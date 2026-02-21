@@ -1,0 +1,2579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design System — Tabletop Sports Games Archive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Lora:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+     * DESIGN TOKENS — inlined for self-contained file
+     * In the real app, link design-tokens.css instead
+     * ============================================================ */
+    :root {
+      --raw-black:       #080705;
+      --raw-ink-950:     #0d0b08;
+      --raw-ink-900:     #111009;
+      --raw-ink-800:     #18150f;
+      --raw-ink-750:     #1e1a13;
+      --raw-ink-700:     #252015;
+      --raw-ink-600:     #30291a;
+      --raw-ink-500:     #3e3424;
+      --raw-ink-400:     #554736;
+      --raw-ink-300:     #6e5f4c;
+      --raw-ink-200:     #9c8b76;
+      --raw-ink-100:     #d4c4ad;
+      --raw-ink-50:      #ede0cc;
+      --raw-cream:       #f5ead8;
+      --raw-gold-450:    #d4a843;
+      --raw-gold-400:    #ddb85a;
+      --raw-gold-300:    #e8ca78;
+      --raw-amber-400:   #e8851a;
+      --raw-amber-300:   #f5a84a;
+      --raw-amber-200:   #f8c07a;
+      --raw-red-400:     #c44b3b;
+      --raw-red-300:     #d46558;
+      --raw-green-400:   #4d8464;
+      --raw-green-300:   #68a07e;
+      --raw-green-200:   #8cbea0;
+      --raw-blue-400:    #4a84b8;
+      --raw-blue-300:    #6a9fcc;
+      --raw-blue-200:    #92bcde;
+
+      --font-display:    'Oswald', 'Arial Narrow', sans-serif;
+      --font-heading:    'Oswald', 'Arial Narrow', sans-serif;
+      --font-body:       'Inter', system-ui, sans-serif;
+      --font-mono:       'DM Mono', 'Fira Code', monospace;
+      --font-serif:      'Lora', Georgia, serif;
+
+      --text-2xs:   0.625rem;
+      --text-xs:    0.75rem;
+      --text-sm:    0.875rem;
+      --text-base:  1rem;
+      --text-md:    1.125rem;
+      --text-lg:    1.25rem;
+      --text-xl:    1.5rem;
+      --text-2xl:   1.875rem;
+      --text-3xl:   2.25rem;
+      --text-4xl:   3rem;
+      --text-5xl:   3.75rem;
+
+      --space-1:  0.25rem;
+      --space-2:  0.5rem;
+      --space-3:  0.75rem;
+      --space-4:  1rem;
+      --space-5:  1.25rem;
+      --space-6:  1.5rem;
+      --space-8:  2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+
+      --radius-xs:   2px;
+      --radius-sm:   4px;
+      --radius-md:   6px;
+      --radius-full: 9999px;
+    }
+
+    /* ============================================================
+     * BASE RESET
+     * ============================================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      line-height: 1.6;
+      background-color: var(--raw-ink-950);
+      color: var(--raw-ink-50);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Grain overlay — subtle texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E");
+      opacity: 0.022;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Warm ambient background glows */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 15% 20%, rgba(212, 168, 67, 0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 85% 70%, rgba(232, 133, 26, 0.03) 0%, transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ============================================================
+     * STYLE GUIDE LAYOUT
+     * ============================================================ */
+    .sg-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      height: 56px;
+      background: rgba(8, 7, 5, 0.97);
+      border-bottom: 1px solid rgba(212, 168, 67, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-8);
+      backdrop-filter: blur(12px);
+    }
+
+    .sg-topbar-logo {
+      font-family: var(--font-display);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--raw-gold-450);
+    }
+
+    .sg-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+
+    .sg-nav-links {
+      display: flex;
+      gap: var(--space-6);
+      list-style: none;
+    }
+
+    .sg-nav-links a {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--raw-ink-200);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      transition: color 0.15s ease;
+    }
+
+    .sg-nav-links a:hover { color: var(--raw-gold-450); }
+
+    .sg-version {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--raw-ink-300);
+      letter-spacing: 0.04em;
+    }
+
+    .sg-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - 56px);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Left navigation sidebar */
+    .sg-sidenav {
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+      border-right: 1px solid rgba(212, 168, 67, 0.08);
+      padding: var(--space-8) var(--space-5);
+      background: rgba(17, 16, 9, 0.6);
+    }
+
+    .sg-sidenav-section {
+      margin-bottom: var(--space-6);
+    }
+
+    .sg-sidenav-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--raw-ink-300);
+      padding: 0 var(--space-3);
+      margin-bottom: var(--space-2);
+    }
+
+    .sg-sidenav ul {
+      list-style: none;
+    }
+
+    .sg-sidenav ul li a {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-sm);
+      color: var(--raw-ink-200);
+      text-decoration: none;
+      border-radius: var(--radius-sm);
+      transition: all 0.15s ease;
+      border-left: 2px solid transparent;
+    }
+
+    .sg-sidenav ul li a:hover {
+      color: var(--raw-gold-450);
+      background: rgba(212, 168, 67, 0.06);
+      border-left-color: var(--raw-gold-450);
+    }
+
+    .sg-sidenav ul li a .nav-num {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--raw-ink-400);
+    }
+
+    /* Main content */
+    .sg-main {
+      padding: var(--space-10) var(--space-12);
+      max-width: 1100px;
+    }
+
+    /* Section structure */
+    .sg-section {
+      margin-bottom: var(--space-16);
+      padding-bottom: var(--space-16);
+      border-bottom: 1px solid rgba(212, 168, 67, 0.08);
+    }
+
+    .sg-section:last-child {
+      border-bottom: none;
+    }
+
+    .sg-section-header {
+      display: flex;
+      align-items: baseline;
+      gap: var(--space-4);
+      margin-bottom: var(--space-10);
+    }
+
+    .sg-section-num {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--raw-gold-450);
+      letter-spacing: 0.1em;
+      opacity: 0.7;
+    }
+
+    .sg-section-title {
+      font-family: var(--font-display);
+      font-size: var(--text-3xl);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--raw-ink-50);
+    }
+
+    .sg-section-rule {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, rgba(212, 168, 67, 0.3), transparent);
+      margin-left: var(--space-4);
+    }
+
+    .sg-subsection {
+      margin-bottom: var(--space-12);
+    }
+
+    .sg-subsection-title {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--raw-ink-200);
+      margin-bottom: var(--space-5);
+      padding-bottom: var(--space-2);
+      border-bottom: 1px solid rgba(212, 168, 67, 0.08);
+    }
+
+    /* ============================================================
+     * 01 — COLOR SYSTEM
+     * ============================================================ */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: var(--space-3);
+    }
+
+    .color-swatch {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .swatch-block {
+      height: 56px;
+      border-radius: var(--radius-md);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .swatch-block.has-border {
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .swatch-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--raw-ink-300);
+      letter-spacing: 0.04em;
+    }
+
+    .swatch-name {
+      font-size: var(--text-xs);
+      color: var(--raw-ink-200);
+      font-weight: 500;
+      margin-bottom: 1px;
+    }
+
+    .swatch-hex {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--raw-ink-300);
+    }
+
+    .color-row {
+      display: flex;
+      gap: var(--space-2);
+      margin-bottom: var(--space-6);
+      flex-wrap: wrap;
+    }
+
+    .color-row .swatch-block {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Sport accent palette */
+    .sport-swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: var(--space-3);
+    }
+
+    .sport-swatch {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      background: var(--raw-ink-800);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(212, 168, 67, 0.08);
+    }
+
+    .sport-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+    }
+
+    .sport-info { min-width: 0; }
+    .sport-info .name {
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--raw-ink-100);
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sport-info .hex {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--raw-ink-300);
+    }
+
+    /* ============================================================
+     * 02 — TYPOGRAPHY
+     * ============================================================ */
+    .type-specimen {
+      margin-bottom: var(--space-8);
+      padding: var(--space-6);
+      background: var(--raw-ink-800);
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(212, 168, 67, 0.08);
+    }
+
+    .type-meta {
+      display: flex;
+      gap: var(--space-6);
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid rgba(212, 168, 67, 0.1);
+    }
+
+    .type-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .type-meta-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--raw-ink-400);
+    }
+
+    .type-meta-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--raw-gold-450);
+    }
+
+    .type-scale-grid {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .type-scale-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      align-items: baseline;
+      gap: var(--space-6);
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid rgba(212, 168, 67, 0.06);
+    }
+
+    .type-scale-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--raw-ink-400);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: right;
+    }
+
+    /* ============================================================
+     * 03 — SPACING
+     * ============================================================ */
+    .spacing-grid {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .spacing-row {
+      display: grid;
+      grid-template-columns: 80px 200px 1fr;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-2) 0;
+    }
+
+    .spacing-token {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--raw-ink-300);
+    }
+
+    .spacing-bar-wrap {
+      height: 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    .spacing-bar {
+      height: 10px;
+      background: linear-gradient(to right, var(--raw-gold-450), var(--raw-amber-400));
+      border-radius: 2px;
+      opacity: 0.7;
+    }
+
+    .spacing-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--raw-ink-200);
+    }
+
+    /* ============================================================
+     * 04 — SHADOWS
+     * ============================================================ */
+    .shadow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: var(--space-6);
+    }
+
+    .shadow-demo {
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.1);
+      border-radius: var(--radius-md);
+      padding: var(--space-6);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-4);
+    }
+
+    .shadow-swatch {
+      width: 80px;
+      height: 64px;
+      background: var(--raw-ink-700);
+      border-radius: var(--radius-md);
+    }
+
+    .shadow-token {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--raw-gold-450);
+    }
+
+    .shadow-desc {
+      font-size: var(--text-xs);
+      color: var(--raw-ink-300);
+    }
+
+    /* ============================================================
+     * 05 — COMPONENTS
+     * ============================================================ */
+
+    /* --- Component preview wrapper --- */
+    .component-block {
+      background: var(--raw-ink-900);
+      border: 1px solid rgba(212, 168, 67, 0.1);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-bottom: var(--space-8);
+    }
+
+    .component-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--raw-ink-400);
+      padding: var(--space-2) var(--space-4);
+      background: var(--raw-ink-800);
+      border-bottom: 1px solid rgba(212, 168, 67, 0.08);
+    }
+
+    .component-preview {
+      padding: var(--space-8);
+    }
+
+    .component-preview.dark-bg {
+      background: var(--raw-ink-950);
+    }
+
+    /* .......... NAVIGATION .......... */
+    .demo-nav {
+      width: 100%;
+      height: 60px;
+      background: rgba(8, 7, 5, 0.97);
+      border-bottom: 1px solid rgba(212, 168, 67, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-6);
+      gap: var(--space-8);
+    }
+
+    .demo-nav-logo {
+      font-family: var(--font-display);
+      font-size: var(--text-md);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--raw-gold-450);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .demo-nav-logo span {
+      color: var(--raw-ink-200);
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      font-size: var(--text-sm);
+    }
+
+    .demo-nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+      list-style: none;
+    }
+
+    .demo-nav-links a {
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      color: var(--raw-ink-200);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      padding-bottom: 2px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .demo-nav-links a:hover {
+      color: var(--raw-gold-450);
+      border-bottom-color: var(--raw-gold-450);
+    }
+
+    .demo-nav-links a.active {
+      color: var(--raw-gold-450);
+      border-bottom-color: var(--raw-gold-450);
+    }
+
+    .demo-nav-search {
+      flex: 1;
+      max-width: 280px;
+      position: relative;
+    }
+
+    .demo-nav-search input {
+      width: 100%;
+      height: 36px;
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.15);
+      border-radius: var(--radius-sm);
+      padding: 0 var(--space-4) 0 var(--space-8);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      color: var(--raw-ink-50);
+      outline: none;
+    }
+
+    .demo-nav-search input::placeholder { color: var(--raw-ink-400); }
+
+    .demo-nav-search .search-icon {
+      position: absolute;
+      left: var(--space-3);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--raw-ink-400);
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    /* .......... SEARCH BAR .......... */
+    .search-bar-demo {
+      position: relative;
+      max-width: 540px;
+    }
+
+    .search-bar-demo input {
+      width: 100%;
+      height: 48px;
+      background: #13100c;
+      border: 1px solid rgba(212, 168, 67, 0.18);
+      border-radius: var(--radius-sm);
+      padding: 0 var(--space-5) 0 48px;
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--raw-ink-50);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .search-bar-demo input:focus {
+      border-color: var(--raw-gold-450);
+      box-shadow: 0 0 0 3px rgba(212, 168, 67, 0.1);
+    }
+
+    .search-bar-demo input::placeholder { color: var(--raw-ink-400); }
+
+    .search-bar-demo .icon {
+      position: absolute;
+      left: var(--space-4);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--raw-ink-300);
+      font-size: 18px;
+      pointer-events: none;
+    }
+
+    /* .......... FILTER SEARCH .......... */
+    .filter-search-demo input {
+      width: 100%;
+      max-width: 240px;
+      height: 36px;
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.14);
+      border-radius: var(--radius-sm);
+      padding: 0 var(--space-3);
+      font-family: var(--font-body);
+      font-size: var(--text-xs);
+      color: var(--raw-ink-50);
+      outline: none;
+    }
+
+    .filter-search-demo input::placeholder { color: var(--raw-ink-400); }
+
+    /* .......... VIEW TOGGLE .......... */
+    .view-toggle-demo {
+      display: inline-flex;
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.12);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .view-toggle-demo button {
+      height: 40px;
+      padding: 0 var(--space-5);
+      border: none;
+      background: transparent;
+      color: var(--raw-ink-300);
+      font-family: var(--font-heading);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      transition: all 0.15s ease;
+    }
+
+    .view-toggle-demo button.active {
+      background: var(--raw-gold-450);
+      color: var(--raw-black);
+    }
+
+    .view-toggle-demo button:not(.active):hover {
+      color: var(--raw-gold-450);
+      background: rgba(212, 168, 67, 0.06);
+    }
+
+    .view-toggle-demo button + button {
+      border-left: 1px solid rgba(212, 168, 67, 0.12);
+    }
+
+    /* .......... RESULTS INFO .......... */
+    .results-info-demo {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--raw-ink-300);
+      letter-spacing: 0.04em;
+    }
+
+    .results-info-demo strong {
+      color: var(--raw-gold-450);
+      font-weight: 500;
+    }
+
+    /* .......... GAME CARDS .......... */
+    .cards-grid-demo {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-5);
+    }
+
+    @media (max-width: 800px) {
+      .cards-grid-demo { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .game-card {
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.12);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s ease, box-shadow 0.25s ease, transform 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .game-card:hover {
+      border-color: rgba(212, 168, 67, 0.42);
+      box-shadow: 0 0 28px rgba(212, 168, 67, 0.2), 0 8px 24px rgba(0,0,0,0.5);
+      transform: translateY(-3px);
+    }
+
+    .game-card-image {
+      width: 100%;
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* Sport-accent bar at base of image */
+    .game-card-image::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .game-card-image.sport-football::after { background: #d4531a; }
+    .game-card-image.sport-baseball::after { background: #c44b3b; }
+    .game-card-image.sport-basketball::after { background: #e07b39; }
+    .game-card-image.sport-hockey::after { background: #4a84b8; }
+    .game-card-image.sport-soccer::after { background: #4d8464; }
+
+    .card-img-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-img-placeholder.football {
+      background: linear-gradient(135deg, #1a0a04 0%, #2d1208 40%, #3d1a0a 100%);
+    }
+    .card-img-placeholder.baseball {
+      background: linear-gradient(135deg, #1a0a0a 0%, #2d0e0e 40%, #3a1212 100%);
+    }
+    .card-img-placeholder.soccer {
+      background: linear-gradient(135deg, #061a0d 0%, #0d2d18 40%, #102e1a 100%);
+    }
+    .card-img-placeholder.hockey {
+      background: linear-gradient(135deg, #050e1a 0%, #0a1e30 40%, #0e2840 100%);
+    }
+
+    .card-img-placeholder .sport-emblem {
+      width: 60px;
+      height: 60px;
+      border: 2px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.25;
+    }
+
+    .sport-emblem-text {
+      font-family: var(--font-display);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .game-card-body {
+      padding: var(--space-4);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .game-card-title {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--raw-ink-50);
+      line-height: 1.2;
+      letter-spacing: 0.01em;
+    }
+
+    .game-card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1-5);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 var(--space-2);
+      border-radius: var(--radius-xs);
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      border: 1px solid;
+    }
+
+    .tag-sport {
+      background: rgba(212, 168, 67, 0.1);
+      border-color: rgba(212, 168, 67, 0.3);
+      color: var(--raw-gold-300);
+    }
+
+    .tag-type {
+      background: rgba(232, 133, 26, 0.1);
+      border-color: rgba(232, 133, 26, 0.28);
+      color: var(--raw-amber-300);
+    }
+
+    .tag-bgg {
+      background: rgba(77, 132, 100, 0.12);
+      border-color: rgba(77, 132, 100, 0.32);
+      color: var(--raw-green-300);
+    }
+
+    .tag-manual {
+      background: rgba(74, 132, 184, 0.12);
+      border-color: rgba(74, 132, 184, 0.3);
+      color: var(--raw-blue-200);
+    }
+
+    .game-card-meta {
+      display: flex;
+      gap: var(--space-4);
+      margin-top: auto;
+      padding-top: var(--space-3);
+      border-top: 1px solid rgba(212, 168, 67, 0.08);
+    }
+
+    .meta-chip {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .meta-chip-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--raw-ink-400);
+    }
+
+    .meta-chip-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--raw-ink-100);
+    }
+
+    /* .......... LIST VIEW CARD .......... */
+    .game-card-list {
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.1);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-5);
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: var(--space-6);
+      transition: border-color 0.15s ease, background 0.15s ease;
+      border-left: 3px solid rgba(212, 168, 67, 0.25);
+    }
+
+    .game-card-list:hover {
+      border-color: rgba(212, 168, 67, 0.3);
+      border-left-color: var(--raw-gold-450);
+      background: var(--raw-ink-750);
+    }
+
+    .list-card-main {
+      display: flex;
+      align-items: center;
+      gap: var(--space-5);
+      min-width: 0;
+    }
+
+    .list-card-num {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--raw-ink-400);
+      flex-shrink: 0;
+      width: 28px;
+      text-align: right;
+    }
+
+    .list-card-title {
+      font-family: var(--font-heading);
+      font-size: var(--text-base);
+      font-weight: 500;
+      color: var(--raw-ink-50);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0.01em;
+    }
+
+    .list-card-tags {
+      display: flex;
+      gap: var(--space-1-5);
+      flex-shrink: 0;
+    }
+
+    .list-card-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+      flex-shrink: 0;
+    }
+
+    .list-meta-item {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--raw-ink-300);
+      white-space: nowrap;
+    }
+
+    .list-meta-item span {
+      color: var(--raw-ink-100);
+      margin-left: var(--space-1);
+    }
+
+    /* .......... FILTER SIDEBAR .......... */
+    .filter-sidebar-demo {
+      width: 260px;
+      background: var(--raw-ink-900);
+      border: 1px solid rgba(212, 168, 67, 0.1);
+      border-radius: var(--radius-md);
+      padding: var(--space-5);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+    }
+
+    .filter-sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-2);
+    }
+
+    .filter-sidebar-title {
+      font-family: var(--font-heading);
+      font-size: var(--text-md);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--raw-ink-50);
+    }
+
+    .clear-btn {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--raw-ink-400);
+      background: none;
+      border: 1px solid rgba(212, 168, 67, 0.12);
+      border-radius: var(--radius-xs);
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .clear-btn:hover {
+      color: var(--raw-red-300);
+      border-color: rgba(196, 75, 59, 0.3);
+    }
+
+    .filter-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .filter-section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--raw-gold-450);
+      margin-bottom: var(--space-1);
+      opacity: 0.8;
+    }
+
+    .filter-option {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2-5);
+      padding: var(--space-1-5) var(--space-2);
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+
+    .filter-option:hover { background: rgba(212, 168, 67, 0.06); }
+
+    .filter-option input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border: 1px solid rgba(212, 168, 67, 0.3);
+      border-radius: 2px;
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+      transition: border-color 0.12s, background 0.12s;
+    }
+
+    .filter-option input[type="checkbox"]:checked {
+      background: var(--raw-gold-450);
+      border-color: var(--raw-gold-450);
+    }
+
+    .filter-option input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      width: 4px;
+      height: 7px;
+      border: 1.5px solid var(--raw-black);
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+
+    .filter-option label {
+      font-size: var(--text-sm);
+      color: var(--raw-ink-100);
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .filter-count {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--raw-ink-400);
+    }
+
+    .filter-divider {
+      height: 1px;
+      background: rgba(212, 168, 67, 0.07);
+    }
+
+    .year-range-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-2);
+    }
+
+    .year-range-inputs input {
+      width: 100%;
+      height: 34px;
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.15);
+      border-radius: var(--radius-sm);
+      padding: 0 var(--space-2);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--raw-ink-50);
+      outline: none;
+      text-align: center;
+    }
+
+    .year-range-inputs input::placeholder { color: var(--raw-ink-400); }
+
+    .year-range-inputs input:focus {
+      border-color: var(--raw-gold-450);
+    }
+
+    /* .......... TAGS & BADGES (full showcase) .......... */
+    .tags-showcase {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+
+    /* Complexity badges */
+    .badge-simple {
+      background: rgba(77, 132, 100, 0.14);
+      color: var(--raw-green-200);
+      border: 1px solid rgba(77, 132, 100, 0.3);
+    }
+
+    .badge-medium {
+      background: rgba(212, 168, 67, 0.14);
+      color: var(--raw-gold-200);
+      border: 1px solid rgba(212, 168, 67, 0.3);
+    }
+
+    .badge-complex {
+      background: rgba(232, 133, 26, 0.14);
+      color: var(--raw-amber-200);
+      border: 1px solid rgba(232, 133, 26, 0.3);
+    }
+
+    .badge-expert {
+      background: rgba(196, 75, 59, 0.14);
+      color: var(--raw-red-200);
+      border: 1px solid rgba(196, 75, 59, 0.3);
+    }
+
+    /* .......... META ITEMS (scoreboard) .......... */
+    .meta-grid-demo {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-4);
+      max-width: 600px;
+    }
+
+    .meta-item-demo {
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.1);
+      border-radius: var(--radius-sm);
+      padding: var(--space-4);
+      border-top: 2px solid var(--raw-gold-450);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .meta-item-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--raw-ink-400);
+    }
+
+    .meta-item-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-xl);
+      font-weight: 500;
+      color: var(--raw-ink-50);
+      line-height: 1;
+    }
+
+    .meta-item-unit {
+      font-size: var(--text-xs);
+      color: var(--raw-ink-300);
+    }
+
+    /* .......... BUTTONS .......... */
+    .buttons-showcase {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      height: 40px;
+      padding: 0 var(--space-6);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-heading);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--raw-gold-450);
+      color: #080705;
+      box-shadow: 0 2px 8px rgba(212, 168, 67, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: var(--raw-gold-400);
+      box-shadow: 0 4px 16px rgba(212, 168, 67, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--raw-ink-200);
+      border: 1px solid rgba(212, 168, 67, 0.22);
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(212, 168, 67, 0.45);
+      color: var(--raw-gold-450);
+      background: rgba(212, 168, 67, 0.06);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--raw-ink-200);
+      border: none;
+    }
+
+    .btn-ghost:hover {
+      color: var(--raw-gold-450);
+      background: rgba(212, 168, 67, 0.06);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--raw-red-300);
+      border: 1px solid rgba(196, 75, 59, 0.25);
+    }
+
+    .btn-danger:hover {
+      background: rgba(196, 75, 59, 0.1);
+      border-color: rgba(196, 75, 59, 0.45);
+    }
+
+    .btn-sm {
+      height: 32px;
+      padding: 0 var(--space-4);
+      font-size: 11px;
+    }
+
+    .btn-lg {
+      height: 48px;
+      padding: 0 var(--space-8);
+      font-size: var(--text-base);
+    }
+
+    /* .......... BACK BUTTON .......... */
+    .back-btn-demo {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 0 var(--space-5);
+      height: 40px;
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.15);
+      border-radius: var(--radius-sm);
+      color: var(--raw-ink-200);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .back-btn-demo:hover {
+      border-color: rgba(212, 168, 67, 0.35);
+      color: var(--raw-gold-450);
+      transform: translateX(-2px);
+    }
+
+    .back-btn-demo .arrow {
+      font-size: 16px;
+      margin-top: -1px;
+    }
+
+    /* .......... PAGINATION .......... */
+    .pagination-demo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1-5);
+      flex-wrap: wrap;
+    }
+
+    .page-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.12);
+      color: var(--raw-ink-300);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      background: var(--raw-ink-700);
+      border-color: rgba(212, 168, 67, 0.3);
+      color: var(--raw-gold-450);
+    }
+
+    .page-btn.active {
+      background: var(--raw-gold-450);
+      border-color: var(--raw-gold-450);
+      color: var(--raw-black);
+      font-weight: 600;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .page-btn.wide {
+      width: auto;
+      padding: 0 var(--space-3);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      letter-spacing: 0.02em;
+    }
+
+    .page-ellipsis {
+      width: 36px;
+      text-align: center;
+      color: var(--raw-ink-400);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+    }
+
+    /* .......... LOADING / EMPTY / ERROR STATES .......... */
+    .state-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-5);
+    }
+
+    .state-card {
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.08);
+      border-radius: var(--radius-md);
+      padding: var(--space-10) var(--space-6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-4);
+      text-align: center;
+    }
+
+    .state-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .state-icon.loading {
+      background: rgba(212, 168, 67, 0.1);
+      border: 1px solid rgba(212, 168, 67, 0.2);
+      color: var(--raw-gold-450);
+      animation: spin 1.8s linear infinite;
+    }
+
+    .state-icon.empty {
+      background: rgba(156, 139, 118, 0.1);
+      border: 1px solid rgba(156, 139, 118, 0.2);
+      color: var(--raw-ink-300);
+    }
+
+    .state-icon.error {
+      background: rgba(196, 75, 59, 0.1);
+      border: 1px solid rgba(196, 75, 59, 0.2);
+      color: var(--raw-red-300);
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .state-title {
+      font-family: var(--font-heading);
+      font-size: var(--text-lg);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--raw-ink-100);
+    }
+
+    .state-desc {
+      font-size: var(--text-sm);
+      color: var(--raw-ink-300);
+      line-height: 1.5;
+    }
+
+    /* .......... SECTION HEADER COMPONENT .......... */
+    .section-header-demo {
+      padding: var(--space-5) 0;
+      border-bottom: 1px solid rgba(212, 168, 67, 0.12);
+      margin-bottom: var(--space-6);
+    }
+
+    .section-header-inner {
+      display: flex;
+      align-items: flex-end;
+      gap: var(--space-4);
+    }
+
+    .section-header-text {}
+
+    .section-header-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--raw-gold-450);
+      opacity: 0.7;
+      margin-bottom: var(--space-1);
+    }
+
+    .section-header-title {
+      font-family: var(--font-display);
+      font-size: var(--text-2xl);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--raw-ink-50);
+    }
+
+    .section-header-count {
+      font-family: var(--font-mono);
+      font-size: var(--text-base);
+      color: var(--raw-ink-300);
+      margin-left: auto;
+    }
+
+    /* ============================================================
+     * INTRO / HERO
+     * ============================================================ */
+    .sg-hero {
+      padding: var(--space-16) var(--space-12) var(--space-10);
+      border-bottom: 1px solid rgba(212, 168, 67, 0.1);
+      position: relative;
+    }
+
+    .sg-hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--raw-gold-450);
+      opacity: 0.8;
+      margin-bottom: var(--space-4);
+    }
+
+    .sg-hero-title {
+      font-family: var(--font-display);
+      font-size: var(--text-5xl);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: var(--raw-ink-50);
+      margin-bottom: var(--space-4);
+    }
+
+    .sg-hero-title span {
+      color: var(--raw-gold-450);
+    }
+
+    .sg-hero-desc {
+      font-size: var(--text-md);
+      color: var(--raw-ink-200);
+      max-width: 540px;
+      line-height: 1.6;
+      font-style: italic;
+      font-family: var(--font-serif);
+    }
+
+    .sg-hero-meta {
+      display: flex;
+      gap: var(--space-8);
+      margin-top: var(--space-8);
+      padding-top: var(--space-6);
+      border-top: 1px solid rgba(212, 168, 67, 0.1);
+    }
+
+    .sg-hero-stat {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .sg-hero-stat-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-2xl);
+      color: var(--raw-gold-450);
+      font-weight: 500;
+    }
+
+    .sg-hero-stat-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--raw-ink-400);
+    }
+
+    /* ============================================================
+     * UTILITY HELPERS
+     * ============================================================ */
+    .flex { display: flex; }
+    .gap-sm { gap: var(--space-3); }
+    .gap-md { gap: var(--space-5); }
+    .items-center { align-items: center; }
+    .flex-wrap { flex-wrap: wrap; }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--raw-ink-950); }
+    ::-webkit-scrollbar-thumb { background: rgba(212, 168, 67, 0.2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(212, 168, 67, 0.35); }
+
+    /* ============================================================
+     * RESPONSIVE
+     * ============================================================ */
+    @media (max-width: 900px) {
+      .sg-layout { grid-template-columns: 1fr; }
+      .sg-sidenav { display: none; }
+      .sg-main { padding: var(--space-8) var(--space-5); }
+      .sg-hero { padding: var(--space-10) var(--space-5) var(--space-8); }
+      .cards-grid-demo { grid-template-columns: 1fr; }
+      .meta-grid-demo { grid-template-columns: repeat(2, 1fr); }
+      .state-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     TOP BAR
+     ============================================================ -->
+<header class="sg-topbar">
+  <span class="sg-topbar-logo">TSGA — Design System</span>
+  <div class="sg-topbar-right">
+    <nav>
+      <ul class="sg-nav-links">
+        <li><a href="#colors">Colors</a></li>
+        <li><a href="#typography">Type</a></li>
+        <li><a href="#spacing">Space</a></li>
+        <li><a href="#shadows">Shadows</a></li>
+        <li><a href="#components">Components</a></li>
+      </ul>
+    </nav>
+    <span class="sg-version">v1.0 · The Press Box</span>
+  </div>
+</header>
+
+<!-- ============================================================
+     LAYOUT
+     ============================================================ -->
+<div class="sg-layout">
+
+  <!-- Left nav -->
+  <nav class="sg-sidenav">
+    <div class="sg-sidenav-section">
+      <p class="sg-sidenav-label">Foundations</p>
+      <ul>
+        <li><a href="#colors"><span class="nav-num">01</span> Colors</a></li>
+        <li><a href="#typography"><span class="nav-num">02</span> Typography</a></li>
+        <li><a href="#spacing"><span class="nav-num">03</span> Spacing</a></li>
+        <li><a href="#shadows"><span class="nav-num">04</span> Shadows</a></li>
+      </ul>
+    </div>
+    <div class="sg-sidenav-section">
+      <p class="sg-sidenav-label">Components</p>
+      <ul>
+        <li><a href="#nav-component"><span class="nav-num">—</span> Navigation</a></li>
+        <li><a href="#search-component"><span class="nav-num">—</span> Search</a></li>
+        <li><a href="#cards-component"><span class="nav-num">—</span> Game Cards</a></li>
+        <li><a href="#filters-component"><span class="nav-num">—</span> Filters</a></li>
+        <li><a href="#tags-component"><span class="nav-num">—</span> Tags &amp; Badges</a></li>
+        <li><a href="#meta-component"><span class="nav-num">—</span> Meta Items</a></li>
+        <li><a href="#buttons-component"><span class="nav-num">—</span> Buttons</a></li>
+        <li><a href="#pagination-component"><span class="nav-num">—</span> Pagination</a></li>
+        <li><a href="#states-component"><span class="nav-num">—</span> States</a></li>
+      </ul>
+    </div>
+    <div class="sg-sidenav-section">
+      <p class="sg-sidenav-label">Files</p>
+      <ul>
+        <li><a href="design-tokens.css"><span class="nav-num">→</span> design-tokens.css</a></li>
+        <li><a href="game-detail-mockup.html"><span class="nav-num">→</span> detail-mockup.html</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main>
+
+    <!-- HERO -->
+    <div class="sg-hero">
+      <p class="sg-hero-eyebrow">Design System · The Press Box</p>
+      <h1 class="sg-hero-title">Tabletop Sports<br><span>Games Archive</span></h1>
+      <p class="sg-hero-desc">A premium sports analytics aesthetic meets vintage game archive — warm incandescent light, aged leather, the precision of a scoreboard, the depth of a curated collection.</p>
+      <div class="sg-hero-meta">
+        <div class="sg-hero-stat">
+          <span class="sg-hero-stat-value">78</span>
+          <span class="sg-hero-stat-label">Tokens</span>
+        </div>
+        <div class="sg-hero-stat">
+          <span class="sg-hero-stat-value">14</span>
+          <span class="sg-hero-stat-label">Components</span>
+        </div>
+        <div class="sg-hero-stat">
+          <span class="sg-hero-stat-value">3</span>
+          <span class="sg-hero-stat-label">Fonts</span>
+        </div>
+        <div class="sg-hero-stat">
+          <span class="sg-hero-stat-value">Vanilla</span>
+          <span class="sg-hero-stat-label">Stack</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sg-main">
+
+      <!-- ==================================================================
+           01 — COLOR SYSTEM
+           ================================================================== -->
+      <section id="colors" class="sg-section">
+        <div class="sg-section-header">
+          <span class="sg-section-num">01</span>
+          <h2 class="sg-section-title">Color System</h2>
+          <div class="sg-section-rule"></div>
+        </div>
+
+        <!-- Backgrounds -->
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">Background Scale</p>
+          <div class="color-grid" style="grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));">
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:#080705;border:1px solid #333;"></div>
+              <span class="swatch-name">Base / Page</span>
+              <span class="swatch-hex">#080705 · --raw-black</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:#0d0b08;border:1px solid #333;"></div>
+              <span class="swatch-name">BG Primary</span>
+              <span class="swatch-hex">#0d0b08 · ink-950</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:#111009;"></div>
+              <span class="swatch-name">Surface</span>
+              <span class="swatch-hex">#111009 · ink-900</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:#18150f;"></div>
+              <span class="swatch-name">Elevated</span>
+              <span class="swatch-hex">#18150f · ink-800</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:#1e1a13;"></div>
+              <span class="swatch-name">Overlay</span>
+              <span class="swatch-hex">#1e1a13 · ink-750</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:#252015;"></div>
+              <span class="swatch-name">Subtle Hover</span>
+              <span class="swatch-hex">#252015 · ink-700</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:#30291a;"></div>
+              <span class="swatch-name">Muted</span>
+              <span class="swatch-hex">#30291a · ink-600</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gold Accent Scale -->
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">Gold Accent Scale — Primary Brand</p>
+          <div class="color-row">
+            <div><div class="swatch-block" style="background:#3d2e00;width:48px;height:48px;border-radius:4px;"></div></div>
+            <div><div class="swatch-block" style="background:#5e4800;width:48px;height:48px;border-radius:4px;"></div></div>
+            <div><div class="swatch-block" style="background:#856800;width:48px;height:48px;border-radius:4px;"></div></div>
+            <div><div class="swatch-block" style="background:#a88500;width:48px;height:48px;border-radius:4px;"></div></div>
+            <div><div class="swatch-block" style="background:#c9a032;width:48px;height:48px;border-radius:4px;"></div></div>
+            <div><div class="swatch-block" style="background:#d4a843;width:48px;height:48px;border-radius:4px;box-shadow:0 0 12px rgba(212,168,67,0.4);"></div></div>
+            <div><div class="swatch-block" style="background:#ddb85a;width:48px;height:48px;border-radius:4px;"></div></div>
+            <div><div class="swatch-block" style="background:#e8ca78;width:48px;height:48px;border-radius:4px;"></div></div>
+            <div><div class="swatch-block" style="background:#f2da9e;width:48px;height:48px;border-radius:4px;"></div></div>
+            <div><div class="swatch-block" style="background:#faf0cc;width:48px;height:48px;border-radius:4px;"></div></div>
+          </div>
+          <p style="font-family:var(--font-mono);font-size:11px;color:var(--raw-ink-300);margin-top:var(--space-2);">
+            900 — 800 — 700 — 600 — 500 — <strong style="color:var(--raw-gold-450);">450 ★ PRIMARY</strong> — 400 — 300 — 200 — 100
+          </p>
+        </div>
+
+        <!-- Semantic Colors -->
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">Semantic Colors</p>
+          <div class="color-grid">
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:var(--raw-gold-450);"></div>
+              <span class="swatch-name">Accent Primary</span>
+              <span class="swatch-hex">#d4a843 · Gold</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:var(--raw-amber-400);"></div>
+              <span class="swatch-name">Accent Secondary</span>
+              <span class="swatch-hex">#e8851a · Amber</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:var(--raw-red-400);"></div>
+              <span class="swatch-name">Error / Heat</span>
+              <span class="swatch-hex">#c44b3b · Red</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:var(--raw-green-400);"></div>
+              <span class="swatch-name">Success / Field</span>
+              <span class="swatch-hex">#4d8464 · Green</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:var(--raw-blue-400);"></div>
+              <span class="swatch-name">Info / Ice</span>
+              <span class="swatch-hex">#4a84b8 · Blue</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:var(--raw-ink-50);border:1px solid #444;"></div>
+              <span class="swatch-name">Text Primary</span>
+              <span class="swatch-hex">#ede0cc · Cream</span>
+            </div>
+            <div class="color-swatch">
+              <div class="swatch-block" style="background:var(--raw-ink-200);border:1px solid #333;"></div>
+              <span class="swatch-name">Text Muted</span>
+              <span class="swatch-hex">#9c8b76 · Warm grey</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sport Accents -->
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">Sport Accent Colors — Per-sport identity</p>
+          <div class="sport-swatches">
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#d4531a;"></div>
+              <div class="sport-info"><span class="name">Football</span><span class="hex">#d4531a</span></div>
+            </div>
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#c44b3b;"></div>
+              <div class="sport-info"><span class="name">Baseball</span><span class="hex">#c44b3b</span></div>
+            </div>
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#e07b39;"></div>
+              <div class="sport-info"><span class="name">Basketball</span><span class="hex">#e07b39</span></div>
+            </div>
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#4a84b8;"></div>
+              <div class="sport-info"><span class="name">Hockey</span><span class="hex">#4a84b8</span></div>
+            </div>
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#4d8464;"></div>
+              <div class="sport-info"><span class="name">Soccer</span><span class="hex">#4d8464</span></div>
+            </div>
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#c8b83a;"></div>
+              <div class="sport-info"><span class="name">Tennis</span><span class="hex">#c8b83a</span></div>
+            </div>
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#5a7c42;"></div>
+              <div class="sport-info"><span class="name">Golf</span><span class="hex">#5a7c42</span></div>
+            </div>
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#d4a843;"></div>
+              <div class="sport-info"><span class="name">Racing</span><span class="hex">#d4a843</span></div>
+            </div>
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#b5863a;"></div>
+              <div class="sport-info"><span class="name">Cricket</span><span class="hex">#b5863a</span></div>
+            </div>
+            <div class="sport-swatch">
+              <div class="sport-dot" style="background:#8b5e3c;"></div>
+              <div class="sport-info"><span class="name">Rugby</span><span class="hex">#8b5e3c</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           02 — TYPOGRAPHY
+           ================================================================== -->
+      <section id="typography" class="sg-section">
+        <div class="sg-section-header">
+          <span class="sg-section-num">02</span>
+          <h2 class="sg-section-title">Typography</h2>
+          <div class="sg-section-rule"></div>
+        </div>
+
+        <!-- Font Families -->
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">Font Families</p>
+
+          <div class="type-specimen">
+            <div style="font-family:'Oswald',sans-serif;font-size:var(--text-4xl);font-weight:700;letter-spacing:-0.02em;line-height:1.1;color:var(--raw-ink-50);">OSWALD DISPLAY</div>
+            <div style="font-family:'Oswald',sans-serif;font-size:var(--text-xl);font-weight:400;letter-spacing:0.12em;color:var(--raw-ink-200);text-transform:uppercase;margin-top:var(--space-2);">Condensed · Athletic · Precise</div>
+            <div class="type-meta">
+              <div class="type-meta-item"><span class="type-meta-label">Token</span><span class="type-meta-value">--font-display, --font-heading</span></div>
+              <div class="type-meta-item"><span class="type-meta-label">Use</span><span class="type-meta-value">H1-H4, buttons, labels, nav</span></div>
+              <div class="type-meta-item"><span class="type-meta-label">Weights</span><span class="type-meta-value">300 · 400 · 500 · 600 · 700</span></div>
+            </div>
+          </div>
+
+          <div class="type-specimen">
+            <div style="font-family:'Inter',sans-serif;font-size:var(--text-xl);font-weight:400;color:var(--raw-ink-50);line-height:1.5;">Inter — The workhorse. Used for all body copy, descriptions, filter labels, and UI text where clarity matters most. It holds the system together at smaller sizes without fatigue.</div>
+            <div class="type-meta">
+              <div class="type-meta-item"><span class="type-meta-label">Token</span><span class="type-meta-value">--font-body</span></div>
+              <div class="type-meta-item"><span class="type-meta-label">Use</span><span class="type-meta-value">Body, UI labels, filter text</span></div>
+              <div class="type-meta-item"><span class="type-meta-label">Weights</span><span class="type-meta-value">300 · 400 · 500 · 600</span></div>
+            </div>
+          </div>
+
+          <div class="type-specimen">
+            <div style="font-family:'DM Mono',monospace;font-size:var(--text-xl);color:var(--raw-gold-450);letter-spacing:0.04em;">1994 · 2-6 players · 45 min</div>
+            <div style="font-family:'DM Mono',monospace;font-size:var(--text-sm);color:var(--raw-ink-300);margin-top:var(--space-2);">DM MONO — For all numeric data, stats, badges, counts, and code.</div>
+            <div class="type-meta">
+              <div class="type-meta-item"><span class="type-meta-label">Token</span><span class="type-meta-value">--font-mono</span></div>
+              <div class="type-meta-item"><span class="type-meta-label">Use</span><span class="type-meta-value">Stats, counts, year, players, tokens</span></div>
+            </div>
+          </div>
+
+          <div class="type-specimen">
+            <div style="font-family:'Lora',serif;font-size:var(--text-md);font-style:italic;color:var(--raw-ink-100);line-height:1.7;max-width:580px;">An immersive strategy experience that puts you in command of an entire football franchise — from drafting your roster to calling plays under pressure in crunch time. Every decision counts in this definitive tabletop simulation.</div>
+            <div class="type-meta">
+              <div class="type-meta-item"><span class="type-meta-label">Token</span><span class="type-meta-value">--font-serif</span></div>
+              <div class="type-meta-item"><span class="type-meta-label">Use</span><span class="type-meta-value">Game descriptions, pull quotes, flavor text</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Type Scale -->
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">Type Scale — Oswald Display</p>
+          <div class="type-scale-grid">
+            <div class="type-scale-row">
+              <span class="type-scale-label">5xl · 60px</span>
+              <span style="font-family:'Oswald';font-size:var(--text-5xl);font-weight:700;letter-spacing:-0.03em;line-height:1;color:var(--raw-ink-50);">Archive</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">4xl · 48px</span>
+              <span style="font-family:'Oswald';font-size:var(--text-4xl);font-weight:600;letter-spacing:-0.02em;line-height:1.1;color:var(--raw-ink-50);">3,311 Games</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">3xl · 36px</span>
+              <span style="font-family:'Oswald';font-size:var(--text-3xl);font-weight:600;letter-spacing:-0.01em;color:var(--raw-ink-50);">Browse by Sport</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">2xl · 30px</span>
+              <span style="font-family:'Oswald';font-size:var(--text-2xl);font-weight:500;color:var(--raw-ink-50);">Filter Results</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">xl · 24px</span>
+              <span style="font-family:'Oswald';font-size:var(--text-xl);font-weight:500;letter-spacing:0.02em;color:var(--raw-ink-100);">Section Header</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">lg · 20px</span>
+              <span style="font-family:'Oswald';font-size:var(--text-lg);font-weight:500;letter-spacing:0.02em;color:var(--raw-ink-100);">Card Title — Gridiron Tactics</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">LABEL · xs</span>
+              <span style="font-family:'Oswald';font-size:var(--text-xs);font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--raw-gold-450);">Sport Category</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Type Scale Body -->
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">Type Scale — Inter Body</p>
+          <div class="type-scale-grid">
+            <div class="type-scale-row">
+              <span class="type-scale-label">md · 18px</span>
+              <span style="font-family:'Inter';font-size:var(--text-md);color:var(--raw-ink-50);">Lead / Introduction text for sections</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">base · 16px</span>
+              <span style="font-family:'Inter';font-size:var(--text-base);color:var(--raw-ink-100);">Standard body copy and UI labels</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">sm · 14px</span>
+              <span style="font-family:'Inter';font-size:var(--text-sm);color:var(--raw-ink-200);">Secondary text, filter options, tags</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">xs · 12px</span>
+              <span style="font-family:'Inter';font-size:var(--text-xs);color:var(--raw-ink-300);">Captions, metadata, small labels</span>
+            </div>
+            <div class="type-scale-row">
+              <span class="type-scale-label">2xs · 10px</span>
+              <span style="font-family:'DM Mono';font-size:var(--text-2xs);letter-spacing:0.2em;text-transform:uppercase;color:var(--raw-ink-400);">MICRO LABELS · TOKENS · COUNTS</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           03 — SPACING
+           ================================================================== -->
+      <section id="spacing" class="sg-section">
+        <div class="sg-section-header">
+          <span class="sg-section-num">03</span>
+          <h2 class="sg-section-title">Spacing</h2>
+          <div class="sg-section-rule"></div>
+        </div>
+
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">4px Base Grid</p>
+          <div class="spacing-grid">
+            <div class="spacing-row">
+              <span class="spacing-token">--space-1</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:4px;"></div></div>
+              <span class="spacing-value">4px · 0.25rem</span>
+            </div>
+            <div class="spacing-row">
+              <span class="spacing-token">--space-2</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:8px;"></div></div>
+              <span class="spacing-value">8px · 0.5rem</span>
+            </div>
+            <div class="spacing-row">
+              <span class="spacing-token">--space-3</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:12px;"></div></div>
+              <span class="spacing-value">12px · 0.75rem</span>
+            </div>
+            <div class="spacing-row">
+              <span class="spacing-token">--space-4</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:16px;"></div></div>
+              <span class="spacing-value">16px · 1rem</span>
+            </div>
+            <div class="spacing-row">
+              <span class="spacing-token">--space-5</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:20px;"></div></div>
+              <span class="spacing-value">20px · 1.25rem · card padding</span>
+            </div>
+            <div class="spacing-row">
+              <span class="spacing-token">--space-6</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:24px;"></div></div>
+              <span class="spacing-value">24px · 1.5rem · panel padding</span>
+            </div>
+            <div class="spacing-row">
+              <span class="spacing-token">--space-8</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:32px;"></div></div>
+              <span class="spacing-value">32px · 2rem · section gap</span>
+            </div>
+            <div class="spacing-row">
+              <span class="spacing-token">--space-10</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:40px;"></div></div>
+              <span class="spacing-value">40px · 2.5rem</span>
+            </div>
+            <div class="spacing-row">
+              <span class="spacing-token">--space-12</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:48px;"></div></div>
+              <span class="spacing-value">48px · 3rem · major gaps</span>
+            </div>
+            <div class="spacing-row">
+              <span class="spacing-token">--space-16</span>
+              <div class="spacing-bar-wrap"><div class="spacing-bar" style="width:64px;"></div></div>
+              <span class="spacing-value">64px · 4rem · hero spacing</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           04 — SHADOWS
+           ================================================================== -->
+      <section id="shadows" class="sg-section">
+        <div class="sg-section-header">
+          <span class="sg-section-num">04</span>
+          <h2 class="sg-section-title">Shadows &amp; Elevation</h2>
+          <div class="sg-section-rule"></div>
+        </div>
+
+        <div class="shadow-grid">
+          <div class="shadow-demo">
+            <div class="shadow-swatch" style="box-shadow:none;"></div>
+            <div>
+              <div class="shadow-token">--elevation-0</div>
+              <div class="shadow-desc">Flat. Base-level surfaces.</div>
+            </div>
+          </div>
+          <div class="shadow-demo">
+            <div class="shadow-swatch" style="box-shadow:0 1px 3px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.3);"></div>
+            <div>
+              <div class="shadow-token">--elevation-1</div>
+              <div class="shadow-desc">Resting cards. Sidebar panels.</div>
+            </div>
+          </div>
+          <div class="shadow-demo">
+            <div class="shadow-swatch" style="box-shadow:0 4px 10px rgba(0,0,0,.45),0 2px 4px rgba(0,0,0,.3);"></div>
+            <div>
+              <div class="shadow-token">--elevation-2</div>
+              <div class="shadow-desc">Sticky nav. Dropdowns.</div>
+            </div>
+          </div>
+          <div class="shadow-demo">
+            <div class="shadow-swatch" style="box-shadow:0 10px 24px rgba(0,0,0,.5),0 4px 8px rgba(0,0,0,.35);"></div>
+            <div>
+              <div class="shadow-token">--elevation-3</div>
+              <div class="shadow-desc">Tooltips. Overlay menus.</div>
+            </div>
+          </div>
+          <div class="shadow-demo">
+            <div class="shadow-swatch" style="box-shadow:0 0 28px rgba(212,168,67,.25),0 4px 12px rgba(0,0,0,.4);"></div>
+            <div>
+              <div class="shadow-token">--elevation-hover</div>
+              <div class="shadow-desc" style="color:var(--raw-gold-450);">Interactive hover — gold warm glow.</div>
+            </div>
+          </div>
+          <div class="shadow-demo">
+            <div class="shadow-swatch" style="box-shadow:0 0 48px rgba(212,168,67,.3),0 8px 24px rgba(0,0,0,.5);"></div>
+            <div>
+              <div class="shadow-token">--glow-gold-lg</div>
+              <div class="shadow-desc">Hero emphasis. Active states.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================================
+           05 — COMPONENTS
+           ================================================================== -->
+      <section id="components" class="sg-section">
+        <div class="sg-section-header">
+          <span class="sg-section-num">05</span>
+          <h2 class="sg-section-title">Components</h2>
+          <div class="sg-section-rule"></div>
+        </div>
+
+        <!-- NAVIGATION -->
+        <div class="sg-subsection" id="nav-component">
+          <p class="sg-subsection-title">Navigation Bar</p>
+          <div class="component-block">
+            <div class="component-label">nav · primary · sticky · 60px height</div>
+            <div class="component-preview" style="padding:0;">
+              <div class="demo-nav">
+                <div class="demo-nav-logo">TSGA <span>— Sports Archive</span></div>
+                <ul class="demo-nav-links">
+                  <li><a href="#" class="active">Browse</a></li>
+                  <li><a href="#">Sports</a></li>
+                  <li><a href="#">About</a></li>
+                </ul>
+                <div class="demo-nav-search">
+                  <span class="search-icon">⌕</span>
+                  <input type="text" placeholder="Search 3,311 games…">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEARCH -->
+        <div class="sg-subsection" id="search-component">
+          <p class="sg-subsection-title">Search &amp; Filter Search</p>
+          <div class="component-block">
+            <div class="component-label">search-bar · main · 48px height</div>
+            <div class="component-preview dark-bg">
+              <div class="search-bar-demo">
+                <span class="icon">⌕</span>
+                <input type="text" placeholder="Search games by name or description…">
+              </div>
+            </div>
+          </div>
+          <div class="component-block">
+            <div class="component-label">search-bar · filter · 36px height</div>
+            <div class="component-preview dark-bg">
+              <div class="filter-search-demo">
+                <input type="text" placeholder="Search in filters…">
+              </div>
+            </div>
+          </div>
+          <div class="component-block">
+            <div class="component-label">view-toggle + results-info · toolbar</div>
+            <div class="component-preview dark-bg flex items-center gap-md flex-wrap">
+              <div class="view-toggle-demo">
+                <button class="active">⊞ Grid</button>
+                <button>≡ List</button>
+              </div>
+              <div class="results-info-demo">
+                Showing <strong>1–50</strong> of <strong>3,311</strong> games
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GAME CARDS GRID -->
+        <div class="sg-subsection" id="cards-component">
+          <p class="sg-subsection-title">Game Cards — Grid View</p>
+          <div class="component-block">
+            <div class="component-label">game-card · grid · 260px min-width · hover: gold glow + lift</div>
+            <div class="component-preview dark-bg">
+              <div class="cards-grid-demo">
+
+                <div class="game-card">
+                  <div class="game-card-image sport-football">
+                    <div class="card-img-placeholder football">
+                      <div class="sport-emblem"><span class="sport-emblem-text">NFL</span></div>
+                    </div>
+                  </div>
+                  <div class="game-card-body">
+                    <div class="game-card-title">Gridiron Tactics Pro</div>
+                    <div class="game-card-tags">
+                      <span class="tag tag-sport">Football</span>
+                      <span class="tag tag-type">Strategy</span>
+                    </div>
+                    <div class="game-card-meta">
+                      <div class="meta-chip">
+                        <span class="meta-chip-label">Year</span>
+                        <span class="meta-chip-value">2022</span>
+                      </div>
+                      <div class="meta-chip">
+                        <span class="meta-chip-label">Players</span>
+                        <span class="meta-chip-value">2–4</span>
+                      </div>
+                      <div class="meta-chip">
+                        <span class="meta-chip-label">Time</span>
+                        <span class="meta-chip-value">90m</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="game-card">
+                  <div class="game-card-image sport-baseball">
+                    <div class="card-img-placeholder baseball">
+                      <div class="sport-emblem"><span class="sport-emblem-text">MLB</span></div>
+                    </div>
+                  </div>
+                  <div class="game-card-body">
+                    <div class="game-card-title">Diamond Dynasty</div>
+                    <div class="game-card-tags">
+                      <span class="tag tag-sport">Baseball</span>
+                      <span class="tag tag-type">Simulation</span>
+                    </div>
+                    <div class="game-card-meta">
+                      <div class="meta-chip">
+                        <span class="meta-chip-label">Year</span>
+                        <span class="meta-chip-value">2019</span>
+                      </div>
+                      <div class="meta-chip">
+                        <span class="meta-chip-label">Players</span>
+                        <span class="meta-chip-value">2</span>
+                      </div>
+                      <div class="meta-chip">
+                        <span class="meta-chip-label">Time</span>
+                        <span class="meta-chip-value">60m</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="game-card">
+                  <div class="game-card-image sport-soccer">
+                    <div class="card-img-placeholder soccer">
+                      <div class="sport-emblem"><span class="sport-emblem-text">PITCH</span></div>
+                    </div>
+                  </div>
+                  <div class="game-card-body">
+                    <div class="game-card-title">Pitch Masters FC</div>
+                    <div class="game-card-tags">
+                      <span class="tag tag-sport">Soccer</span>
+                      <span class="tag tag-type">Card Game</span>
+                    </div>
+                    <div class="game-card-meta">
+                      <div class="meta-chip">
+                        <span class="meta-chip-label">Year</span>
+                        <span class="meta-chip-value">2023</span>
+                      </div>
+                      <div class="meta-chip">
+                        <span class="meta-chip-label">Players</span>
+                        <span class="meta-chip-value">2–6</span>
+                      </div>
+                      <div class="meta-chip">
+                        <span class="meta-chip-label">Time</span>
+                        <span class="meta-chip-value">45m</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GAME CARDS LIST -->
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">Game Cards — List View</p>
+          <div class="component-block">
+            <div class="component-label">game-card · list · full-width · left accent border</div>
+            <div class="component-preview dark-bg">
+              <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+                <div class="game-card-list">
+                  <div class="list-card-main">
+                    <span class="list-card-num">01</span>
+                    <span class="list-card-title">Gridiron Tactics: Pro Football Strategy</span>
+                    <div class="list-card-tags">
+                      <span class="tag tag-sport">Football</span>
+                      <span class="tag tag-type">Strategy</span>
+                    </div>
+                  </div>
+                  <div class="list-card-meta">
+                    <span class="list-meta-item">Year<span>2022</span></span>
+                    <span class="list-meta-item">Players<span>2–4</span></span>
+                    <span class="list-meta-item">Time<span>90m</span></span>
+                  </div>
+                </div>
+                <div class="game-card-list">
+                  <div class="list-card-main">
+                    <span class="list-card-num">02</span>
+                    <span class="list-card-title">Diamond Dynasty Baseball Sim</span>
+                    <div class="list-card-tags">
+                      <span class="tag tag-sport">Baseball</span>
+                    </div>
+                  </div>
+                  <div class="list-card-meta">
+                    <span class="list-meta-item">Year<span>2019</span></span>
+                    <span class="list-meta-item">Players<span>2</span></span>
+                    <span class="list-meta-item">Time<span>60m</span></span>
+                  </div>
+                </div>
+                <div class="game-card-list">
+                  <div class="list-card-main">
+                    <span class="list-card-num">03</span>
+                    <span class="list-card-title">Ice Time Hockey Manager</span>
+                    <div class="list-card-tags">
+                      <span class="tag tag-sport">Hockey</span>
+                      <span class="tag tag-type">Management</span>
+                    </div>
+                  </div>
+                  <div class="list-card-meta">
+                    <span class="list-meta-item">Year<span>2021</span></span>
+                    <span class="list-meta-item">Players<span>2</span></span>
+                    <span class="list-meta-item">Time<span>120m</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FILTER SIDEBAR -->
+        <div class="sg-subsection" id="filters-component">
+          <p class="sg-subsection-title">Filter Sidebar</p>
+          <div class="component-block">
+            <div class="component-label">filter-sidebar · 280px · sticky · custom checkboxes</div>
+            <div class="component-preview dark-bg">
+              <div class="filter-sidebar-demo">
+                <div class="filter-sidebar-header">
+                  <span class="filter-sidebar-title">Filters</span>
+                  <button class="clear-btn">Clear All</button>
+                </div>
+                <input style="width:100%;height:34px;background:var(--raw-ink-800);border:1px solid rgba(212,168,67,.14);border-radius:var(--radius-sm);padding:0 var(--space-3);font-family:var(--font-body);font-size:var(--text-xs);color:var(--raw-ink-50);outline:none;" placeholder="Search in filters…">
+                <div class="filter-section">
+                  <span class="filter-section-label">Sport</span>
+                  <div class="filter-option">
+                    <input type="checkbox" id="c1" checked>
+                    <label for="c1">Football</label>
+                    <span class="filter-count">842</span>
+                  </div>
+                  <div class="filter-option">
+                    <input type="checkbox" id="c2">
+                    <label for="c2">Baseball</label>
+                    <span class="filter-count">634</span>
+                  </div>
+                  <div class="filter-option">
+                    <input type="checkbox" id="c3">
+                    <label for="c3">Basketball</label>
+                    <span class="filter-count">521</span>
+                  </div>
+                </div>
+                <div class="filter-divider"></div>
+                <div class="filter-section">
+                  <span class="filter-section-label">Year Range</span>
+                  <div class="year-range-inputs">
+                    <input type="number" placeholder="From">
+                    <input type="number" placeholder="To">
+                  </div>
+                </div>
+                <div class="filter-divider"></div>
+                <div class="filter-section">
+                  <span class="filter-section-label">Complexity</span>
+                  <div class="filter-option">
+                    <input type="checkbox" id="c4">
+                    <label for="c4">Simple</label>
+                    <span class="filter-count">418</span>
+                  </div>
+                  <div class="filter-option">
+                    <input type="checkbox" id="c5" checked>
+                    <label for="c5">Medium</label>
+                    <span class="filter-count">1,204</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAGS & BADGES -->
+        <div class="sg-subsection" id="tags-component">
+          <p class="sg-subsection-title">Tags &amp; Badges</p>
+          <div class="component-block">
+            <div class="component-label">tags · sharp corners (radius-xs=2px) · border + tinted bg</div>
+            <div class="component-preview dark-bg">
+              <div style="display:flex;flex-direction:column;gap:var(--space-5);">
+                <div>
+                  <p style="font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--raw-ink-400);margin-bottom:var(--space-3);">Sport Tags</p>
+                  <div class="tags-showcase">
+                    <span class="tag tag-sport">Football</span>
+                    <span class="tag tag-sport">Baseball</span>
+                    <span class="tag tag-sport">Basketball</span>
+                    <span class="tag tag-sport">Soccer</span>
+                    <span class="tag tag-sport">Hockey</span>
+                    <span class="tag tag-sport">Tennis</span>
+                  </div>
+                </div>
+                <div>
+                  <p style="font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--raw-ink-400);margin-bottom:var(--space-3);">Type Tags</p>
+                  <div class="tags-showcase">
+                    <span class="tag tag-type">Strategy</span>
+                    <span class="tag tag-type">Simulation</span>
+                    <span class="tag tag-type">Card Game</span>
+                    <span class="tag tag-type">Management</span>
+                    <span class="tag tag-type">Dice Game</span>
+                  </div>
+                </div>
+                <div>
+                  <p style="font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--raw-ink-400);margin-bottom:var(--space-3);">Source Badges</p>
+                  <div class="tags-showcase">
+                    <span class="tag tag-bgg">BoardGameGeek</span>
+                    <span class="tag tag-manual">Hidden Games</span>
+                  </div>
+                </div>
+                <div>
+                  <p style="font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--raw-ink-400);margin-bottom:var(--space-3);">Complexity Badges</p>
+                  <div class="tags-showcase">
+                    <span class="tag badge-simple">Simple</span>
+                    <span class="tag badge-medium">Medium</span>
+                    <span class="tag badge-complex">Complex</span>
+                    <span class="tag badge-expert">Expert</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- META ITEMS -->
+        <div class="sg-subsection" id="meta-component">
+          <p class="sg-subsection-title">Meta Items — Scoreboard Stats</p>
+          <div class="component-block">
+            <div class="component-label">meta-item · mono font · gold top accent · grid layout</div>
+            <div class="component-preview dark-bg">
+              <div class="meta-grid-demo">
+                <div class="meta-item-demo">
+                  <span class="meta-item-label">Year</span>
+                  <span class="meta-item-value">1994</span>
+                </div>
+                <div class="meta-item-demo">
+                  <span class="meta-item-label">Players</span>
+                  <span class="meta-item-value">2–4</span>
+                </div>
+                <div class="meta-item-demo">
+                  <span class="meta-item-label">Playtime</span>
+                  <span class="meta-item-value">90 <span class="meta-item-unit">min</span></span>
+                </div>
+                <div class="meta-item-demo">
+                  <span class="meta-item-label">Complexity</span>
+                  <span class="meta-item-value" style="font-family:var(--font-heading);font-size:var(--text-base);letter-spacing:.04em;">Medium</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="sg-subsection" id="buttons-component">
+          <p class="sg-subsection-title">Buttons</p>
+          <div class="component-block">
+            <div class="component-label">buttons · Oswald font · uppercase + wide tracking · radius-sm</div>
+            <div class="component-preview dark-bg">
+              <div class="buttons-showcase">
+                <button class="btn btn-primary">View on BGG →</button>
+                <button class="btn btn-secondary">Browse All</button>
+                <button class="btn btn-ghost">Learn More</button>
+                <button class="btn btn-danger">Clear Filters</button>
+              </div>
+              <div class="buttons-showcase" style="margin-top:var(--space-5);">
+                <button class="btn btn-primary btn-sm">Small</button>
+                <button class="btn btn-secondary btn-sm">Secondary Sm</button>
+                <button class="btn btn-primary btn-lg">Large Primary</button>
+              </div>
+              <div style="margin-top:var(--space-5);">
+                <a href="#" class="back-btn-demo">
+                  <span class="arrow">←</span> Back to Games
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PAGINATION -->
+        <div class="sg-subsection" id="pagination-component">
+          <p class="sg-subsection-title">Pagination</p>
+          <div class="component-block">
+            <div class="component-label">pagination · mono font · gold active state</div>
+            <div class="component-preview dark-bg">
+              <div class="pagination-demo">
+                <button class="page-btn wide" disabled>← Prev</button>
+                <button class="page-btn">1</button>
+                <button class="page-btn active">2</button>
+                <button class="page-btn">3</button>
+                <button class="page-btn">4</button>
+                <button class="page-btn">5</button>
+                <span class="page-ellipsis">…</span>
+                <button class="page-btn">67</button>
+                <button class="page-btn wide">Next →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATES -->
+        <div class="sg-subsection" id="states-component">
+          <p class="sg-subsection-title">Loading / Empty / Error States</p>
+          <div class="component-block">
+            <div class="component-label">states · centered · icon + title + description</div>
+            <div class="component-preview dark-bg">
+              <div class="state-cards">
+                <div class="state-card">
+                  <div class="state-icon loading">⟳</div>
+                  <div class="state-title">Loading Games</div>
+                  <div class="state-desc">Fetching your collection from the database…</div>
+                </div>
+                <div class="state-card">
+                  <div class="state-icon empty">⊘</div>
+                  <div class="state-title">No Results Found</div>
+                  <div class="state-desc">Try adjusting your filters or search term.</div>
+                  <button class="btn btn-secondary btn-sm">Clear Filters</button>
+                </div>
+                <div class="state-card">
+                  <div class="state-icon error">!</div>
+                  <div class="state-title">Failed to Load</div>
+                  <div class="state-desc">Database connection error. Please refresh.</div>
+                  <button class="btn btn-secondary btn-sm">Retry</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION HEADER -->
+        <div class="sg-subsection">
+          <p class="sg-subsection-title">Section Header Component</p>
+          <div class="component-block">
+            <div class="component-label">section-header · eyebrow + title + count · border-bottom</div>
+            <div class="component-preview dark-bg">
+              <div class="section-header-demo">
+                <div class="section-header-inner">
+                  <div class="section-header-text">
+                    <p class="section-header-eyebrow">Browse by Sport</p>
+                    <h2 class="section-header-title">Football Games</h2>
+                  </div>
+                  <span class="section-header-count">842 games</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div><!-- .sg-main -->
+  </main>
+</div><!-- .sg-layout -->
+
+</body>
+</html>

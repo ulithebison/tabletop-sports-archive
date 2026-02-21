@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Details - Tabletop Sports Games Archive</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #f1f1f1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffd93d;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .back-button:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+            background: rgba(255, 107, 107, 0.2);
+        }
+
+        .game-detail {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .loading, .error {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+
+        .game-header {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .image-container {
+            width: 100%;
+        }
+
+        .main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2ecc71 0%, #3498db 100%);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .game-info {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .game-title {
+            font-size: 2.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 50%, #6bcf7f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .game-subtitle {
+            font-size: 1.2em;
+            color: #b0b0b0;
+            margin-bottom: 20px;
+        }
+
+        .game-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tag {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            color: #555;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .tag.sport { background: #e3f2fd; color: #1976d2; }
+        .tag.type { background: #f3e5f5; color: #7b1fa2; }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .meta-item {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .meta-label {
+            font-size: 0.85em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .meta-value {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #f1f1f1;
+        }
+
+        .section {
+            margin: 40px 0;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #ffd93d;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #ff6b6b;
+        }
+
+        .description {
+            font-size: 1.05em;
+            line-height: 1.8;
+            color: #b0b0b0;
+            white-space: pre-wrap;
+        }
+
+        .info-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .info-row strong {
+            color: #ffd93d;
+            font-weight: 600;
+        }
+
+        .info-row span {
+            color: #b0b0b0;
+        }
+
+        .info-row a {
+            color: #ff6b6b;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 10px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+
+        .info-row a:hover {
+            text-decoration: underline;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1em;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ff5252 0%, #ffc107 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-header {
+                grid-template-columns: 1fr;
+            }
+
+            .game-title {
+                font-size: 2em;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .game-detail {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-button">
+            ← Back to Games
+        </a>
+
+        <div class="game-detail" id="gameDetail">
+            <div class="loading">Loading game details...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentGame = null;
+
+        async function loadGameDetail() {
+            // Get game ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameId = urlParams.get('id');
+
+            if (!gameId) {
+                showError('No game ID provided');
+                return;
+            }
+
+            try {
+                const { data, error } = await window.supabaseClient
+                    .from('games')
+                    .select('*')
+                    .eq('id', gameId)
+                    .single();
+
+                if (error) throw error;
+                if (!data) throw new Error('Game not found');
+
+                currentGame = data;
+                displayGameDetail(data);
+            } catch (error) {
+                console.error('Error loading game:', error);
+                showError('Error loading game details. Please try again.');
+            }
+        }
+
+        function displayGameDetail(game) {
+            document.title = `${game.name} - Tabletop Sports Games Archive`;
+
+            const sports = game.sport ? game.sport.split(';').map(s => s.trim()) : [];
+            const types = game.type ? game.type.split(';').map(t => t.trim()) : [];
+            const authors = game.authors ? game.authors.split(';').map(a => a.trim()) : [];
+
+            // Use first available image
+            const mainImage = game.image_url || game.thumbnail_url || game.top_image_url || '';
+
+            const html = `
+                <div class="game-header">
+                    <div class="image-container">
+                        ${mainImage ? `<img src="${mainImage}" alt="${game.name}" class="main-image">` : 
+                                      '<div class="main-image"></div>'}
+                    </div>
+
+                    <div class="game-info">
+                        <h1 class="game-title">${game.name}</h1>
+                        
+                        ${game.subtitle ? `<div class="game-subtitle">${game.subtitle}</div>` : ''}
+                        
+                        <div class="game-tags">
+                            ${sports.map(s => `<span class="tag sport">${s}</span>`).join('')}
+                            ${types.map(t => `<span class="tag type">${t}</span>`).join('')}
+                        </div>
+
+                        <div class="meta-grid">
+                            ${game.year ? `
+                                <div class="meta-item">
+                                    <div class="meta-label">Year</div>
+                                    <div class="meta-value">${game.year}</div>
+                                </div>
+                            ` : ''}
+                            
+                            ${game.players ? `
+                                <div class="meta-item">
+                                    <div class="meta-label">Players</div>
+                                    <div class="meta-value">${game.players}</div>
+                                </div>
+                            ` : ''}
+                            
+                            ${game.playtime ? `
+                                <div class="meta-item">
+                                    <div class="meta-label">Playtime</div>
+                                    <div class="meta-value">${game.playtime} min</div>
+                                </div>
+                            ` : ''}
+                            
+                            ${game.complexity ? `
+                                <div class="meta-item">
+                                    <div class="meta-label">Complexity</div>
+                                    <div class="meta-value">${game.complexity}</div>
+                                </div>
+                            ` : ''}
+
+                            ${game.min_age ? `
+                                <div class="meta-item">
+                                    <div class="meta-label">Min Age</div>
+                                    <div class="meta-value">${game.min_age}+</div>
+                                </div>
+                            ` : ''}
+
+                            ${game.best_player_count_min && game.best_player_count_max ? `
+                                <div class="meta-item">
+                                    <div class="meta-label">Best With</div>
+                                    <div class="meta-value">${game.best_player_count_min}-${game.best_player_count_max} players</div>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="action-buttons">
+                            ${game.bgg_url ? `
+                                <a href="${game.bgg_url}" target="_blank" class="btn btn-primary">
+                                    View on BoardGameGeek →
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+
+                ${game.publisher_name || authors.length > 0 ? `
+                    <div class="section">
+                        <h2 class="section-title">Credits</h2>
+                        
+                        ${game.publisher_name ? `
+                            <div class="info-row">
+                                <strong>Publisher:</strong>
+                                <span>${game.publisher_name}</span>
+                                ${game.publisher_website && game.publisher_website_title ? `
+                                    <a href="${game.publisher_website}" target="_blank">${game.publisher_website_title} →</a>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        ${authors.length > 0 && authors[0] ? `
+                            <div class="info-row">
+                                <strong>Designer${authors.length > 1 ? 's' : ''}:</strong>
+                                <span>${authors.join(', ')}</span>
+                            </div>
+                        ` : ''}
+
+                        ${game.artists ? `
+                            <div class="info-row">
+                                <strong>Artist${game.artists.split(';').length > 1 ? 's' : ''}:</strong>
+                                <span>${game.artists.split(';').map(a => a.trim()).join(', ')}</span>
+                            </div>
+                        ` : ''}
+
+                        ${game.graphic_designers ? `
+                            <div class="info-row">
+                                <strong>Graphic Designer${game.graphic_designers.split(';').length > 1 ? 's' : ''}:</strong>
+                                <span>${game.graphic_designers.split(';').map(g => g.trim()).join(', ')}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+
+                ${game.description ? `
+                    <div class="section">
+                        <h2 class="section-title">Description</h2>
+                        <div class="description">${game.description}</div>
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('gameDetail').innerHTML = html;
+        }
+
+        function showError(message) {
+            document.getElementById('gameDetail').innerHTML = `
+                <div class="error">${message}</div>
+            `;
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', loadGameDetail);
+    </script>
+</body>
+</html>

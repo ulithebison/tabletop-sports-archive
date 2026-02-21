@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gridiron Tactics — Tabletop Sports Games Archive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+     * DESIGN TOKENS — inline for standalone file
+     * ============================================================ */
+    :root {
+      --font-display:  'Oswald', 'Arial Narrow', sans-serif;
+      --font-heading:  'Oswald', 'Arial Narrow', sans-serif;
+      --font-body:     'Inter', system-ui, sans-serif;
+      --font-mono:     'DM Mono', monospace;
+      --font-serif:    'Lora', Georgia, serif;
+
+      --raw-black:     #080705;
+      --raw-ink-950:   #0d0b08;
+      --raw-ink-900:   #111009;
+      --raw-ink-800:   #18150f;
+      --raw-ink-750:   #1e1a13;
+      --raw-ink-700:   #252015;
+      --raw-ink-600:   #30291a;
+      --raw-ink-500:   #3e3424;
+      --raw-ink-400:   #554736;
+      --raw-ink-300:   #6e5f4c;
+      --raw-ink-200:   #9c8b76;
+      --raw-ink-100:   #d4c4ad;
+      --raw-ink-50:    #ede0cc;
+      --raw-cream:     #f5ead8;
+
+      --raw-gold-600:  #a88500;
+      --raw-gold-500:  #c9a032;
+      --raw-gold-450:  #d4a843;
+      --raw-gold-400:  #ddb85a;
+      --raw-gold-300:  #e8ca78;
+      --raw-gold-200:  #f2da9e;
+
+      --raw-amber-500: #d07018;
+      --raw-amber-400: #e8851a;
+      --raw-amber-300: #f5a84a;
+
+      --raw-red-400:   #c44b3b;
+      --raw-red-300:   #d46558;
+      --raw-red-200:   #e4897e;
+
+      --raw-green-500: #3d6e52;
+      --raw-green-400: #4d8464;
+      --raw-green-300: #68a07e;
+      --raw-green-200: #8cbea0;
+
+      --raw-blue-400:  #4a84b8;
+      --raw-blue-300:  #6a9fcc;
+      --raw-blue-200:  #92bcde;
+
+      --sport-color:   #d4531a;   /* Football burnt orange */
+    }
+
+    /* ============================================================
+     * BASE
+     * ============================================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      background-color: var(--raw-ink-950);
+      color: var(--raw-ink-50);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* Grain texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='0.1'/%3E%3C/svg%3E");
+      opacity: 0.022;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Ambient glow */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 10%, rgba(212, 168, 67, 0.05) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 60% at 80% 80%, rgba(212, 83, 26, 0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--raw-ink-950); }
+    ::-webkit-scrollbar-thumb { background: rgba(212, 168, 67, 0.2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(212, 168, 67, 0.35); }
+
+    /* ============================================================
+     * NAVIGATION
+     * ============================================================ */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      height: 60px;
+      background: rgba(8, 7, 5, 0.97);
+      border-bottom: 1px solid rgba(212, 168, 67, 0.1);
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(1.25rem, 4vw, 3rem);
+      gap: 2rem;
+    }
+
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--raw-gold-450);
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .nav-logo-sub {
+      color: var(--raw-ink-200);
+      font-weight: 300;
+      font-size: 0.875rem;
+      letter-spacing: 0.04em;
+      font-family: var(--font-display);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--raw-ink-200);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      padding-bottom: 2px;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--raw-gold-450);
+      border-bottom-color: var(--raw-gold-450);
+    }
+
+    .nav-search {
+      flex: 1;
+      max-width: 280px;
+      position: relative;
+    }
+
+    .nav-search input {
+      width: 100%;
+      height: 36px;
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.15);
+      border-radius: 4px;
+      padding: 0 0.75rem 0 2.25rem;
+      font-family: var(--font-body);
+      font-size: 0.8125rem;
+      color: var(--raw-ink-50);
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .nav-search input::placeholder { color: var(--raw-ink-400); }
+    .nav-search input:focus { border-color: var(--raw-gold-450); }
+
+    .nav-search-icon {
+      position: absolute;
+      left: 0.625rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--raw-ink-400);
+      font-size: 14px;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    /* ============================================================
+     * PAGE WRAPPER
+     * ============================================================ */
+    .page-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem clamp(1.25rem, 4vw, 3rem) 5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ============================================================
+     * BACK BUTTON
+     * ============================================================ */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      height: 38px;
+      padding: 0 1.25rem;
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.15);
+      border-radius: 4px;
+      color: var(--raw-ink-200);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+      margin-bottom: 2rem;
+    }
+
+    .back-btn:hover {
+      border-color: rgba(212, 168, 67, 0.35);
+      color: var(--raw-gold-450);
+      transform: translateX(-3px);
+    }
+
+    .back-btn svg { flex-shrink: 0; }
+
+    /* ============================================================
+     * BREADCRUMB
+     * ============================================================ */
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--raw-ink-300);
+    }
+
+    .breadcrumb a {
+      color: var(--raw-ink-300);
+      text-decoration: none;
+      transition: color 0.12s ease;
+    }
+    .breadcrumb a:hover { color: var(--raw-gold-450); }
+    .breadcrumb-sep { color: var(--raw-ink-500); }
+    .breadcrumb-current { color: var(--raw-ink-200); }
+
+    /* ============================================================
+     * HERO SECTION
+     * ============================================================ */
+    .game-hero {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 3rem;
+      margin-bottom: 4rem;
+      align-items: start;
+    }
+
+    /* Cover image */
+    .cover-container {
+      position: relative;
+    }
+
+    .cover-image {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+      box-shadow:
+        0 24px 64px rgba(0,0,0,0.7),
+        0 8px 24px rgba(0,0,0,0.5),
+        0 0 48px rgba(212, 83, 26, 0.15);
+    }
+
+    /* Placeholder gradient — football theme */
+    .cover-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(165deg,
+          #0a0604 0%,
+          #1a0b06 25%,
+          #2d1408 45%,
+          #3e1c0a 65%,
+          #2a1006 85%,
+          #180804 100%
+        );
+    }
+
+    /* Grid lines pattern on cover */
+    .cover-grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(212, 83, 26, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212, 83, 26, 0.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .cover-center-emblem {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .emblem-ring {
+      width: 100px;
+      height: 100px;
+      border: 2px solid rgba(212, 83, 26, 0.35);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .emblem-ring::before {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 1px solid rgba(212, 168, 67, 0.15);
+      border-radius: 4px;
+    }
+
+    .emblem-text {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: rgba(212, 83, 26, 0.6);
+    }
+
+    .emblem-subtitle {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(212, 168, 67, 0.3);
+    }
+
+    /* Sport color bar at bottom of cover */
+    .cover-sport-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(to right, var(--sport-color), transparent);
+    }
+
+    /* Cover corner ornaments */
+    .cover-corner {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      opacity: 0.3;
+    }
+    .cover-corner.tl { top: 10px; left: 10px; border-top: 1px solid var(--raw-gold-450); border-left: 1px solid var(--raw-gold-450); }
+    .cover-corner.tr { top: 10px; right: 10px; border-top: 1px solid var(--raw-gold-450); border-right: 1px solid var(--raw-gold-450); }
+    .cover-corner.bl { bottom: 14px; left: 10px; border-bottom: 1px solid var(--raw-gold-450); border-left: 1px solid var(--raw-gold-450); }
+    .cover-corner.br { bottom: 14px; right: 10px; border-bottom: 1px solid var(--raw-gold-450); border-right: 1px solid var(--raw-gold-450); }
+
+    /* Cover source badge */
+    .cover-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      padding: 3px 8px;
+      background: rgba(77, 132, 100, 0.9);
+      border: 1px solid rgba(104, 160, 126, 0.5);
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--raw-green-200);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Game info column */
+    .game-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      padding-top: 0.5rem;
+    }
+
+    /* Title block */
+    .game-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.625rem;
+    }
+
+    .game-sport-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .sport-pip {
+      width: 10px;
+      height: 10px;
+      background: var(--sport-color);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .sport-label-text {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--sport-color);
+      opacity: 0.9;
+    }
+
+    .game-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1;
+      color: var(--raw-ink-50);
+    }
+
+    .game-subtitle {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      font-style: italic;
+      color: var(--raw-ink-200);
+      line-height: 1.4;
+    }
+
+    /* Tags row */
+    .game-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 24px;
+      padding: 0 0.5rem;
+      border-radius: 2px;
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+
+    .tag-sport {
+      background: rgba(212, 83, 26, 0.1);
+      border-color: rgba(212, 83, 26, 0.35);
+      color: #e8855a;
+    }
+
+    .tag-type {
+      background: rgba(232, 133, 26, 0.1);
+      border-color: rgba(232, 133, 26, 0.28);
+      color: var(--raw-amber-300);
+    }
+
+    .tag-bgg {
+      background: rgba(77, 132, 100, 0.12);
+      border-color: rgba(77, 132, 100, 0.32);
+      color: var(--raw-green-300);
+    }
+
+    /* ============================================================
+     * META GRID (stats)
+     * ============================================================ */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: rgba(212, 168, 67, 0.08);
+      border: 1px solid rgba(212, 168, 67, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .meta-item {
+      background: var(--raw-ink-800);
+      padding: 1.125rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      position: relative;
+    }
+
+    .meta-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--raw-gold-450);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .meta-item:hover::before { opacity: 1; }
+
+    .meta-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--raw-ink-400);
+    }
+
+    .meta-value {
+      font-family: var(--font-mono);
+      font-size: 1.375rem;
+      font-weight: 500;
+      color: var(--raw-ink-50);
+      line-height: 1;
+    }
+
+    .meta-unit {
+      font-size: 0.75rem;
+      color: var(--raw-ink-300);
+      font-weight: 400;
+    }
+
+    .meta-note {
+      font-family: var(--font-body);
+      font-size: 0.6875rem;
+      color: var(--raw-ink-400);
+      margin-top: 0.125rem;
+    }
+
+    /* ============================================================
+     * ACTION BUTTONS
+     * ============================================================ */
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding-top: 0.5rem;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      height: 48px;
+      padding: 0 2rem;
+      background: var(--raw-gold-450);
+      color: var(--raw-black);
+      border: none;
+      border-radius: 4px;
+      font-family: var(--font-heading);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+      box-shadow: 0 2px 12px rgba(212, 168, 67, 0.35);
+    }
+
+    .btn-primary:hover {
+      background: var(--raw-gold-400);
+      box-shadow: 0 4px 20px rgba(212, 168, 67, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      height: 48px;
+      padding: 0 1.5rem;
+      background: transparent;
+      color: var(--raw-ink-200);
+      border: 1px solid rgba(212, 168, 67, 0.22);
+      border-radius: 4px;
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(212, 168, 67, 0.45);
+      color: var(--raw-gold-450);
+      background: rgba(212, 168, 67, 0.06);
+    }
+
+    /* ============================================================
+     * DIVIDER
+     * ============================================================ */
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(to right, rgba(212, 168, 67, 0.2), transparent 70%);
+      margin: 3rem 0;
+    }
+
+    /* ============================================================
+     * CONTENT SECTIONS
+     * ============================================================ */
+    .content-area {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 4rem;
+      align-items: start;
+    }
+
+    .content-main {}
+    .content-sidebar {}
+
+    /* Section heading */
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid rgba(212, 168, 67, 0.1);
+    }
+
+    .section-heading h2 {
+      font-family: var(--font-display);
+      font-size: 1.375rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--raw-gold-450);
+    }
+
+    .section-heading-rule {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, rgba(212, 168, 67, 0.15), transparent);
+    }
+
+    /* Description */
+    .description-text {
+      font-family: var(--font-serif);
+      font-size: 1.0625rem;
+      line-height: 1.85;
+      color: var(--raw-ink-100);
+    }
+
+    .description-text p + p {
+      margin-top: 1.125rem;
+    }
+
+    .description-text em {
+      color: var(--raw-gold-300);
+      font-style: italic;
+    }
+
+    /* ============================================================
+     * CREDITS SIDEBAR CARD
+     * ============================================================ */
+    .credits-card {
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .credits-card-header {
+      padding: 0.875rem 1.25rem;
+      background: var(--raw-ink-750);
+      border-bottom: 1px solid rgba(212, 168, 67, 0.08);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .credits-card-title {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--raw-gold-450);
+    }
+
+    .credits-list {
+      padding: 0.5rem 0;
+    }
+
+    .credits-item {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid rgba(212, 168, 67, 0.05);
+      align-items: start;
+    }
+
+    .credits-item:last-child { border-bottom: none; }
+
+    .credits-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--raw-ink-400);
+      padding-top: 2px;
+    }
+
+    .credits-value {
+      font-size: 0.875rem;
+      color: var(--raw-ink-100);
+      font-weight: 500;
+    }
+
+    .credits-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--raw-gold-400);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      margin-top: 0.25rem;
+      transition: color 0.12s ease;
+    }
+
+    .credits-link:hover { color: var(--raw-amber-400); }
+
+    /* ============================================================
+     * RELATED / ALSO IN SECTION
+     * ============================================================ */
+    .also-in {
+      margin-top: 4rem;
+      padding-top: 3rem;
+      border-top: 1px solid rgba(212, 168, 67, 0.08);
+    }
+
+    .also-in-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .mini-card {
+      background: var(--raw-ink-800);
+      border: 1px solid rgba(212, 168, 67, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .mini-card:hover {
+      border-color: rgba(212, 168, 67, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .mini-card-image {
+      width: 100%;
+      height: 120px;
+      position: relative;
+    }
+
+    .mini-card-image.c1 { background: linear-gradient(160deg, #0a0604, #2d1408); }
+    .mini-card-image.c2 { background: linear-gradient(160deg, #080a0a, #0e2020); }
+    .mini-card-image.c3 { background: linear-gradient(160deg, #0a0808, #1e0d0d); }
+    .mini-card-image.c4 { background: linear-gradient(160deg, #070a07, #0d1e10); }
+
+    .mini-card-accent {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+    .mini-card-image.c1 .mini-card-accent { background: #d4531a; }
+    .mini-card-image.c2 .mini-card-accent { background: #4a84b8; }
+    .mini-card-image.c3 .mini-card-accent { background: #c44b3b; }
+    .mini-card-image.c4 .mini-card-accent { background: #4d8464; }
+
+    .mini-card-body {
+      padding: 0.75rem;
+    }
+
+    .mini-card-title {
+      font-family: var(--font-heading);
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: var(--raw-ink-50);
+      line-height: 1.3;
+      margin-bottom: 0.375rem;
+    }
+
+    .mini-card-tags {
+      display: flex;
+      gap: 0.25rem;
+      flex-wrap: wrap;
+    }
+
+    .mini-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      background: rgba(212, 168, 67, 0.08);
+      border: 1px solid rgba(212, 168, 67, 0.2);
+      border-radius: 2px;
+      font-size: 10px;
+      color: var(--raw-gold-300);
+      font-family: var(--font-body);
+    }
+
+    /* ============================================================
+     * FOOTER
+     * ============================================================ */
+    .page-footer {
+      margin-top: 5rem;
+      padding: 2rem clamp(1.25rem, 4vw, 3rem);
+      border-top: 1px solid rgba(212, 168, 67, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--raw-ink-300);
+    }
+
+    .footer-text {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--raw-ink-400);
+      letter-spacing: 0.06em;
+    }
+
+    /* ============================================================
+     * RESPONSIVE
+     * ============================================================ */
+    @media (max-width: 960px) {
+      .game-hero {
+        grid-template-columns: 280px 1fr;
+        gap: 2rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .game-hero {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .cover-image {
+        max-width: 320px;
+        margin: 0 auto;
+      }
+
+      .meta-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .content-area {
+        grid-template-columns: 1fr;
+      }
+
+      .also-in-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .nav-links { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .meta-grid { grid-template-columns: 1fr; }
+      .also-in-grid { grid-template-columns: 1fr; }
+      .action-row { flex-direction: column; }
+      .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     NAVIGATION
+     ============================================================ -->
+<nav class="nav">
+  <a href="index.html" class="nav-logo">
+    TSGA <span class="nav-logo-sub">— Sports Archive</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Browse</a></li>
+    <li><a href="#">Sports</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+  <div class="nav-search">
+    <span class="nav-search-icon">⌕</span>
+    <input type="text" placeholder="Search 3,311 games…">
+  </div>
+</nav>
+
+<!-- ============================================================
+     PAGE CONTENT
+     ============================================================ -->
+<div class="page-wrapper">
+
+  <!-- Back + Breadcrumb -->
+  <a href="index.html" class="back-btn">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8.5 2.5L4 7L8.5 11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Back to Archive
+  </a>
+
+  <div class="breadcrumb">
+    <a href="index.html">Archive</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="#">Football</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="#">Strategy</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Gridiron Tactics: Pro Football Strategy</span>
+  </div>
+
+  <!-- ============================================================
+       HERO
+       ============================================================ -->
+  <div class="game-hero">
+
+    <!-- Cover -->
+    <div class="cover-container">
+      <div class="cover-image">
+        <div class="cover-gradient"></div>
+        <div class="cover-grid-overlay"></div>
+        <div class="cover-center-emblem">
+          <div class="emblem-ring">
+            <span class="emblem-text">GT</span>
+          </div>
+          <span class="emblem-subtitle">Pro Edition</span>
+        </div>
+        <div class="cover-corner tl"></div>
+        <div class="cover-corner tr"></div>
+        <div class="cover-corner bl"></div>
+        <div class="cover-corner br"></div>
+        <div class="cover-sport-bar"></div>
+        <div class="cover-badge">BGG Verified</div>
+      </div>
+    </div>
+
+    <!-- Game Info -->
+    <div class="game-info">
+
+      <!-- Sport label + Title -->
+      <div class="game-title-block">
+        <div class="game-sport-label">
+          <div class="sport-pip"></div>
+          <span class="sport-label-text">American Football</span>
+        </div>
+        <h1 class="game-title">Gridiron Tactics</h1>
+        <p class="game-subtitle">Pro Football Strategy — The definitive tabletop simulation of American football</p>
+      </div>
+
+      <!-- Tags -->
+      <div class="game-tags">
+        <span class="tag tag-sport">Football</span>
+        <span class="tag tag-sport">American Football</span>
+        <span class="tag tag-type">Strategy</span>
+        <span class="tag tag-type">Simulation</span>
+        <span class="tag tag-type">Management</span>
+        <span class="tag tag-bgg">BoardGameGeek</span>
+      </div>
+
+      <!-- Meta Grid (scoreboard stats) -->
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span class="meta-label">Year</span>
+          <span class="meta-value">1994</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Players</span>
+          <span class="meta-value">2–4</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Playtime</span>
+          <span class="meta-value">90 <span class="meta-unit">min</span></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Complexity</span>
+          <span class="meta-value" style="font-family:var(--font-heading);font-size:1.125rem;letter-spacing:.04em;">Medium</span>
+          <span class="meta-note">2.8 / 5 weight</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Min Age</span>
+          <span class="meta-value">12<span class="meta-unit">+</span></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Best With</span>
+          <span class="meta-value">2<span class="meta-unit"> players</span></span>
+          <span class="meta-note">Head-to-head</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="action-row">
+        <a href="https://boardgamegeek.com" target="_blank" class="btn-primary">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          View on BoardGameGeek
+        </a>
+        <a href="#" class="btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 4h4.5l-3.5 2.5 1.5 4L7 9 3 11.5 4.5 7.5 1 5h4.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          Save to List
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       DIVIDER
+       ============================================================ -->
+  <div class="section-divider"></div>
+
+  <!-- ============================================================
+       CONTENT AREA
+       ============================================================ -->
+  <div class="content-area">
+
+    <!-- Main: Description -->
+    <div class="content-main">
+
+      <div class="section-heading">
+        <h2>About This Game</h2>
+        <div class="section-heading-rule"></div>
+      </div>
+
+      <div class="description-text">
+        <p>
+          Gridiron Tactics: Pro Football Strategy puts you in complete control of an NFL franchise — from the opening coin toss to the fourth-quarter two-minute drill. Every play call, every substitution, every challenge flag is yours to own.
+        </p>
+        <p>
+          The game uses a <em>card-driven play selection system</em> where your offensive and defensive playbooks are represented by decks of cards, each encoding real-world football concepts: the West Coast offense, the Cover 2 defense, the read-option. As your team builds momentum, your deck grows more powerful. As they tire or get injured, it diminishes.
+        </p>
+        <p>
+          With a complete 32-team season mode, historical rosters spanning five decades, and a robust draft system, this is the football simulation that serious fans have been waiting for. No dice — just cards, decisions, and a deep understanding of the game.
+        </p>
+        <p>
+          The head-to-head mode is considered one of the tightest two-player experiences in sports gaming. Each game clocks in at around 90 minutes — exactly as long as a real football game feels when the stakes are this high.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Sidebar: Credits -->
+    <div class="content-sidebar">
+
+      <div class="credits-card">
+        <div class="credits-card-header">
+          <span class="credits-card-title">Game Credits</span>
+        </div>
+        <div class="credits-list">
+
+          <div class="credits-item">
+            <span class="credits-label">Publisher</span>
+            <div>
+              <div class="credits-value">Armchair Quarterback Games</div>
+              <a href="#" class="credits-link">
+                Visit Website
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 8L8 2M8 2H4M8 2v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="credits-item">
+            <span class="credits-label">Designer</span>
+            <div class="credits-value">Marcus J. Thornton</div>
+          </div>
+
+          <div class="credits-item">
+            <span class="credits-label">Artists</span>
+            <div class="credits-value">Elena Vasquez<br>David Park</div>
+          </div>
+
+          <div class="credits-item">
+            <span class="credits-label">Graphic Design</span>
+            <div class="credits-value">Studio Fieldside</div>
+          </div>
+
+          <div class="credits-item">
+            <span class="credits-label">Edition</span>
+            <div class="credits-value">3rd Edition<br>
+              <span style="font-size:0.75rem;color:var(--raw-ink-300);">Revised & Expanded</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- BGG rating panel -->
+      <div style="margin-top:1rem;background:var(--raw-ink-800);border:1px solid rgba(212,168,67,.1);border-radius:6px;padding:1.25rem;">
+        <p style="font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--raw-ink-400);margin-bottom:.875rem;">Community Rating</p>
+        <div style="display:flex;align-items:baseline;gap:.5rem;margin-bottom:.375rem;">
+          <span style="font-family:var(--font-mono);font-size:2.5rem;font-weight:500;color:var(--raw-gold-450);line-height:1;">7.8</span>
+          <span style="font-family:var(--font-mono);font-size:.75rem;color:var(--raw-ink-400);">/ 10</span>
+        </div>
+        <p style="font-size:.75rem;color:var(--raw-ink-400);font-family:var(--font-mono);">Based on 2,847 ratings</p>
+        <div style="margin-top:1rem;height:4px;background:var(--raw-ink-700);border-radius:2px;overflow:hidden;">
+          <div style="width:78%;height:100%;background:linear-gradient(to right,var(--raw-gold-500),var(--raw-gold-450));border-radius:2px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       ALSO IN: FOOTBALL
+       ============================================================ -->
+  <div class="also-in">
+    <div class="section-heading">
+      <h2>More Football Games</h2>
+      <div class="section-heading-rule"></div>
+    </div>
+    <div class="also-in-grid">
+      <div class="mini-card">
+        <div class="mini-card-image c1">
+          <div class="mini-card-accent"></div>
+        </div>
+        <div class="mini-card-body">
+          <div class="mini-card-title">Blood Bowl: Team Manager</div>
+          <div class="mini-card-tags">
+            <span class="mini-tag">Football</span>
+            <span class="mini-tag">Card Game</span>
+          </div>
+        </div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-image c2">
+          <div class="mini-card-accent"></div>
+        </div>
+        <div class="mini-card-body">
+          <div class="mini-card-title">Ice Time Hockey</div>
+          <div class="mini-card-tags">
+            <span class="mini-tag">Hockey</span>
+            <span class="mini-tag">Management</span>
+          </div>
+        </div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-image c3">
+          <div class="mini-card-accent"></div>
+        </div>
+        <div class="mini-card-body">
+          <div class="mini-card-title">Diamond Dynasty</div>
+          <div class="mini-card-tags">
+            <span class="mini-tag">Baseball</span>
+          </div>
+        </div>
+      </div>
+      <div class="mini-card">
+        <div class="mini-card-image c4">
+          <div class="mini-card-accent"></div>
+        </div>
+        <div class="mini-card-body">
+          <div class="mini-card-title">Pitch Masters FC</div>
+          <div class="mini-card-tags">
+            <span class="mini-tag">Soccer</span>
+            <span class="mini-tag">Strategy</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .page-wrapper -->
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="page-footer">
+  <span class="footer-logo">TSGA</span>
+  <span class="footer-text">Tabletop Sports Games Archive · 3,311+ Games</span>
+  <span class="footer-text">Data sourced from BoardGameGeek &amp; manual research</span>
+</footer>
+
+</body>
+</html>

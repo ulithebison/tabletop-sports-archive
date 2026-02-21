@@ -1,0 +1,332 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================================================================
+ * TABLETOP SPORTS GAMES ARCHIVE — "The Press Box"
+ * Design Tokens v1.0 + shadcn/ui compatibility layer
+ * ================================================================ */
+
+@layer base {
+  /* shadcn/ui CSS variables — mapped to Press Box dark theme (default) */
+  :root {
+    --background: 30 33% 5%;          /* #0d0b08 warm ink */
+    --foreground: 38 52% 87%;         /* #ede0cc warm cream */
+    --card: 30 28% 6%;                /* #111009 surface */
+    --card-foreground: 38 52% 87%;
+    --popover: 30 30% 9%;             /* #18150f elevated */
+    --popover-foreground: 38 52% 87%;
+    --primary: 41 62% 55%;            /* #d4a843 gold accent */
+    --primary-foreground: 30 33% 4%;  /* near-black on gold */
+    --secondary: 30 28% 13%;          /* #252015 subtle bg */
+    --secondary-foreground: 38 36% 75%;
+    --muted: 30 28% 13%;
+    --muted-foreground: 30 19% 54%;   /* #9c8b76 muted text */
+    --accent: 30 35% 15%;             /* #30291a muted bg */
+    --accent-foreground: 38 52% 87%;
+    --destructive: 6 59% 57%;         /* #c44b3b red */
+    --destructive-foreground: 38 52% 87%;
+    --border: 41 62% 55% / 0.22;     /* gold border subtle */
+    --input: 30 33% 7%;               /* #13100c input bg */
+    --ring: 41 62% 55%;               /* gold ring */
+    --radius: 0.375rem;               /* 6px — card radius */
+    --chart-1: 28 68% 46%;
+    --chart-2: 150 30% 40%;
+    --chart-3: 210 44% 42%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  /* .dark mirrors :root since we default to dark */
+  .dark {
+    --background: 30 33% 5%;
+    --foreground: 38 52% 87%;
+    --card: 30 28% 6%;
+    --card-foreground: 38 52% 87%;
+    --popover: 30 30% 9%;
+    --popover-foreground: 38 52% 87%;
+    --primary: 41 62% 55%;
+    --primary-foreground: 30 33% 4%;
+    --secondary: 30 28% 13%;
+    --secondary-foreground: 38 36% 75%;
+    --muted: 30 28% 13%;
+    --muted-foreground: 30 19% 54%;
+    --accent: 30 35% 15%;
+    --accent-foreground: 38 52% 87%;
+    --destructive: 6 59% 57%;
+    --destructive-foreground: 38 52% 87%;
+    --border: 41 62% 55% / 0.22;
+    --input: 30 33% 7%;
+    --ring: 41 62% 55%;
+  }
+
+  /* Press Box raw palette */
+  :root {
+    --raw-black:      #080705;
+    --raw-ink-950:    #0d0b08;
+    --raw-ink-900:    #111009;
+    --raw-ink-800:    #18150f;
+    --raw-ink-750:    #1e1a13;
+    --raw-ink-700:    #252015;
+    --raw-ink-600:    #30291a;
+    --raw-ink-500:    #3e3424;
+    --raw-ink-400:    #554736;
+    --raw-ink-300:    #6e5f4c;
+    --raw-ink-200:    #9c8b76;
+    --raw-ink-150:    #b8a590;
+    --raw-ink-100:    #d4c4ad;
+    --raw-ink-50:     #ede0cc;
+    --raw-cream:      #f5ead8;
+    --raw-white:      #faf5ec;
+
+    --raw-gold-950:   #2a1f00;
+    --raw-gold-900:   #3d2e00;
+    --raw-gold-800:   #5e4800;
+    --raw-gold-700:   #856800;
+    --raw-gold-600:   #a88500;
+    --raw-gold-500:   #c9a032;
+    --raw-gold-450:   #d4a843;
+    --raw-gold-400:   #ddb85a;
+    --raw-gold-300:   #e8ca78;
+    --raw-gold-200:   #f2da9e;
+    --raw-gold-100:   #faf0cc;
+
+    --raw-amber-700:  #8c4400;
+    --raw-amber-600:  #b05a0c;
+    --raw-amber-500:  #d07018;
+    --raw-amber-400:  #e8851a;
+    --raw-amber-350:  #ef9a35;
+    --raw-amber-300:  #f5a84a;
+    --raw-amber-200:  #f8c07a;
+    --raw-amber-100:  #fcdcaa;
+
+    --raw-red-900:    #4a0e08;
+    --raw-red-700:    #7a1e14;
+    --raw-red-600:    #9a2a1e;
+    --raw-red-500:    #b8392c;
+    --raw-red-400:    #c44b3b;
+    --raw-red-300:    #d46558;
+    --raw-red-200:    #e4897e;
+    --raw-red-100:    #f2bab4;
+
+    --raw-green-800:  #1a3022;
+    --raw-green-700:  #234030;
+    --raw-green-600:  #2f5540;
+    --raw-green-500:  #3d6e52;
+    --raw-green-400:  #4d8464;
+    --raw-green-300:  #68a07e;
+    --raw-green-200:  #8cbea0;
+    --raw-green-100:  #b5d9c4;
+
+    --raw-blue-800:   #0f2236;
+    --raw-blue-700:   #1a3554;
+    --raw-blue-600:   #274e78;
+    --raw-blue-500:   #366898;
+    --raw-blue-400:   #4a84b8;
+    --raw-blue-300:   #6a9fcc;
+    --raw-blue-200:   #92bcde;
+    --raw-blue-100:   #bee0f4;
+
+    /* Semantic tokens */
+    --color-bg-base:          var(--raw-ink-950);
+    --color-bg-surface:       var(--raw-ink-900);
+    --color-bg-elevated:      var(--raw-ink-800);
+    --color-bg-overlay:       var(--raw-ink-750);
+    --color-bg-subtle:        var(--raw-ink-700);
+    --color-bg-muted:         var(--raw-ink-600);
+    --color-bg-input:         #13100c;
+    --color-bg-nav:           rgba(11, 9, 6, 0.96);
+
+    --color-text-primary:     var(--raw-ink-50);
+    --color-text-secondary:   var(--raw-ink-100);
+    --color-text-muted:       var(--raw-ink-200);
+    --color-text-faint:       var(--raw-ink-300);
+    --color-text-accent:      var(--raw-gold-450);
+    --color-text-link:        var(--raw-gold-400);
+    --color-text-link-hover:  var(--raw-amber-350);
+    --color-text-on-accent:   var(--raw-black);
+
+    --color-border-faint:     rgba(212, 168, 67, 0.06);
+    --color-border-subtle:    rgba(212, 168, 67, 0.12);
+    --color-border-default:   rgba(212, 168, 67, 0.22);
+    --color-border-strong:    rgba(212, 168, 67, 0.42);
+    --color-border-accent:    var(--raw-gold-450);
+
+    --color-accent-primary:   var(--raw-gold-450);
+    --color-accent-secondary: var(--raw-amber-400);
+    --color-accent-tertiary:  var(--raw-red-400);
+
+    --color-success:          var(--raw-green-400);
+    --color-error:            var(--raw-red-400);
+    --color-warning:          var(--raw-amber-400);
+    --color-info:             var(--raw-blue-400);
+
+    /* Sport accent colors */
+    --color-sport-football:           #d4531a;
+    --color-sport-baseball:           #c44b3b;
+    --color-sport-basketball:         #e07b39;
+    --color-sport-hockey:             #4a84b8;
+    --color-sport-soccer:             #4d8464;
+    --color-sport-football-american:  #d4531a;
+    --color-sport-tennis:             #c8b83a;
+    --color-sport-golf:               #5a7c42;
+    --color-sport-racing:             #d4a843;
+    --color-sport-cricket:            #b5863a;
+    --color-sport-rugby:              #8b5e3c;
+    --color-sport-cycling:            #4a84b8;
+    --color-sport-boxing:             #c44b3b;
+    --color-sport-default:            var(--raw-gold-450);
+
+    /* Typography */
+    --font-display:    'Oswald', 'Arial Narrow', Arial, sans-serif;
+    --font-heading:    'Oswald', 'Arial Narrow', Arial, sans-serif;
+    --font-body:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:       'DM Mono', 'Fira Code', 'Consolas', monospace;
+    --font-serif:      'Lora', 'Georgia', serif;
+
+    /* Layout */
+    --nav-height:       60px;
+    --sidebar-width:    280px;
+    --container-max:    1600px;
+    --container-content:1200px;
+
+    /* Shadows / glows */
+    --glow-gold-sm: 0 0 16px rgba(212, 168, 67, 0.2);
+    --glow-gold-md: 0 0 28px rgba(212, 168, 67, 0.25), 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-card:  0 4px 10px rgba(0,0,0,0.45), 0 2px 4px rgba(0,0,0,0.3);
+
+    /* Transitions */
+    --transition-fast:  all 120ms cubic-bezier(0, 0, 0.2, 1);
+    --transition-base:  all 220ms cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* ================================================================
+ * BASE ELEMENT STYLES
+ * ================================================================ */
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    background-color: var(--color-bg-base);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-bg-base);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  a {
+    color: var(--color-text-link);
+    text-decoration: none;
+    transition: var(--transition-fast);
+  }
+
+  a:hover {
+    color: var(--color-text-link-hover);
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg-surface);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-accent-primary);
+  }
+}
+
+/* ================================================================
+ * UTILITY COMPONENT CLASSES
+ * ================================================================ */
+
+@layer components {
+  /* Gold accent rule (decorative line) */
+  .accent-rule {
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: var(--color-accent-primary);
+    border-radius: 2px;
+  }
+
+  /* Section label (all-caps gold) */
+  .section-label {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-text-accent);
+  }
+
+  /* Stat monospace value */
+  .stat-value {
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
+  }
+
+  /* Sport badge pill */
+  .sport-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: 2px;
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: rgba(212, 168, 67, 0.12);
+    border: 1px solid rgba(212, 168, 67, 0.3);
+    color: var(--raw-gold-300);
+  }
+
+  /* Gold border top accent (used on cards/panels) */
+  .border-gold-top {
+    border-top: 2px solid var(--color-accent-primary);
+  }
+
+  /* Press Box card */
+  .pb-card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 6px;
+    box-shadow: var(--shadow-card);
+    transition: border-color 220ms ease, box-shadow 220ms ease;
+  }
+
+  .pb-card:hover {
+    border-color: var(--color-border-strong);
+    box-shadow: var(--glow-gold-md);
+  }
+
+  /* Complexity badges */
+  .badge-simple  { background: rgba(77,132,100,0.14);  color: #8cbea0; }
+  .badge-medium  { background: rgba(212,168,67,0.14);  color: #f2da9e; }
+  .badge-complex { background: rgba(232,133,26,0.14);  color: #f8c07a; }
+  .badge-expert  { background: rgba(196,75,59,0.14);   color: #e4897e; }
+}

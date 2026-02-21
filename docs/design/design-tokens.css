@@ -1,0 +1,544 @@
+/*
+ * ================================================================
+ * TABLETOP SPORTS GAMES ARCHIVE
+ * Design Tokens v1.0 — "The Press Box"
+ * ================================================================
+ *
+ * Concept: Premium sports analytics dashboard meets vintage game
+ * archive. Warm incandescent lighting, aged leather and paper,
+ * the precision of a scoreboard, the depth of a curated archive.
+ *
+ * Usage: Link this file before your page styles.
+ *   <link rel="stylesheet" href="design-tokens.css">
+ *
+ * Tech stack: Vanilla HTML/CSS/JS, Supabase backend
+ * Fonts required: Oswald, Inter, DM Mono (Google Fonts)
+ *
+ * ================================================================
+ * BREAKPOINT REFERENCE (use in @media — CSS vars can't)
+ * ================================================================
+ *   --bp-xs:   480px   mobile portrait
+ *   --bp-sm:   640px   mobile landscape
+ *   --bp-md:   768px   tablet portrait
+ *   --bp-lg:  1024px   tablet landscape / small desktop
+ *   --bp-xl:  1280px   desktop
+ *   --bp-2xl: 1600px   wide desktop (max-width container)
+ * ================================================================
+ */
+
+:root {
+
+  /* ==============================================================
+   * RAW COLOR PALETTE
+   * Warm-tinted darks: browns and amber undertones, not cold blue
+   * ============================================================== */
+
+  /* Neutrals — warm ink family */
+  --raw-black:      #080705;
+  --raw-ink-950:    #0d0b08;
+  --raw-ink-900:    #111009;
+  --raw-ink-800:    #18150f;
+  --raw-ink-750:    #1e1a13;
+  --raw-ink-700:    #252015;
+  --raw-ink-600:    #30291a;
+  --raw-ink-500:    #3e3424;
+  --raw-ink-400:    #554736;
+  --raw-ink-300:    #6e5f4c;
+  --raw-ink-200:    #9c8b76;
+  --raw-ink-150:    #b8a590;
+  --raw-ink-100:    #d4c4ad;
+  --raw-ink-50:     #ede0cc;
+  --raw-cream:      #f5ead8;
+  --raw-white:      #faf5ec;
+
+  /* Gold — primary accent family (aged, not cheap) */
+  --raw-gold-950:   #2a1f00;
+  --raw-gold-900:   #3d2e00;
+  --raw-gold-800:   #5e4800;
+  --raw-gold-700:   #856800;
+  --raw-gold-600:   #a88500;
+  --raw-gold-500:   #c9a032;   /* core gold — warm, aged */
+  --raw-gold-450:   #d4a843;   /* primary accent */
+  --raw-gold-400:   #ddb85a;
+  --raw-gold-300:   #e8ca78;
+  --raw-gold-200:   #f2da9e;
+  --raw-gold-100:   #faf0cc;
+
+  /* Amber — CTA / flame / energy */
+  --raw-amber-700:  #8c4400;
+  --raw-amber-600:  #b05a0c;
+  --raw-amber-500:  #d07018;
+  --raw-amber-400:  #e8851a;   /* core amber CTA */
+  --raw-amber-350:  #ef9a35;
+  --raw-amber-300:  #f5a84a;
+  --raw-amber-200:  #f8c07a;
+  --raw-amber-100:  #fcdcaa;
+
+  /* Red — error / leather / heat */
+  --raw-red-900:    #4a0e08;
+  --raw-red-700:    #7a1e14;
+  --raw-red-600:    #9a2a1e;
+  --raw-red-500:    #b8392c;
+  --raw-red-400:    #c44b3b;   /* core red */
+  --raw-red-300:    #d46558;
+  --raw-red-200:    #e4897e;
+  --raw-red-100:    #f2bab4;
+
+  /* Green — field / success / pitch */
+  --raw-green-800:  #1a3022;
+  --raw-green-700:  #234030;
+  --raw-green-600:  #2f5540;
+  --raw-green-500:  #3d6e52;
+  --raw-green-400:  #4d8464;   /* core green */
+  --raw-green-300:  #68a07e;
+  --raw-green-200:  #8cbea0;
+  --raw-green-100:  #b5d9c4;
+
+  /* Blue — info / ice / sky */
+  --raw-blue-800:   #0f2236;
+  --raw-blue-700:   #1a3554;
+  --raw-blue-600:   #274e78;
+  --raw-blue-500:   #366898;
+  --raw-blue-400:   #4a84b8;   /* core blue */
+  --raw-blue-300:   #6a9fcc;
+  --raw-blue-200:   #92bcde;
+  --raw-blue-100:   #bee0f4;
+
+
+  /* ==============================================================
+   * SEMANTIC COLOR TOKENS
+   * ============================================================== */
+
+  /* --- Backgrounds --- */
+  --color-bg-base:          var(--raw-ink-950);    /* #0d0b08 — page canvas     */
+  --color-bg-primary:       var(--raw-ink-950);    /* alias for bg-base         */
+  --color-bg-surface:       var(--raw-ink-900);    /* #111009 — cards, panels   */
+  --color-bg-elevated:      var(--raw-ink-800);    /* #18150f — raised elements  */
+  --color-bg-overlay:       var(--raw-ink-750);    /* #1e1a13 — dropdowns       */
+  --color-bg-subtle:        var(--raw-ink-700);    /* #252015 — hover fills     */
+  --color-bg-muted:         var(--raw-ink-600);    /* #30291a — selected state  */
+  --color-bg-input:         #13100c;               /* form inputs               */
+  --color-bg-nav:           rgba(11, 9, 6, 0.96);  /* navbar (sticky)           */
+  --color-bg-sidebar:       var(--raw-ink-900);    /* filter sidebar            */
+  --color-bg-code:          var(--raw-ink-800);    /* code blocks               */
+
+  /* --- Text --- */
+  --color-text-primary:     var(--raw-ink-50);     /* #ede0cc — main body text  */
+  --color-text-secondary:   var(--raw-ink-100);    /* #d4c4ad — supporting text */
+  --color-text-muted:       var(--raw-ink-200);    /* #9c8b76 — metadata        */
+  --color-text-faint:       var(--raw-ink-300);    /* #6e5f4c — placeholders    */
+  --color-text-disabled:    var(--raw-ink-400);    /* disabled controls         */
+  --color-text-inverse:     var(--raw-black);      /* on light backgrounds      */
+  --color-text-accent:      var(--raw-gold-450);   /* #d4a843 — highlighted     */
+  --color-text-link:        var(--raw-gold-400);   /* #ddb85a — hyperlinks      */
+  --color-text-link-hover:  var(--raw-amber-350);  /* link hover                */
+  --color-text-on-accent:   var(--raw-black);      /* text on gold bg           */
+
+  /* --- Borders --- */
+  --color-border-faint:     rgba(212, 168, 67, 0.06);
+  --color-border-subtle:    rgba(212, 168, 67, 0.12);
+  --color-border-default:   rgba(212, 168, 67, 0.22);
+  --color-border-strong:    rgba(212, 168, 67, 0.42);
+  --color-border-accent:    var(--raw-gold-450);
+  --color-border-input:     rgba(212, 168, 67, 0.18);
+  --color-border-input-focus: var(--raw-gold-450);
+
+  /* --- Accent / Brand --- */
+  --color-accent-primary:   var(--raw-gold-450);   /* #d4a843 gold              */
+  --color-accent-secondary: var(--raw-amber-400);  /* #e8851a amber             */
+  --color-accent-tertiary:  var(--raw-red-400);    /* #c44b3b red               */
+  --color-accent-muted:     var(--raw-gold-700);   /* dimmed gold               */
+
+  /* --- Status --- */
+  --color-success:          var(--raw-green-400);
+  --color-success-subtle:   rgba(77, 132, 100, 0.14);
+  --color-success-border:   rgba(77, 132, 100, 0.3);
+  --color-error:            var(--raw-red-400);
+  --color-error-subtle:     rgba(196, 75, 59, 0.14);
+  --color-error-border:     rgba(196, 75, 59, 0.3);
+  --color-warning:          var(--raw-amber-400);
+  --color-warning-subtle:   rgba(232, 133, 26, 0.14);
+  --color-warning-border:   rgba(232, 133, 26, 0.3);
+  --color-info:             var(--raw-blue-400);
+  --color-info-subtle:      rgba(74, 132, 184, 0.14);
+  --color-info-border:      rgba(74, 132, 184, 0.3);
+
+  /* --- Sport Accent Colors ---
+   * Assign per sport type for visual identity.
+   * Usage: var(--color-sport-football), etc.                      */
+  --color-sport-football:   #d4531a;   /* burnt orange             */
+  --color-sport-baseball:   #c44b3b;   /* red leather              */
+  --color-sport-basketball: #e07b39;   /* ball orange              */
+  --color-sport-hockey:     #4a84b8;   /* ice blue                 */
+  --color-sport-soccer:     #4d8464;   /* pitch green              */
+  --color-sport-football-american: #d4531a;
+  --color-sport-tennis:     #c8b83a;   /* court gold               */
+  --color-sport-golf:       #5a7c42;   /* fairway green            */
+  --color-sport-racing:     #d4a843;   /* gold / speed             */
+  --color-sport-cricket:    #b5863a;   /* cream/tan leather        */
+  --color-sport-rugby:      #8b5e3c;   /* leather brown            */
+  --color-sport-cycling:    #4a84b8;   /* jersey blue              */
+  --color-sport-boxing:     #c44b3b;   /* red corner               */
+  --color-sport-default:    var(--raw-gold-450);
+
+  /* --- Tag / Badge colors --- */
+  --color-tag-sport-bg:     rgba(212, 168, 67, 0.10);
+  --color-tag-sport-border: rgba(212, 168, 67, 0.30);
+  --color-tag-sport-text:   var(--raw-gold-300);
+
+  --color-tag-type-bg:      rgba(232, 133, 26, 0.10);
+  --color-tag-type-border:  rgba(232, 133, 26, 0.28);
+  --color-tag-type-text:    var(--raw-amber-300);
+
+  --color-tag-bgg-bg:       rgba(77, 132, 100, 0.12);
+  --color-tag-bgg-border:   rgba(77, 132, 100, 0.32);
+  --color-tag-bgg-text:     var(--raw-green-300);
+
+  --color-tag-manual-bg:    rgba(74, 132, 184, 0.12);
+  --color-tag-manual-border:rgba(74, 132, 184, 0.30);
+  --color-tag-manual-text:  var(--raw-blue-200);
+
+  --color-badge-simple-bg:  rgba(77, 132, 100, 0.14);
+  --color-badge-simple-text:var(--raw-green-200);
+  --color-badge-medium-bg:  rgba(212, 168, 67, 0.14);
+  --color-badge-medium-text:var(--raw-gold-200);
+  --color-badge-complex-bg: rgba(232, 133, 26, 0.14);
+  --color-badge-complex-text:var(--raw-amber-200);
+  --color-badge-expert-bg:  rgba(196, 75, 59, 0.14);
+  --color-badge-expert-text:var(--raw-red-200);
+
+
+  /* ==============================================================
+   * TYPOGRAPHY TOKENS
+   * ============================================================== */
+
+  /* --- Font Families ---
+   * Load via Google Fonts:
+   * Oswald:wght@300;400;500;600;700
+   * Inter:wght@300;400;500;600;700
+   * DM+Mono:wght@400;500
+   * Lora:ital,wght@0,400;0,500;0,600;1,400;1,500   (optional serif) */
+  --font-display:    'Oswald', 'Arial Narrow', Arial, sans-serif;
+  --font-heading:    'Oswald', 'Arial Narrow', Arial, sans-serif;
+  --font-body:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:       'DM Mono', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  --font-serif:      'Lora', 'Georgia', 'Times New Roman', serif;
+
+  /* --- Type Scale (1.25 Major Third, base 16px) --- */
+  --text-2xs:    0.625rem;   /* 10px  — micro labels, legal     */
+  --text-xs:     0.75rem;    /* 12px  — captions, filter counts */
+  --text-sm:     0.875rem;   /* 14px  — secondary, sidebar text */
+  --text-base:   1rem;       /* 16px  — body copy               */
+  --text-md:     1.125rem;   /* 18px  — lead/intro text         */
+  --text-lg:     1.25rem;    /* 20px  — card titles             */
+  --text-xl:     1.5rem;     /* 24px  — section subheads        */
+  --text-2xl:    1.875rem;   /* 30px  — section heads           */
+  --text-3xl:    2.25rem;    /* 36px  — page headings           */
+  --text-4xl:    3rem;       /* 48px  — hero sub-display        */
+  --text-5xl:    3.75rem;    /* 60px  — display                 */
+  --text-6xl:    4.5rem;     /* 72px  — mega display            */
+  --text-7xl:    5.625rem;   /* 90px  — super display           */
+
+  /* --- Font Weights --- */
+  --weight-thin:       100;
+  --weight-light:      300;
+  --weight-regular:    400;
+  --weight-medium:     500;
+  --weight-semibold:   600;
+  --weight-bold:       700;
+  --weight-extrabold:  800;
+  --weight-black:      900;
+
+  /* --- Line Heights --- */
+  --leading-none:      1;
+  --leading-tightest:  1.05;
+  --leading-tight:     1.15;
+  --leading-snug:      1.3;
+  --leading-normal:    1.5;
+  --leading-relaxed:   1.65;
+  --leading-loose:     1.8;
+
+  /* --- Letter Spacing --- */
+  --tracking-tightest: -0.06em;
+  --tracking-tighter:  -0.03em;
+  --tracking-tight:    -0.015em;
+  --tracking-normal:   0em;
+  --tracking-wide:     0.04em;
+  --tracking-wider:    0.08em;
+  --tracking-widest:   0.16em;    /* All-caps labels             */
+  --tracking-ultra:    0.25em;    /* Decorative section markers  */
+
+
+  /* ==============================================================
+   * SPACING TOKENS — 4px base grid
+   * ============================================================== */
+
+  --space-0:     0;
+  --space-px:    1px;
+  --space-0-5:   0.125rem;   /* 2px   */
+  --space-1:     0.25rem;    /* 4px   */
+  --space-1-5:   0.375rem;   /* 6px   */
+  --space-2:     0.5rem;     /* 8px   */
+  --space-2-5:   0.625rem;   /* 10px  */
+  --space-3:     0.75rem;    /* 12px  */
+  --space-3-5:   0.875rem;   /* 14px  */
+  --space-4:     1rem;       /* 16px  */
+  --space-5:     1.25rem;    /* 20px  */
+  --space-6:     1.5rem;     /* 24px  */
+  --space-7:     1.75rem;    /* 28px  */
+  --space-8:     2rem;       /* 32px  */
+  --space-9:     2.25rem;    /* 36px  */
+  --space-10:    2.5rem;     /* 40px  */
+  --space-11:    2.75rem;    /* 44px  */
+  --space-12:    3rem;       /* 48px  */
+  --space-14:    3.5rem;     /* 56px  */
+  --space-16:    4rem;       /* 64px  */
+  --space-18:    4.5rem;     /* 72px  */
+  --space-20:    5rem;       /* 80px  */
+  --space-24:    6rem;       /* 96px  */
+  --space-28:    7rem;       /* 112px */
+  --space-32:    8rem;       /* 128px */
+  --space-40:    10rem;      /* 160px */
+  --space-48:    12rem;      /* 192px */
+
+  /* --- Semantic Spacing Aliases --- */
+  --gap-xs:      var(--space-2);    /* 8px  — tight inline         */
+  --gap-sm:      var(--space-3);    /* 12px — component internal   */
+  --gap-md:      var(--space-4);    /* 16px — standard gap         */
+  --gap-lg:      var(--space-6);    /* 24px — section internal     */
+  --gap-xl:      var(--space-8);    /* 32px — between sections     */
+  --gap-2xl:     var(--space-12);   /* 48px — major section gaps   */
+  --gap-3xl:     var(--space-16);   /* 64px — hero spacing         */
+
+  --padding-xs:  var(--space-2) var(--space-3);    /* 8×12  — tight  */
+  --padding-sm:  var(--space-2) var(--space-4);    /* 8×16           */
+  --padding-md:  var(--space-3) var(--space-5);    /* 12×20          */
+  --padding-lg:  var(--space-4) var(--space-6);    /* 16×24          */
+  --padding-xl:  var(--space-5) var(--space-8);    /* 20×32          */
+  --padding-card:var(--space-5);                   /* 20px all sides */
+  --padding-panel:var(--space-6);                  /* 24px all sides */
+  --padding-section: var(--space-8);               /* 32px all sides */
+
+
+  /* ==============================================================
+   * BORDER RADIUS TOKENS
+   * ============================================================== */
+
+  --radius-none:    0;
+  --radius-xs:      2px;     /* sharp — tags, badges (intentional) */
+  --radius-sm:      4px;     /* buttons, inputs                    */
+  --radius-md:      6px;     /* cards, panels                      */
+  --radius-lg:      10px;    /* modals, large panels               */
+  --radius-xl:      14px;    /* overlays, drawers                  */
+  --radius-2xl:     20px;    /* feature cards                      */
+  --radius-full:    9999px;  /* pills                              */
+
+  /* --- Semantic Radius Aliases --- */
+  --radius-tag:     var(--radius-xs);    /* sharp-cornered tags     */
+  --radius-badge:   var(--radius-xs);    /* badges                  */
+  --radius-button:  var(--radius-sm);    /* buttons                 */
+  --radius-input:   var(--radius-sm);    /* form inputs             */
+  --radius-card:    var(--radius-md);    /* game cards              */
+  --radius-panel:   var(--radius-md);    /* sidebar, main content   */
+  --radius-modal:   var(--radius-lg);    /* modals                  */
+  --radius-image:   var(--radius-md);    /* game cover images       */
+
+
+  /* ==============================================================
+   * SHADOW / ELEVATION TOKENS
+   * ============================================================== */
+
+  /* Base shadows — warm-tinted (slight amber in shadow color) */
+  --shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm:    0 1px 3px rgba(0, 0, 0, 0.4),
+                  0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:    0 4px 10px rgba(0, 0, 0, 0.45),
+                  0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg:    0 10px 24px rgba(0, 0, 0, 0.5),
+                  0 4px 8px rgba(0, 0, 0, 0.35);
+  --shadow-xl:    0 20px 48px rgba(0, 0, 0, 0.55),
+                  0 8px 16px rgba(0, 0, 0, 0.4);
+  --shadow-2xl:   0 32px 64px rgba(0, 0, 0, 0.6),
+                  0 12px 24px rgba(0, 0, 0, 0.45);
+
+  /* Accent glows — the "warm light" effect */
+  --glow-gold-xs: 0 0 8px rgba(212, 168, 67, 0.15);
+  --glow-gold-sm: 0 0 16px rgba(212, 168, 67, 0.2);
+  --glow-gold-md: 0 0 28px rgba(212, 168, 67, 0.25),
+                  0 4px 12px rgba(0, 0, 0, 0.4);
+  --glow-gold-lg: 0 0 48px rgba(212, 168, 67, 0.3),
+                  0 8px 24px rgba(0, 0, 0, 0.5);
+  --glow-amber:   0 0 24px rgba(232, 133, 26, 0.3),
+                  0 4px 12px rgba(0, 0, 0, 0.4);
+
+  /* Semantic elevation levels */
+  --elevation-0:  none;                    /* flat / base surface     */
+  --elevation-1:  var(--shadow-sm);        /* resting cards           */
+  --elevation-2:  var(--shadow-md);        /* sidebar, panels         */
+  --elevation-3:  var(--shadow-lg);        /* dropdowns, tooltips     */
+  --elevation-4:  var(--shadow-xl);        /* modals                  */
+  --elevation-hover: var(--glow-gold-md);  /* interactive hover       */
+
+  /* Inset shadows */
+  --shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-inset-md: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  --shadow-inset-lg: inset 0 4px 12px rgba(0, 0, 0, 0.6);
+
+
+  /* ==============================================================
+   * ANIMATION / TRANSITION TOKENS
+   * ============================================================== */
+
+  /* Durations */
+  --duration-instant:  0ms;
+  --duration-fast:     120ms;
+  --duration-normal:   220ms;
+  --duration-slow:     380ms;
+  --duration-slower:   600ms;
+  --duration-slowest:  900ms;
+
+  /* Easing functions */
+  --ease-linear:    linear;
+  --ease-in:        cubic-bezier(0.4, 0, 1, 1);
+  --ease-out:       cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);  /* slight overshoot */
+  --ease-expo-out:  cubic-bezier(0.16, 1, 0.3, 1);      /* smooth decelerate */
+  --ease-circ-out:  cubic-bezier(0, 0.55, 0.45, 1);
+
+  /* Shorthand transitions */
+  --transition-fast:   all var(--duration-fast) var(--ease-out);
+  --transition-base:   all var(--duration-normal) var(--ease-out);
+  --transition-slow:   all var(--duration-slow) var(--ease-out);
+  --transition-spring: all var(--duration-slow) var(--ease-spring);
+  --transition-color:  color var(--duration-fast) var(--ease-out),
+                       background-color var(--duration-fast) var(--ease-out),
+                       border-color var(--duration-fast) var(--ease-out),
+                       opacity var(--duration-fast) var(--ease-out);
+
+
+  /* ==============================================================
+   * Z-INDEX TOKENS
+   * ============================================================== */
+
+  --z-below:    -1;
+  --z-base:      0;
+  --z-raised:   10;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-overlay:  300;
+  --z-modal:    400;
+  --z-toast:    500;
+  --z-tooltip:  600;
+  --z-max:      9999;
+
+
+  /* ==============================================================
+   * LAYOUT TOKENS
+   * ============================================================== */
+
+  --container-max:     1600px;
+  --container-content: 1200px;
+  --container-narrow:  800px;
+  --container-padding: var(--space-5);   /* page edge padding      */
+
+  --nav-height:          60px;
+  --sidebar-width:       280px;
+  --sidebar-padding:     var(--space-6);
+
+  /* Grid columns */
+  --grid-cols-cards:     repeat(auto-fill, minmax(260px, 1fr));
+  --grid-gap-cards:      var(--space-5);
+
+
+  /* ==============================================================
+   * COMPONENT-SPECIFIC TOKENS
+   * ============================================================== */
+
+  /* Navigation */
+  --nav-bg:              var(--color-bg-nav);
+  --nav-border:          var(--color-border-subtle);
+  --nav-link-color:      var(--color-text-muted);
+  --nav-link-hover:      var(--color-text-primary);
+  --nav-link-active:     var(--color-accent-primary);
+  --nav-padding:         0 var(--space-6);
+
+  /* Game Card */
+  --card-bg:             var(--color-bg-surface);
+  --card-border:         var(--color-border-subtle);
+  --card-border-hover:   var(--color-border-strong);
+  --card-radius:         var(--radius-card);
+  --card-image-height:   200px;
+  --card-shadow:         var(--elevation-1);
+  --card-shadow-hover:   var(--elevation-hover);
+  --card-padding:        var(--padding-card);
+  --card-title-font:     var(--font-heading);
+  --card-title-size:     var(--text-lg);
+  --card-title-weight:   var(--weight-semibold);
+
+  /* Search Input */
+  --search-bg:           var(--color-bg-input);
+  --search-border:       var(--color-border-input);
+  --search-border-focus: var(--color-border-input-focus);
+  --search-radius:       var(--radius-input);
+  --search-height:       44px;
+  --search-font-size:    var(--text-sm);
+
+  /* Filter Sidebar */
+  --filter-header-size:  var(--text-xs);
+  --filter-header-color: var(--color-text-accent);
+  --filter-header-track: var(--tracking-widest);
+  --filter-option-py:    var(--space-2);
+  --filter-check-size:   14px;
+
+  /* Tags */
+  --tag-height:          24px;
+  --tag-padding:         0 var(--space-2);
+  --tag-font-size:       var(--text-xs);
+  --tag-font-weight:     var(--weight-medium);
+  --tag-radius:          var(--radius-tag);
+  --tag-letter-spacing:  var(--tracking-wide);
+
+  /* Buttons */
+  --btn-font:            var(--font-heading);
+  --btn-weight:          var(--weight-semibold);
+  --btn-tracking:        var(--tracking-wider);
+  --btn-radius:          var(--radius-button);
+  --btn-transition:      var(--transition-fast);
+  --btn-height-sm:       32px;
+  --btn-height-md:       40px;
+  --btn-height-lg:       48px;
+
+  /* Primary button */
+  --btn-primary-bg:       var(--raw-gold-450);
+  --btn-primary-bg-hover: var(--raw-gold-400);
+  --btn-primary-color:    var(--raw-black);
+  --btn-primary-shadow:   0 2px 8px rgba(212, 168, 67, 0.35);
+
+  /* Secondary button */
+  --btn-secondary-bg:       transparent;
+  --btn-secondary-border:   var(--color-border-default);
+  --btn-secondary-color:    var(--color-text-secondary);
+  --btn-secondary-hover-bg: var(--color-bg-subtle);
+
+  /* Pagination */
+  --page-btn-size:       36px;
+  --page-btn-radius:     var(--radius-sm);
+  --page-btn-bg:         var(--color-bg-elevated);
+  --page-btn-bg-hover:   var(--color-bg-subtle);
+  --page-btn-bg-active:  var(--raw-gold-450);
+  --page-btn-color:      var(--color-text-muted);
+  --page-btn-color-hover:var(--color-text-primary);
+  --page-btn-color-active:var(--raw-black);
+  --page-btn-border:     var(--color-border-subtle);
+
+  /* Meta Items (scoreboard stats) */
+  --meta-label-size:     var(--text-2xs);
+  --meta-label-color:    var(--color-text-faint);
+  --meta-label-track:    var(--tracking-widest);
+  --meta-value-size:     var(--text-lg);
+  --meta-value-font:     var(--font-mono);
+  --meta-value-color:    var(--color-text-primary);
+  --meta-accent-line:    var(--color-accent-primary);
+
+}
