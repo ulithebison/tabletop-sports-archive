@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { LogOut, LayoutDashboard, Gamepad2, Star, MessageCircle, Newspaper } from "lucide-react";
+import { LogOut, LayoutDashboard, Gamepad2, Star, MessageCircle, Newspaper, BookOpen } from "lucide-react";
 
 const NAV_LINKS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { href: "/admin/reviews", label: "Reviews", icon: Star, exact: false },
   { href: "/admin/comments", label: "Comments", icon: MessageCircle, exact: false },
   { href: "/admin/news", label: "News", icon: Newspaper, exact: false },
+  { href: "/admin/blog", label: "Blog", icon: BookOpen, exact: false },
 ];
 
 interface AdminNavProps {

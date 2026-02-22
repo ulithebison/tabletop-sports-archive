@@ -1,5 +1,5 @@
 import { createClient } from "./supabase/server";
-import type { Game, GameFilters, PaginatedResult, Review, GameSubmission, NewsItem, Comment } from "./types";
+import type { Game, GameFilters, PaginatedResult, Review, GameSubmission, NewsItem, BlogPost, Comment } from "./types";
 
 const PER_PAGE = 48;
 
@@ -460,6 +460,56 @@ export async function getNews(limit = 5): Promise<NewsItem[]> {
     .limit(limit);
 
   return (data ?? []) as NewsItem[];
+}
+
+export async function getAllNews(): Promise<NewsItem[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("news")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  return (data ?? []) as NewsItem[];
+}
+
+// ================================================================
+// BLOG POSTS
+// ================================================================
+
+export async function getBlogPosts(limit?: number): Promise<BlogPost[]> {
+  const supabase = await createClient();
+  let query = supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("status", "published")
+    .order("published_at", { ascending: false });
+
+  if (limit) query = query.limit(limit);
+
+  const { data } = await query;
+  return (data ?? []) as BlogPost[];
+}
+
+export async function getBlogPost(slug: string): Promise<BlogPost | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("slug", slug)
+    .eq("status", "published")
+    .single();
+
+  if (error) return null;
+  return data as BlogPost;
+}
+
+export async function getBlogPostCount(): Promise<number> {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("blog_posts")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "published");
+  return count ?? 0;
 }
 
 // ================================================================

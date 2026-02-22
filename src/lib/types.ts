@@ -139,6 +139,19 @@ export interface NewsItem {
   created_at: string;
 }
 
+export interface BlogPost {
+  id: number;
+  title: string;
+  slug: string;
+  body: string;
+  excerpt: string | null;
+  image_url: string | null;
+  status: "draft" | "published";
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Filter params for game list
 export interface GameFilters {
   sport?: string;       // comma-separated for multi-select

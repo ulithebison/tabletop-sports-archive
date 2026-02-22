@@ -15,6 +15,9 @@ const NAV_LINKS = [
   { href: "/popular", label: "Popular" },
   { href: "/recent", label: "Recent" },
   { href: "/stats", label: "Stats" },
+  { href: "/about", label: "About" },
+  { href: "/blog", label: "Blog" },
+  { href: "/news", label: "News" },
   { href: "/submit/game", label: "Submit Game" },
 ];
 

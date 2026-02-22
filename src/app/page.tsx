@@ -24,15 +24,20 @@ async function GameCount() {
 
 async function NewsFeed() {
   try {
-    const items = await getNews(4);
+    const items = await getNews(2);
     if (items.length === 0) return null;
     return (
       <section className="mb-16">
-        <div className="flex items-center gap-3 mb-6">
-          <span className="accent-rule" />
-          <h2 className="font-heading font-bold text-xl uppercase tracking-widest" style={{ color: "var(--color-text-accent)" }}>
-            Latest News
-          </h2>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <span className="accent-rule" />
+            <h2 className="font-heading font-bold text-xl uppercase tracking-widest" style={{ color: "var(--color-text-accent)" }}>
+              Latest News
+            </h2>
+          </div>
+          <Link href="/news" className="flex items-center gap-1 text-sm transition-colors" style={{ color: "var(--color-text-link)" }}>
+            View all <ArrowRight size={14} />
+          </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {items.map((item: NewsItem) => (
@@ -221,6 +226,62 @@ export default function LandingPage() {
             </Link>
           ))}
         </div>
+
+        {/* About the Archive */}
+        <section
+          className="mb-16 rounded-lg p-8"
+          style={{
+            background: "var(--color-bg-surface)",
+            border: "1px solid var(--color-border-subtle)",
+            borderLeft: "3px solid var(--raw-gold-450)",
+          }}
+        >
+          <h2
+            className="font-heading font-bold text-xl uppercase tracking-wide mb-5"
+            style={{ color: "var(--color-text-primary)" }}
+          >
+            What Is This Place?
+          </h2>
+          <div className="space-y-4" style={{ fontFamily: "var(--font-lora)" }}>
+            <p className="text-base leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+              This archive started because sports tabletop games deserve a home. Thousands of games exist across dozens of
+              sports &mdash; from classic baseball simulations to obscure curling card games &mdash; and there&rsquo;s
+              never been one place to find them all.
+            </p>
+            <p className="text-base leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+              Most of our catalog comes from BoardGameGeek, but we know there are plenty of gems out there that
+              BGG doesn&rsquo;t cover. That&rsquo;s where you come in. If you know a game that&rsquo;s missing &mdash;
+              something your family plays, a local favorite, an indie release &mdash; submit it. Every game matters here.
+            </p>
+            <p className="text-base leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
+              Rate games, write reviews, help other fans find their next favorite. This is a community project and it
+              grows with your contributions.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 mt-6">
+            <Link
+              href="/about"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded font-heading font-semibold text-sm uppercase tracking-wider transition-all border"
+              style={{
+                background: "transparent",
+                borderColor: "var(--color-border-default)",
+                color: "var(--color-text-secondary)",
+              }}
+            >
+              Learn More
+            </Link>
+            <Link
+              href="/submit/game"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded font-heading font-semibold text-sm uppercase tracking-wider transition-all"
+              style={{
+                background: "var(--raw-gold-450)",
+                color: "var(--raw-black)",
+              }}
+            >
+              Submit a Game <ArrowRight size={14} />
+            </Link>
+          </div>
+        </section>
 
         <Suspense fallback={null}><PopularGames /></Suspense>
         <Suspense fallback={null}><NewsFeed /></Suspense>
