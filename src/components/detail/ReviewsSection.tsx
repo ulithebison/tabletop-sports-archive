@@ -1,14 +1,25 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { Star, MessageSquare } from "lucide-react";
 import type { Review } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+import { ReviewVoteButtons } from "./ReviewVoteButtons";
 
 interface ReviewsSectionProps {
   reviews: Review[];
   gameId: number;
+  reviewScores?: Record<number, number>;
 }
 
-export function ReviewsSection({ reviews, gameId }: ReviewsSectionProps) {
+export function ReviewsSection({ reviews, gameId, reviewScores = {} }: ReviewsSectionProps) {
+  // Sort reviews: highest score first, then newest first
+  const sorted = [...reviews].sort((a, b) => {
+    const scoreA = reviewScores[a.id] ?? 0;
+    const scoreB = reviewScores[b.id] ?? 0;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
   return (
     <section>
       <div className="flex items-center justify-between mb-5">
@@ -35,7 +46,7 @@ export function ReviewsSection({ reviews, gameId }: ReviewsSectionProps) {
         </Link>
       </div>
 
-      {reviews.length === 0 ? (
+      {sorted.length === 0 ? (
         <div
           className="py-10 text-center rounded-md"
           style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border-faint)" }}
@@ -52,7 +63,7 @@ export function ReviewsSection({ reviews, gameId }: ReviewsSectionProps) {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {reviews.map((review) => (
+          {sorted.map((review) => (
             <article
               key={review.id}
               className="p-5 rounded-md"
@@ -63,6 +74,14 @@ export function ReviewsSection({ reviews, gameId }: ReviewsSectionProps) {
             >
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-3">
+                  {/* Vote buttons */}
+                  <Suspense fallback={null}>
+                    <ReviewVoteButtons
+                      reviewId={review.id}
+                      initialScore={reviewScores[review.id] ?? 0}
+                    />
+                  </Suspense>
+
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-heading font-bold text-sm"
                     style={{

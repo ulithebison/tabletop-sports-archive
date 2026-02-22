@@ -14,7 +14,7 @@ export function Footer() {
       <div className="max-w-[1600px] mx-auto px-5 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="md:col-span-2">
+          <div>
             <div className="flex items-center gap-3 mb-4">
               <div
                 className="w-8 h-8 flex items-center justify-center rounded flex-shrink-0"
@@ -37,7 +37,7 @@ export function Footer() {
               </div>
             </div>
             <p
-              className="text-sm leading-relaxed max-w-sm"
+              className="text-sm leading-relaxed"
               style={{ color: "var(--color-text-muted)" }}
             >
               The definitive database of physical sports simulation games. From vintage
@@ -60,6 +60,28 @@ export function Footer() {
                 { href: "/designers", label: "By Designer" },
                 { href: "/recent", label: "Recent Additions" },
                 { href: "/stats", label: "Stats & Insights" },
+              ].map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm transition-colors"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Site */}
+          <div>
+            <h3 className="section-label mb-4">Site</h3>
+            <ul className="space-y-2">
+              {[
+                { href: "/about", label: "About" },
+                { href: "/blog", label: "Blog" },
+                { href: "/news", label: "News" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
@@ -105,9 +127,25 @@ export function Footer() {
           <p className="text-xs" style={{ color: "var(--color-text-faint)" }}>
             &copy; {year} Tabletop Sports Games Archive. Game data sourced from BoardGameGeek.
           </p>
-          <p className="text-xs" style={{ color: "var(--color-text-faint)" }}>
-            Built with Next.js &amp; Supabase
-          </p>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/privacy"
+              className="text-xs transition-colors"
+              style={{ color: "var(--color-text-faint)" }}
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms"
+              className="text-xs transition-colors"
+              style={{ color: "var(--color-text-faint)" }}
+            >
+              Terms of Use
+            </Link>
+            <p className="text-xs" style={{ color: "var(--color-text-faint)" }}>
+              Built with Next.js &amp; Supabase
+            </p>
+          </div>
         </div>
       </div>
     </footer>

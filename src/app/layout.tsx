@@ -36,6 +36,7 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://tabletopsportsarchive.com"),
   title: {
     default: "Tabletop Sports Games Archive",
     template: "%s | Tabletop Sports Games Archive",

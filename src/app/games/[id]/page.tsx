@@ -9,6 +9,7 @@ import {
   getApprovedReviews,
   getComments,
   getGameRating,
+  getReviewVoteScores,
   incrementViewCount,
 } from "@/lib/queries";
 import {
@@ -39,13 +40,18 @@ export async function generateMetadata({ params }: GameDetailPageProps): Promise
   const { id } = await params;
   const game = await getGame(Number(id));
   if (!game) return { title: "Game Not Found" };
+  const desc = game.description?.slice(0, 160) ?? undefined;
   return {
     title: game.name,
-    description: game.description?.slice(0, 160) ?? undefined,
+    description: desc,
     openGraph: {
       title: game.name,
-      description: game.description?.slice(0, 160) ?? undefined,
-      images: game.image_url ? [game.image_url] : undefined,
+      description: desc,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: game.name,
+      description: desc,
     },
   };
 }
@@ -73,6 +79,11 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
       getComments(gameId),
       getGameRating(gameId),
     ]);
+  // Fetch vote scores for reviews
+  const reviewScores = reviews.length > 0
+    ? await getReviewVoteScores(reviews.map((r) => r.id))
+    : {};
+
   const mainImage = getGameImage(game);
   const designers = splitSemicolon(game.authors);
   const artists = splitSemicolon(game.artists);
@@ -407,7 +418,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
             {game.video_url && <YouTubeEmbed url={game.video_url} />}
 
             {/* Reviews */}
-            <ReviewsSection reviews={reviews} gameId={gameId} />
+            <ReviewsSection reviews={reviews} gameId={gameId} reviewScores={reviewScores} />
 
             {/* Comments */}
             <CommentsSection comments={comments} gameId={gameId} />

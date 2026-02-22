@@ -124,6 +124,14 @@ export interface GameSubmission {
   created_at: string;
 }
 
+export interface ReviewVote {
+  id: number;
+  review_id: number;
+  session_id: string;
+  vote: 1 | -1;
+  created_at: string;
+}
+
 export interface Comment {
   id: number;
   game_id: number;

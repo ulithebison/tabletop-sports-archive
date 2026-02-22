@@ -301,6 +301,84 @@ export async function getDesignerStats(
 }
 
 // ================================================================
+// SPORT STATS (for enriched sport landing pages)
+// ================================================================
+
+export async function getSportStats(sport: string): Promise<{
+  totalGames: number;
+  yearMin: number | null;
+  yearMax: number | null;
+  topPublishers: { name: string; count: number }[];
+  complexityDistribution: { complexity: string; count: number }[];
+  topRated: Game[];
+}> {
+  const supabase = await createClient();
+  const orFilter = `sport.eq.${sport},sport.ilike.${sport};%,sport.ilike.%; ${sport},sport.ilike.%; ${sport};%`;
+
+  // Fetch all rows for this sport (just the columns we need for stats)
+  const BATCH = 1000;
+  const rows: { year: number | null; publisher_name: string | null; complexity: string | null }[] = [];
+  let offset = 0;
+
+  while (true) {
+    const { data } = await supabase
+      .from("games")
+      .select("year, publisher_name, complexity")
+      .or(orFilter)
+      .range(offset, offset + BATCH - 1);
+
+    if (!data || data.length === 0) break;
+    rows.push(...data);
+    if (data.length < BATCH) break;
+    offset += BATCH;
+  }
+
+  const totalGames = rows.length;
+
+  // Year range
+  const years = rows.map((r) => r.year).filter((y): y is number => y != null && y > 0);
+  const yearMin = years.length > 0 ? Math.min(...years) : null;
+  const yearMax = years.length > 0 ? Math.max(...years) : null;
+
+  // Top publishers
+  const pubCounts: Record<string, number> = {};
+  for (const row of rows) {
+    if (row.publisher_name) {
+      pubCounts[row.publisher_name] = (pubCounts[row.publisher_name] ?? 0) + 1;
+    }
+  }
+  const topPublishers = Object.entries(pubCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name, count]) => ({ name, count }));
+
+  // Complexity distribution
+  const complexityOrder = ["Simple", "Medium", "Complex", "Expert"];
+  const compCounts: Record<string, number> = {};
+  for (const row of rows) {
+    if (row.complexity && complexityOrder.includes(row.complexity)) {
+      compCounts[row.complexity] = (compCounts[row.complexity] ?? 0) + 1;
+    }
+  }
+  const complexityDistribution = complexityOrder
+    .filter((c) => compCounts[c])
+    .map((complexity) => ({ complexity, count: compCounts[complexity] }));
+
+  // Top rated games (4 highest-rated)
+  const { data: topRatedData } = await supabase
+    .from("games")
+    .select("*")
+    .or(orFilter)
+    .not("average_rating", "is", null)
+    .order("average_rating", { ascending: false })
+    .limit(4);
+
+  const topRated = (topRatedData ?? []) as Game[];
+
+  return { totalGames, yearMin, yearMax, topPublishers, complexityDistribution, topRated };
+}
+
+// ================================================================
 // RECENT ADDITIONS
 // ================================================================
 
@@ -415,6 +493,33 @@ export async function getPendingReviews(): Promise<Review[]> {
     .order("created_at", { ascending: false });
 
   return (data ?? []) as Review[];
+}
+
+// ================================================================
+// REVIEW VOTES
+// ================================================================
+
+export async function getReviewVoteScores(
+  reviewIds: number[]
+): Promise<Record<number, number>> {
+  if (reviewIds.length === 0) return {};
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("review_votes")
+    .select("review_id, vote")
+    .in("review_id", reviewIds);
+
+  const scores: Record<number, number> = {};
+  for (const id of reviewIds) scores[id] = 0;
+
+  if (data) {
+    for (const row of data) {
+      scores[row.review_id] = (scores[row.review_id] ?? 0) + row.vote;
+    }
+  }
+
+  return scores;
 }
 
 // ================================================================
