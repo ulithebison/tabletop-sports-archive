@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
 import { getGameCount, getNews, getTopGames, getRecentGames } from "@/lib/queries";
-import { formatDate, getGameImage, getSportColor, formatRating } from "@/lib/utils";
+import { formatDate, getGameImage, getSportColor } from "@/lib/utils";
 import { SITE_URL, SITE_NAME } from "@/lib/constants";
 import type { Game, NewsItem } from "@/lib/types";
 import { ArrowRight, Trophy, Clock, Tags, Layers } from "lucide-react";
@@ -136,12 +136,6 @@ async function RecentGames() {
                     {game.sport && <span className="text-xs" style={{ color: sportColor }}>{game.sport}</span>}
                     {game.year && <span className="text-xs font-mono" style={{ color: "var(--color-text-faint)" }}>· {game.year}</span>}
                   </div>
-                  {game.average_rating != null && game.average_rating > 0 && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <span style={{ color: "var(--raw-gold-450)", fontSize: "0.65rem" }}>★</span>
-                      <span className="font-mono text-xs" style={{ color: "var(--color-text-primary)" }}>{formatRating(game.average_rating)}</span>
-                    </div>
-                  )}
                 </div>
               </Link>
             );
