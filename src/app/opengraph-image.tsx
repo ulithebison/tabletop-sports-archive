@@ -5,9 +5,15 @@ export const alt = "Tabletop Sports Games Archive";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 export default async function OGImage() {
   const fontData = await fetch(
-    new URL("/fonts/oswald-bold.ttf", process.env.NEXT_PUBLIC_SITE_URL || "https://tabletopsportsarchive.com")
+    new URL("/fonts/oswald-bold.ttf", getBaseUrl())
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(

@@ -36,7 +36,10 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://tabletopsportsarchive.com"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL
+      ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+  ),
   title: {
     default: "Tabletop Sports Games Archive",
     template: "%s | Tabletop Sports Games Archive",

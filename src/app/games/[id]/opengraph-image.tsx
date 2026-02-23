@@ -31,6 +31,12 @@ function getSportColor(sport: string | null): string {
   return (first && SPORT_COLORS[first]) || "#d4a843";
 }
 
+function getBaseUrl() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
 export default async function GameOGImage({
   params,
 }: {
@@ -39,10 +45,7 @@ export default async function GameOGImage({
   const { id } = await params;
 
   const fontData = await fetch(
-    new URL(
-      "/fonts/oswald-bold.ttf",
-      process.env.NEXT_PUBLIC_SITE_URL || "https://tabletopsportsarchive.com"
-    )
+    new URL("/fonts/oswald-bold.ttf", getBaseUrl())
   ).then((res) => res.arrayBuffer());
 
   // Fetch game data
