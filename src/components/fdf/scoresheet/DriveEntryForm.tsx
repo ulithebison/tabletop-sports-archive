@@ -5,7 +5,7 @@ import type { FieldPosition, DriveResultType, PATResult, DriveInput, FdfTeam, Fi
 import { needsPAT, isInstantResult, isNoClockPlay } from "@/lib/fdf/scoring";
 import { isTimingWarningZone } from "@/lib/fdf/game-clock";
 import { getFinderPlayerFieldsForResult } from "@/lib/fdf/player-mapping";
-import { generateSummary, type SummaryContext } from "@/lib/fdf/summary-generator";
+import { generateSummary, generateSimpleSummary, type SummaryContext } from "@/lib/fdf/summary-generator";
 import { FieldPositionSelector } from "./FieldPositionSelector";
 import { DriveTimeSelector } from "./DriveTimeSelector";
 import { DriveResultPicker } from "./DriveResultPicker";
@@ -56,12 +56,23 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
     if (!enhancedMode || !result || !fieldPosition) return;
 
     const fields = getFinderPlayerFieldsForResult(result);
+
+    // For results with no player fields (punts, kneel, end of half, etc.),
+    // generate a team-only summary immediately
+    if (fields.length === 0) {
+      const text = generateSimpleSummary(result, offenseTeam.abbreviation, defenseTeam.abbreviation, fieldPosition);
+      setSummary(text);
+      setGeneratedSummaryText(text);
+      setSummaryContext(null);
+      return;
+    }
+
     const requiredFilled = fields
       .filter(f => f.required)
       .every(f => !!(playerInvolvement[f.key as keyof DrivePlayerInvolvement]));
 
     const invKey = JSON.stringify(playerInvolvement);
-    if (requiredFilled && invKey !== prevInvolvementRef.current && fields.length > 0) {
+    if (requiredFilled && invKey !== prevInvolvementRef.current) {
       prevInvolvementRef.current = invKey;
 
       const ctx: SummaryContext = {
@@ -81,6 +92,14 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
       setSummaryContext(ctx);
     }
   }, [playerInvolvement, result, fieldPosition, enhancedMode, offenseTeam, defenseTeam, offenseFinderRoster, defenseFinderRoster]);
+
+  // Auto-generate summary in non-enhanced mode when result changes
+  useEffect(() => {
+    if (enhancedMode || !result) return;
+    const fp = fieldPosition || "AVERAGE";
+    const text = generateSimpleSummary(result, offenseTeam.abbreviation, defenseTeam.abbreviation, fp);
+    setSummary(text);
+  }, [result, enhancedMode, offenseTeam.abbreviation, defenseTeam.abbreviation, fieldPosition]);
 
   const isInstant = result ? isInstantResult(result) : false;
   const noClockPlay = result ? isNoClockPlay(result) : false;

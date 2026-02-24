@@ -19,6 +19,7 @@ interface GameSummaryProps {
   game: FdfGame;
   homeTeam: FdfTeam;
   awayTeam: FdfTeam;
+  seasonId?: string;
 }
 
 function getResultLabel(result: string): string {
@@ -178,7 +179,7 @@ function WPSection({ game, homeTeam, awayTeam }: { game: FdfGame; homeTeam: FdfT
   );
 }
 
-export function GameSummary({ game, homeTeam, awayTeam }: GameSummaryProps) {
+export function GameSummary({ game, homeTeam, awayTeam, seasonId }: GameSummaryProps) {
   const router = useRouter();
   const createGame = useGameStore((s) => s.createGame);
   const getTeam = useTeamStore((s) => s.getTeam);
@@ -384,12 +385,12 @@ export function GameSummary({ game, homeTeam, awayTeam }: GameSummaryProps) {
       {/* Actions */}
       <div className="flex gap-3">
         <Link
-          href="/fdf"
+          href={seasonId ? `/fdf/seasons/${seasonId}` : "/fdf"}
           className="flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-medium transition-colors"
           style={{ color: "var(--fdf-text-secondary)", border: "1px solid var(--fdf-border)" }}
         >
           <ArrowLeft size={16} />
-          Dashboard
+          {seasonId ? "Back to Season" : "Dashboard"}
         </Link>
         <button
           onClick={handleRematch}

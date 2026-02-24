@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Zap, Users, History, X } from "lucide-react";
+import { LayoutDashboard, Zap, Users, History, Trophy, HardDrive, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/fdf", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/fdf/quick-game", label: "Quick Game", icon: Zap },
   { href: "/fdf/teams", label: "Teams", icon: Users },
+  { href: "/fdf/seasons", label: "Seasons", icon: Trophy },
   { href: "/fdf/history", label: "History", icon: History },
+  { href: "/fdf/data", label: "Data", icon: HardDrive },
 ];
 
 interface FdfSidebarProps {

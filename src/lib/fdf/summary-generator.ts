@@ -7,7 +7,7 @@ import type {
   FieldPosition,
 } from "./types";
 import { findPlayerInFinderRoster } from "./player-mapping";
-import { SUMMARY_TEMPLATES } from "./summary-templates";
+import { SUMMARY_TEMPLATES, SIMPLE_SUMMARY_TEMPLATES } from "./summary-templates";
 
 export interface SummaryContext {
   result: DriveResultType;
@@ -105,6 +105,26 @@ export function generateSummary(ctx: SummaryContext): string {
   }
   const idx = Math.floor(Math.random() * templates.length);
   return resolveVariables(templates[idx], ctx);
+}
+
+/**
+ * Generate a team-only summary for non-Enhanced mode (no player names).
+ * Uses SIMPLE_SUMMARY_TEMPLATES first, falls back to SUMMARY_TEMPLATES
+ * for result types that already only use {team}/{opponent}/{fieldpos}.
+ */
+export function generateSimpleSummary(
+  result: DriveResultType,
+  offenseTeamName: string,
+  defenseTeamName: string,
+  fieldPosition: FieldPosition
+): string {
+  const templates = SIMPLE_SUMMARY_TEMPLATES[result] ?? SUMMARY_TEMPLATES[result];
+  if (!templates || templates.length === 0) return "";
+  const idx = Math.floor(Math.random() * templates.length);
+  return templates[idx]
+    .replace(/\{team\}/g, offenseTeamName)
+    .replace(/\{opponent\}/g, defenseTeamName)
+    .replace(/\{fieldpos\}/g, fieldPosition.toLowerCase());
 }
 
 /**

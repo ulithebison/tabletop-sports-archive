@@ -316,3 +316,217 @@ export interface WPAnalytics {
   leadChanges: number;
   biggestSwingDelta: number;
 }
+
+// ============================================================
+// Sprint 5 — Season Replay
+// ============================================================
+
+export type SeasonStatus = "setup" | "regular_season" | "playoffs" | "completed";
+
+export type LeagueType = "NFL" | "USFL" | "AFL" | "CFL" | "XFL" | "Custom";
+
+export type OvertimeType = "sudden_death" | "modified_sudden_death" | "guaranteed_possession";
+
+export type PlayoffRound = "wild_card" | "divisional" | "conference" | "super_bowl";
+
+export interface SeasonConfig {
+  totalRegularSeasonWeeks: number;
+  playoffTeams: number;
+  hasByeWeeks: boolean;
+  homeFieldInPlayoffs: boolean;
+}
+
+export interface OvertimeConfig {
+  type: OvertimeType;
+  canEndInTie: boolean;
+}
+
+export interface Division {
+  name: string;
+  teamIds: string[];
+}
+
+export interface ScheduleGame {
+  id: string;
+  week: number;
+  homeTeamId: string;
+  awayTeamId: string;
+  result?: SeasonGameResult;
+  gameId?: string;
+  isBye?: boolean;
+  isPlayoff?: boolean;
+  playoffRound?: PlayoffRound;
+}
+
+export interface SeasonGameResult {
+  homeScore: number;
+  awayScore: number;
+  winner: "home" | "away" | "tie";
+  isOvertime: boolean;
+  isSimulated: boolean;
+  instantResultData?: InstantResultData;
+}
+
+export interface InstantResultData {
+  homeTeamRating: number;
+  awayTeamRating: number;
+  pointDifferential: number;
+  winRangeMax: number;
+  rollResult: number;
+  otRollResult?: number;
+  winnerScoringQuality: "PROLIFIC" | "PROLIFIC_SEMI" | "NEUTRAL" | "DULL_SEMI" | "DULL";
+  winnerScoreRoll: number;
+  loserClosenessRoll: number;
+  loserFormulaRoll: number;
+}
+
+export interface FdfSeason {
+  id: string;
+  name: string;
+  year: number;
+  leagueType: LeagueType;
+  config: SeasonConfig;
+  overtimeRules: OvertimeConfig;
+  currentWeek: number;
+  status: SeasonStatus;
+  teamIds: string[];
+  divisions: Division[];
+  schedule: ScheduleGame[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeamStanding {
+  teamId: string;
+  wins: number;
+  losses: number;
+  ties: number;
+  winPct: number;
+  pointsFor: number;
+  pointsAgainst: number;
+  pointDiff: number;
+  streak: string;
+  divisionRecord: { wins: number; losses: number; ties: number };
+  homeRecord: { wins: number; losses: number; ties: number };
+  awayRecord: { wins: number; losses: number; ties: number };
+  last5: ("W" | "L" | "T")[];
+}
+
+// ============================================================
+// Sprint 6 — Season Stats & Awards
+// ============================================================
+
+export interface PlayerGameLogEntry {
+  week: number;
+  opponentTeamId: string;
+  isHome: boolean;
+  result: "W" | "L" | "T";
+  score: string; // e.g. "24-17"
+  passingTD: number;
+  interceptions: number;
+  rushingTD: number;
+  receivingTD: number;
+  fieldGoalsMade: number;
+  extraPointsMade: number;
+  pointsResponsibleFor: number;
+}
+
+export interface PlayerSeasonStats {
+  playerId: string;
+  playerName: string;
+  playerNumber?: number;
+  teamId: string;
+  gamesPlayed: number;
+  // Passing
+  passingTD: number;
+  interceptions: number;
+  sacks: number;
+  // Rushing
+  rushingTD: number;
+  fumbles: number;
+  // Receiving
+  receivingTD: number;
+  // Kicking
+  fieldGoalsMade: number;
+  fieldGoalsMissed: number;
+  extraPointsMade: number;
+  extraPointsMissed: number;
+  // Defense
+  defensiveInterceptions: number;
+  fumbleRecoveries: number;
+  defensiveSacks: number;
+  returnTouchdowns: number;
+  // Special Teams
+  kickReturnTD: number;
+  puntReturnTD: number;
+  // Totals
+  totalTouchdowns: number;
+  pointsResponsibleFor: number;
+  // Derived
+  tdIntRatio: number; // (passingTD + rushingTD + receivingTD) / max(1, interceptions)
+  kickingPoints: number; // FG*3 + XP*1
+  // Game log
+  gameLog: PlayerGameLogEntry[];
+}
+
+export interface TeamSeasonStats {
+  teamId: string;
+  gamesPlayed: number;
+  manualGamesPlayed: number;
+  simulatedGamesPlayed: number;
+  pointsFor: number;
+  pointsAgainst: number;
+  avgPointsFor: number;
+  avgPointsAgainst: number;
+  pointDiff: number;
+  // Drive-based (manual games only)
+  fieldPositionPoor: number;   // percentage 0-100
+  fieldPositionAvg: number;
+  fieldPositionGreat: number;
+  turnoversCommitted: number;
+  turnoversForced: number;
+  turnoverDiff: number;
+}
+
+export type SeasonAwardType = "MVP" | "OPOY" | "DPOY" | "CLUTCH" | "BEST_TURNOVER_TEAM";
+
+export interface SeasonAward {
+  type: SeasonAwardType;
+  playerId: string;
+  playerName: string;
+  playerNumber?: number;
+  teamId: string;
+  statLine: string;
+  isTeamAward?: boolean;
+}
+
+export interface PlayerOfTheWeek {
+  week: number;
+  playerId: string;
+  playerName: string;
+  playerNumber?: number;
+  teamId: string;
+  statLine: string;
+  pointsResponsibleFor: number;
+}
+
+export type SeasonMomentType =
+  | "biggest_wp_swing"
+  | "closest_game"
+  | "blowout"
+  | "comeback"
+  | "shutout"
+  | "highest_scoring"
+  | "overtime";
+
+export interface SeasonMoment {
+  type: SeasonMomentType;
+  week: number;
+  homeTeamId: string;
+  awayTeamId: string;
+  homeScore: number;
+  awayScore: number;
+  headline: string;
+  gameId?: string;
+  wpSwing?: number;
+}

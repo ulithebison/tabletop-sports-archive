@@ -1,4 +1,4 @@
-import type { DriveResultType, PATResult, FieldPosition, RosterPosition } from "./types";
+import type { DriveResultType, PATResult, FieldPosition, RosterPosition, LeagueType } from "./types";
 
 // Timing die: face value → ticks consumed
 export const TIMING_DIE_MAP: Record<number, number> = {
@@ -76,6 +76,7 @@ export const STORAGE_KEYS = {
   TEAMS: "fdf_teams",
   GAMES: "fdf_games",
   SETTINGS: "fdf_settings",
+  SEASONS: "fdf_seasons",
 } as const;
 
 // ============================================================
@@ -102,3 +103,26 @@ export const POSITION_LABELS: Record<RosterPosition, string> = {
   KR: "Kick Returner",
   PR: "Punt Returner",
 };
+
+// ============================================================
+// Sprint 5 — Season Replay
+// ============================================================
+
+export const LEAGUE_TYPE_LABELS: Record<LeagueType, string> = {
+  NFL: "NFL",
+  USFL: "USFL",
+  AFL: "AFL",
+  CFL: "CFL",
+  XFL: "XFL",
+  Custom: "Custom",
+};
+
+export const PLAYOFF_FORMAT_OPTIONS = [
+  { value: 2, label: "2 teams" },
+  { value: 4, label: "4 teams" },
+  { value: 6, label: "6 teams" },
+  { value: 7, label: "7 teams (NFL)" },
+  { value: 8, label: "8 teams" },
+  { value: 12, label: "12 teams" },
+  { value: 14, label: "14 teams" },
+];

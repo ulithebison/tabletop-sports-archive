@@ -1,21 +1,63 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
+import { useSeasonStore } from "@/lib/fdf/stores/season-store";
 import { Scoresheet } from "@/components/fdf/scoresheet/Scoresheet";
 import { GameSummary } from "@/components/fdf/scoresheet/GameSummary";
+import type { SeasonGameResult } from "@/lib/fdf/types";
 
 export default function GamePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [hydrated, setHydrated] = useState(false);
 
-  const game = useGameStore((s) => s.getGame(params.id as string));
+  const gameId = params.id as string;
+  const seasonId = searchParams.get("seasonId");
+  const scheduleGameId = searchParams.get("scheduleGameId");
+
+  const game = useGameStore((s) => s.getGame(gameId));
   const getTeam = useTeamStore((s) => s.getTeam);
+  const recordGameResult = useSeasonStore((s) => s.recordGameResult);
 
   useEffect(() => setHydrated(true), []);
+
+  // When the game completes, write the result back to the season
+  const handleGameComplete = useCallback(() => {
+    if (!seasonId || !scheduleGameId) return;
+
+    const completedGame = useGameStore.getState().getGame(gameId);
+    if (!completedGame || completedGame.status !== "completed") return;
+
+    const homeScore = completedGame.score.home.total;
+    const awayScore = completedGame.score.away.total;
+    const isOvertime = completedGame.gameClock.quarter === 5;
+
+    const result: SeasonGameResult = {
+      homeScore,
+      awayScore,
+      winner: homeScore > awayScore ? "home" : homeScore < awayScore ? "away" : "tie",
+      isOvertime,
+      isSimulated: false,
+    };
+
+    recordGameResult(seasonId, scheduleGameId, result, gameId);
+  }, [seasonId, scheduleGameId, gameId, recordGameResult]);
+
+  // Auto-detect game completion and write result
+  useEffect(() => {
+    if (game?.status === "completed" && seasonId && scheduleGameId) {
+      // Check if result is already recorded
+      const season = useSeasonStore.getState().getSeason(seasonId);
+      const scheduleGame = season?.schedule.find((g) => g.id === scheduleGameId);
+      if (scheduleGame && !scheduleGame.result) {
+        handleGameComplete();
+      }
+    }
+  }, [game?.status, seasonId, scheduleGameId, handleGameComplete]);
 
   if (!hydrated) {
     return (
@@ -42,7 +84,7 @@ export default function GamePage() {
   if (game.status === "completed") {
     return (
       <div className="max-w-5xl mx-auto">
-        <GameSummary game={game} homeTeam={homeTeam} awayTeam={awayTeam} />
+        <GameSummary game={game} homeTeam={homeTeam} awayTeam={awayTeam} seasonId={seasonId ?? undefined} />
       </div>
     );
   }
@@ -53,7 +95,7 @@ export default function GamePage() {
         game={game}
         homeTeam={homeTeam}
         awayTeam={awayTeam}
-        onGameComplete={() => {}}
+        onGameComplete={handleGameComplete}
       />
     </div>
   );
