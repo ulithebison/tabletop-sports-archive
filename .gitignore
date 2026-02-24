@@ -34,6 +34,9 @@ yarn-error.log*
 # copyrighted FDF reference materials (kept locally only)
 docs/fdf_webapp/references/
 
+# BGG pipeline data (tokens, checkpoints, local scripts)
+scripts/bgg_pipeline/
+
 # vercel
 .vercel
 
