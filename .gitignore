@@ -31,6 +31,9 @@ yarn-error.log*
 # claude code
 .claude/
 
+# copyrighted FDF reference materials (kept locally only)
+docs/fdf_webapp/references/
+
 # vercel
 .vercel
 
