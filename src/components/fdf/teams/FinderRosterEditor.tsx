@@ -5,7 +5,7 @@ import type { FinderRoster, FinderPlayer } from "@/lib/fdf/types";
 import { generateId } from "@/lib/fdf/id";
 import { parseTeamFile } from "@/lib/fdf/team-file-parser";
 import { FinderRosterImport } from "./FinderRosterImport";
-import { ChevronDown, ChevronRight, Plus, Trash2, Upload, FileUp, Pencil, AlertTriangle } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2, Upload, FileUp, Pencil, AlertTriangle, HelpCircle, X } from "lucide-react";
 
 export const EMPTY_FINDER_ROSTER: FinderRoster = {
   rushingTD: [],
@@ -41,7 +41,7 @@ function findExistingPlayerId(roster: FinderRoster, name: string, number?: numbe
     ...roster.kickingFGXP,
   ];
   const match = allPlayers.find(
-    (p) => p.name.toLowerCase() === name.toLowerCase() && p.number === number
+    (p) => p.name.toLowerCase() === name.toLowerCase() && (number === undefined || p.number === number)
   );
   return match?.id;
 }
@@ -69,23 +69,20 @@ function CategorySection({ config, players, roster, onChange, onOpenImport }: Ca
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
-  const [newNumber, setNewNumber] = useState("");
   const [newRange, setNewRange] = useState("");
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const handleAdd = () => {
     if (!newName.trim()) return;
-    const num = newNumber ? parseInt(newNumber, 10) : undefined;
-    const existingId = findExistingPlayerId(roster, newName.trim(), isNaN(num ?? NaN) ? undefined : num);
+    const existingId = findExistingPlayerId(roster, newName.trim());
     const player: FinderPlayer = {
       id: existingId || generateId(),
       name: newName.trim(),
-      number: num && !isNaN(num) ? num : undefined,
+      number: undefined,
       finderRange: newRange.trim() || undefined,
     };
     onChange({ ...roster, [config.key]: [...roster[config.key], player] });
     setNewName("");
-    setNewNumber("");
     setNewRange("");
     // Keep adding open, focus name input
     setTimeout(() => nameInputRef.current?.focus(), 0);
@@ -201,13 +198,6 @@ function CategorySection({ config, players, roster, onChange, onOpenImport }: Ca
             <div className="mt-1">
               <div className="flex items-center gap-1.5">
                 <input
-                  value={newNumber}
-                  onChange={(e) => setNewNumber(e.target.value)}
-                  placeholder="#"
-                  className="w-10 rounded px-1.5 py-1 text-xs font-fdf-mono text-center"
-                  style={inputStyle}
-                />
-                <input
                   ref={nameInputRef}
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
@@ -223,7 +213,6 @@ function CategorySection({ config, players, roster, onChange, onOpenImport }: Ca
                     if (e.key === "Escape") {
                       setAdding(false);
                       setNewName("");
-                      setNewNumber("");
                       setNewRange("");
                     }
                   }}
@@ -242,7 +231,6 @@ function CategorySection({ config, players, roster, onChange, onOpenImport }: Ca
                     if (e.key === "Escape") {
                       setAdding(false);
                       setNewName("");
-                      setNewNumber("");
                       setNewRange("");
                     }
                   }}
@@ -252,7 +240,7 @@ function CategorySection({ config, players, roster, onChange, onOpenImport }: Ca
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setAdding(false); setNewName(""); setNewNumber(""); setNewRange(""); }}
+                  onClick={() => { setAdding(false); setNewName(""); setNewRange(""); }}
                   className="p-1 rounded text-sm"
                   style={{ color: "var(--fdf-text-muted)" }}
                 >
@@ -277,7 +265,6 @@ function EditPlayerInline({
   onCancel: () => void;
 }) {
   const [name, setName] = useState(player.name);
-  const [number, setNumber] = useState(player.number?.toString() ?? "");
   const [range, setRange] = useState(player.finderRange ?? "");
 
   const inputStyle = {
@@ -287,18 +274,15 @@ function EditPlayerInline({
   };
 
   const handleSave = () => {
-    const num = number ? parseInt(number, 10) : undefined;
     onSave({
       ...player,
       name: name.trim() || player.name,
-      number: num && !isNaN(num) ? num : undefined,
       finderRange: range.trim() || undefined,
     });
   };
 
   return (
     <div className="flex items-center gap-1.5">
-      <input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="#" className="w-10 rounded px-1.5 py-0.5 text-xs font-fdf-mono text-center" style={inputStyle} />
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -326,6 +310,7 @@ export function FinderRosterEditor({ finderRoster, onChange }: FinderRosterEdito
   const [importCategory, setImportCategory] = useState<FinderCategory | null>(null);
   const [fileImportPending, setFileImportPending] = useState<{ roster: FinderRoster; warnings: string[] } | null>(null);
   const [fileImportWarnings, setFileImportWarnings] = useState<string[]>([]);
+  const [showGuide, setShowGuide] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImport = (category: FinderCategory, players: FinderPlayer[]) => {
@@ -379,15 +364,26 @@ export function FinderRosterEditor({ finderRoster, onChange }: FinderRosterEdito
         <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>
           {totalPlayers(finderRoster)} unique player{totalPlayers(finderRoster) !== 1 ? "s" : ""} on roster
         </span>
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold font-fdf-mono uppercase tracking-wider transition-colors"
-          style={{ color: "var(--fdf-accent)", border: "1px solid var(--fdf-border)" }}
-        >
-          <FileUp size={12} />
-          Import Team File
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-bold font-fdf-mono uppercase tracking-wider transition-colors"
+            style={{ color: "var(--fdf-accent)", border: "1px solid var(--fdf-border)" }}
+          >
+            <FileUp size={12} />
+            Import Team File
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowGuide(true)}
+            className="p-1 rounded transition-colors"
+            style={{ color: "var(--fdf-text-muted)" }}
+            title="Import format guide"
+          >
+            <HelpCircle size={14} />
+          </button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -462,6 +458,67 @@ export function FinderRosterEditor({ finderRoster, onChange }: FinderRosterEdito
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Format guide modal */}
+      {showGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div
+            className="w-full max-w-md rounded-lg p-4 mx-4 max-h-[80vh] overflow-y-auto"
+            style={{ backgroundColor: "var(--fdf-bg-card)", border: "1px solid var(--fdf-border)" }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold font-fdf-mono uppercase tracking-wider" style={{ color: "var(--fdf-accent)" }}>
+                Import Format Guide
+              </h3>
+              <button type="button" onClick={() => setShowGuide(false)} className="p-1 rounded" style={{ color: "var(--fdf-text-muted)" }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Section 1: Team File */}
+            <div className="mb-4">
+              <h4 className="text-xs font-bold mb-1.5" style={{ color: "var(--fdf-text-primary)" }}>
+                Team File (.txt)
+              </h4>
+              <p className="text-[10px] mb-2" style={{ color: "var(--fdf-text-muted)" }}>
+                Section headers ({`RUSHING TD`}, {`PASSING TD`}, {`RECEIVING TD`}, {`FG & XP`}), player names one per line, blank line, then finder ranges (two numbers per line matching player order).
+              </p>
+              <pre
+                className="text-[10px] font-fdf-mono rounded px-2.5 py-2 whitespace-pre leading-relaxed"
+                style={{ backgroundColor: "var(--fdf-bg-elevated)", color: "var(--fdf-text-secondary)", border: "1px solid var(--fdf-border)" }}
+              >
+{`RUSHING TD
+Josh Jacobs
+Emanuel Wilson
+
+11 45
+46 55
+
+PASSING TD
+Jordan Love
+...`}
+              </pre>
+            </div>
+
+            {/* Section 2: Quick Import */}
+            <div>
+              <h4 className="text-xs font-bold mb-1.5" style={{ color: "var(--fdf-text-primary)" }}>
+                Quick Import (per category)
+              </h4>
+              <p className="text-[10px] mb-2" style={{ color: "var(--fdf-text-muted)" }}>
+                One player per line, comma-separated. Used via the small <Upload size={10} className="inline" /> icon in each section header.
+              </p>
+              <pre
+                className="text-[10px] font-fdf-mono rounded px-2.5 py-2 whitespace-pre leading-relaxed"
+                style={{ backgroundColor: "var(--fdf-bg-elevated)", color: "var(--fdf-text-secondary)", border: "1px solid var(--fdf-border)" }}
+              >
+{`D. Henry, 11-40
+J. Mixon, 41-55`}
+              </pre>
             </div>
           </div>
         </div>

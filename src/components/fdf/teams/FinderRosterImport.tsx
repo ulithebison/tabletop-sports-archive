@@ -13,7 +13,7 @@ interface FinderRosterImportProps {
 
 /**
  * Dialog for importing players from pasted text.
- * Format per line: Name, Number, Range (e.g. "D. Henry, 4, 11-40")
+ * Format per line: Name, Range (e.g. "D. Henry, 11-40")
  */
 export function FinderRosterImport({ category, onImport, onClose }: FinderRosterImportProps) {
   const [text, setText] = useState("");
@@ -27,13 +27,12 @@ export function FinderRosterImport({ category, onImport, onClose }: FinderRoster
       if (parts.length === 0 || !parts[0]) continue;
 
       const name = parts[0];
-      const number = parts[1] ? parseInt(parts[1], 10) : undefined;
-      const finderRange = parts[2] || undefined;
+      const finderRange = parts[1] || undefined;
 
       players.push({
         id: generateId(),
         name,
-        number: number && !isNaN(number) ? number : undefined,
+        number: undefined,
         finderRange,
       });
     }
@@ -66,17 +65,17 @@ export function FinderRosterImport({ category, onImport, onClose }: FinderRoster
         </div>
 
         <p className="text-xs mb-2" style={{ color: "var(--fdf-text-muted)" }}>
-          One player per line: <span className="font-fdf-mono">Name, Number, Range</span>
+          One player per line: <span className="font-fdf-mono">Name, Range</span>
         </p>
         <p className="text-[10px] mb-3 font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>
-          Example: D. Henry, 4, 11-40
+          Example: D. Henry, 11-40
         </p>
 
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={8}
-          placeholder={"D. Henry, 4, 11-40\nJ. Mixon, 26, 41-55\nD. Cook, 33, 56-66"}
+          placeholder={"D. Henry, 11-40\nJ. Mixon, 41-55\nD. Cook, 56-66"}
           className="w-full rounded px-2.5 py-2 text-xs font-fdf-mono mb-3"
           style={inputStyle}
           autoFocus
