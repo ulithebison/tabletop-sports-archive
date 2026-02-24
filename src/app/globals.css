@@ -330,3 +330,50 @@
   .badge-complex { background: rgba(232,133,26,0.14);  color: #f8c07a; }
   .badge-expert  { background: rgba(196,75,59,0.14);   color: #e4897e; }
 }
+
+/* ================================================================
+ * FDF COMPANION APP — Theme Variables
+ * Scoped under [data-theme="fdf"] to avoid bleeding into archive
+ * ================================================================ */
+
+[data-theme="fdf"] {
+  /* Backgrounds */
+  --fdf-bg-primary: #0a0e17;
+  --fdf-bg-secondary: #111827;
+  --fdf-bg-card: #1a2332;
+  --fdf-bg-elevated: #243044;
+
+  /* Text */
+  --fdf-text-primary: #f1f5f9;
+  --fdf-text-secondary: #94a3b8;
+  --fdf-text-muted: #64748b;
+
+  /* Accent */
+  --fdf-accent: #3b82f6;
+
+  /* Drive Results */
+  --fdf-td: #22c55e;
+  --fdf-fg: #f59e0b;
+  --fdf-turnover: #ef4444;
+  --fdf-punt: #64748b;
+  --fdf-safety: #a855f7;
+  --fdf-unusual: #f97316;
+  --fdf-desperation: #ec4899;
+
+  /* Field Position */
+  --fdf-fp-poor: #ef4444;
+  --fdf-fp-average: #f59e0b;
+  --fdf-fp-great: #22c55e;
+
+  /* Quality Badges */
+  --fdf-quality-positive: #22c55e;
+  --fdf-quality-negative: #ef4444;
+  --fdf-quality-semi: #f59e0b;
+
+  /* Scoreboard */
+  --fdf-scoreboard-bg: #000000;
+  --fdf-scoreboard-text: #fbbf24;
+
+  /* Borders */
+  --fdf-border: rgba(59, 130, 246, 0.15);
+}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Oswald, Inter, DM_Mono, Lora } from "next/font/google";
+import { Oswald, Inter, DM_Mono, Lora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -35,6 +35,13 @@ const lora = Lora({
   display: "swap",
 });
 
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL
@@ -61,7 +68,8 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${oswald.variable} ${inter.variable} ${dmMono.variable} ${lora.variable}`}
+      className={`${oswald.variable} ${inter.variable} ${dmMono.variable} ${lora.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
     >
       <body className="min-h-screen flex flex-col bg-ink-950 text-ink-50">
         <Header />

@@ -87,6 +87,18 @@ const config: Config = {
           100: "#faf0cc",
           DEFAULT: "#d4a843",
         },
+        fdf: {
+          bg: "#0a0e17",
+          "bg-secondary": "#111827",
+          card: "#1a2332",
+          elevated: "#243044",
+          accent: "#3b82f6",
+          td: "#22c55e",
+          fg: "#f59e0b",
+          turnover: "#ef4444",
+          punt: "#64748b",
+          safety: "#a855f7",
+        },
         ember: {
           700: "#8c4400",
           600: "#b05a0c",
@@ -106,6 +118,7 @@ const config: Config = {
         heading: ["var(--font-oswald)", "Arial Narrow", "Arial", "sans-serif"],
         body:    ["var(--font-inter)", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         mono:    ["var(--font-dm-mono)", "Fira Code", "Consolas", "monospace"],
+        "fdf-mono": ["var(--font-jetbrains)", "'JetBrains Mono'", "monospace"],
         serif:   ["var(--font-lora)", "Georgia", "serif"],
       },
 

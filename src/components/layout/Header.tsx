@@ -19,6 +19,7 @@ const NAV_LINKS = [
   { href: "/blog", label: "Blog" },
   { href: "/news", label: "News" },
   { href: "/submit/game", label: "Submit Game" },
+  { href: "/fdf", label: "FDF Companion" },
 ];
 
 export function Header() {

@@ -1,0 +1,14 @@
+{
+  "games": {},
+  "game_families": {},
+  "pending_ids": [],
+  "fetched_ids": [],
+  "failed_ids": [],
+  "metadata": {
+    "started_at": "2026-02-22T09:59:38.378854+00:00",
+    "families_discovered": [
+      5840
+    ],
+    "last_saved": "2026-02-22T09:59:38.498789+00:00"
+  }
+}
