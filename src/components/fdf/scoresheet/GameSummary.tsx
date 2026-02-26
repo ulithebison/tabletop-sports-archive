@@ -6,10 +6,11 @@ import type { FdfGame, FdfTeam } from "@/lib/fdf/types";
 import { isScoringPlay, isReturnTD } from "@/lib/fdf/scoring";
 import { calculatePlayerGameStats, getGameMVP } from "@/lib/fdf/player-stats";
 import { computeWPHistory, computeWPAnalytics } from "@/lib/fdf/win-probability";
+import { exportGameToExcel } from "@/lib/fdf/excel-export";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { useRouter } from "next/navigation";
-import { Trophy, ArrowLeft, RotateCcw, Share2 } from "lucide-react";
+import { Trophy, ArrowLeft, RotateCcw, Share2, Printer, FileSpreadsheet } from "lucide-react";
 import { GameBoxScore } from "./GameBoxScore";
 import { WinProbabilityChart } from "./WinProbabilityChart";
 import { GameCardExport } from "./GameCardExport";
@@ -184,6 +185,7 @@ export function GameSummary({ game, homeTeam, awayTeam, seasonId }: GameSummaryP
   const createGame = useGameStore((s) => s.createGame);
   const getTeam = useTeamStore((s) => s.getTeam);
   const [showCard, setShowCard] = useState(false);
+  const [excelLoading, setExcelLoading] = useState(false);
 
   // Enhanced mode: calculate player stats (prefer FinderRoster, fall back to TeamRoster)
   const homeTeamData = getTeam(game.homeTeamId);
@@ -209,6 +211,21 @@ export function GameSummary({ game, homeTeam, awayTeam, seasonId }: GameSummaryP
   const handleRematch = () => {
     const newGameId = createGame(game.homeTeamId, game.awayTeamId, game.enhancedMode || undefined);
     router.push(`/fdf/game/${newGameId}`);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownloadExcel = async () => {
+    setExcelLoading(true);
+    try {
+      await exportGameToExcel(game, homeTeam, awayTeam, playerStats.length > 0 ? playerStats : undefined);
+    } catch (err) {
+      console.error("Excel export error:", err);
+    } finally {
+      setExcelLoading(false);
+    }
   };
 
   return (
@@ -350,10 +367,40 @@ export function GameSummary({ game, homeTeam, awayTeam, seasonId }: GameSummaryP
       {game.drives.length > 0 && (
         <DriveLog drives={game.drives} homeTeam={homeTeam} awayTeam={awayTeam} />
       )}
+      {/* Export Buttons */}
+      <div className="flex gap-3" data-no-print>
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-fdf-mono font-bold transition-colors"
+          style={{
+            color: "var(--fdf-accent)",
+            border: "1px solid var(--fdf-accent)",
+            backgroundColor: "rgba(59,130,246,0.08)",
+          }}
+        >
+          <Printer size={16} />
+          Download PDF
+        </button>
+        <button
+          type="button"
+          onClick={handleDownloadExcel}
+          disabled={excelLoading}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-fdf-mono font-bold transition-colors disabled:opacity-50"
+          style={{
+            color: "var(--fdf-accent)",
+            border: "1px solid var(--fdf-accent)",
+            backgroundColor: "rgba(59,130,246,0.08)",
+          }}
+        >
+          <FileSpreadsheet size={16} />
+          {excelLoading ? "Exporting…" : "Download Excel"}
+        </button>
+      </div>
 
       {/* Share Game Card */}
       {game.drives.length >= 2 && (
-        <>
+        <div data-no-print>
           {!showCard ? (
             <button
               type="button"
@@ -379,11 +426,11 @@ export function GameSummary({ game, homeTeam, awayTeam, seasonId }: GameSummaryP
               mvp={mvp}
             />
           )}
-        </>
+        </div>
       )}
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="flex gap-3" data-no-print>
         <Link
           href={seasonId ? `/fdf/seasons/${seasonId}` : "/fdf"}
           className="flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-medium transition-colors"

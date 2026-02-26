@@ -11,6 +11,9 @@ interface WeekViewProps {
   onPlay: (game: ScheduleGame) => void;
   onSimulate: (gameId: string) => void;
   onSimulateWeek: () => void;
+  onResume?: (game: ScheduleGame) => void;
+  onReset?: (game: ScheduleGame) => void;
+  activeGameIds?: Set<string>;
 }
 
 export function WeekView({
@@ -20,9 +23,12 @@ export function WeekView({
   onPlay,
   onSimulate,
   onSimulateWeek,
+  onResume,
+  onReset,
+  activeGameIds,
 }: WeekViewProps) {
   const weekGames = season.schedule.filter((g) => g.week === week);
-  const playableGames = weekGames.filter((g) => !g.result && !g.isBye);
+  const playableGames = weekGames.filter((g) => !g.result && !g.isBye && !(g.gameId && activeGameIds?.has(g.id)));
   const isPlayoffWeek = weekGames.some((g) => g.isPlayoff);
 
   return (
@@ -55,6 +61,9 @@ export function WeekView({
             seasonId={season.id}
             onPlay={onPlay}
             onSimulate={onSimulate}
+            onResume={onResume}
+            onReset={onReset}
+            isActiveGame={!!game.gameId && (activeGameIds?.has(game.id) ?? false)}
           />
         ))}
       </div>

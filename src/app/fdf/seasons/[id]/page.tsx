@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Play, Settings, Zap, BarChart3, Trophy, BookOpen, Coins, X } from "lucide-react";
+import { ArrowLeft, Trash2, Play, Settings, Zap, BarChart3, Trophy, BookOpen } from "lucide-react";
 import { useSeasonStore } from "@/lib/fdf/stores/season-store";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
@@ -16,9 +16,10 @@ import { SimulationModal } from "@/components/fdf/seasons/SimulationModal";
 import { SeedingPreview } from "@/components/fdf/seasons/SeedingPreview";
 import { PlayoffBracket } from "@/components/fdf/seasons/PlayoffBracket";
 import { SeasonComplete } from "@/components/fdf/seasons/SeasonComplete";
+import { PreGameModal } from "@/components/fdf/seasons/PreGameModal";
 import { simulateInstantResult } from "@/lib/fdf/instant-results";
 import { calculateStandings, sortStandings, getStandingsByDivision } from "@/lib/fdf/standings";
-import { generatePlayoffSeeds, generatePlayoffSchedule, advancePlayoffWinner } from "@/lib/fdf/playoff-seeding";
+import { generatePlayoffSeeds, generatePlayoffSchedule, advancePlayoffWinner, revertPlayoffResult } from "@/lib/fdf/playoff-seeding";
 import { calculateSeasonPlayerStats, calculateTeamSeasonStats, calculateSeasonAwards } from "@/lib/fdf/season-stats";
 import type { ScheduleGame, SeasonGameResult } from "@/lib/fdf/types";
 
@@ -34,6 +35,7 @@ export default function SeasonDashboardPage() {
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<null | "week" | "remaining">(null);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [showStandings, setShowStandings] = useState(false);
   const [showSeeding, setShowSeeding] = useState(false);
@@ -42,9 +44,7 @@ export default function SeasonDashboardPage() {
     scheduleGameId: string;
   } | null>(null);
   const [pendingGame, setPendingGame] = useState<ScheduleGame | null>(null);
-  const [receivingTeam, setReceivingTeam] = useState<"home" | "away">("away");
-  const [coinFlipping, setCoinFlipping] = useState(false);
-  const [coinResult, setCoinResult] = useState<"home" | "away" | null>(null);
+  const [resetTarget, setResetTarget] = useState<ScheduleGame | null>(null);
 
   const seasonId = params.id as string;
   const season = useSeasonStore((s) => s.getSeason(seasonId));
@@ -55,9 +55,11 @@ export default function SeasonDashboardPage() {
   const simulateRemainingGames = useSeasonStore((s) => s.simulateRemainingGames);
   const startPlayoffs = useSeasonStore((s) => s.startPlayoffs);
   const completeSeason = useSeasonStore((s) => s.completeSeason);
+  const resetGameResult = useSeasonStore((s) => s.resetGameResult);
   const getTeam = useTeamStore((s) => s.getTeam);
   const teamsMap = useTeamStore((s) => s.teams);
   const createGame = useGameStore((s) => s.createGame);
+  const deleteGame = useGameStore((s) => s.deleteGame);
   const gamesMap = useGameStore((s) => s.games);
 
   const allTeams = useMemo(() => Object.values(teamsMap), [teamsMap]);
@@ -93,6 +95,18 @@ export default function SeasonDashboardPage() {
     if (!season) return [];
     return generatePlayoffSeeds(standings, season);
   }, [standings, season]);
+
+  // Detect in-progress games that haven't been completed
+  const activeGameIds = useMemo(() => {
+    if (!season) return new Set<string>();
+    const ids = new Set<string>();
+    for (const sg of season.schedule) {
+      if (sg.gameId && !sg.result && gamesMap[sg.gameId]?.status === "in_progress") {
+        ids.add(sg.id);
+      }
+    }
+    return ids;
+  }, [season, gamesMap]);
 
   // Awards for completed season display
   const seasonAwards = useMemo(() => {
@@ -141,30 +155,24 @@ export default function SeasonDashboardPage() {
     setSchedule(seasonId, games);
   }, [setSchedule, seasonId]);
 
+  const handleResume = useCallback((game: ScheduleGame) => {
+    if (game.gameId) {
+      router.push(`/fdf/game/${game.gameId}?seasonId=${seasonId}&scheduleGameId=${game.id}`);
+    }
+  }, [router, seasonId]);
+
   const handlePlay = useCallback((game: ScheduleGame) => {
+    // If there's an active in-progress game, resume it instead
+    if (game.gameId && activeGameIds.has(game.id)) {
+      handleResume(game);
+      return;
+    }
     setPendingGame(game);
-    setReceivingTeam("away");
-    setCoinResult(null);
-    setCoinFlipping(false);
-  }, []);
+  }, [activeGameIds, handleResume]);
 
-  const handleCoinToss = useCallback(() => {
-    setCoinFlipping(true);
-    setCoinResult(null);
-    setTimeout(() => {
-      const result: "home" | "away" = Math.random() < 0.5 ? "home" : "away";
-      setCoinResult(result);
-      setReceivingTeam(result);
-      setCoinFlipping(false);
-    }, 600);
-  }, []);
-
-  const handleStartPendingGame = useCallback(() => {
+  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away") => {
     if (!pendingGame) return;
-    const homeTeam = getTeam(pendingGame.homeTeamId);
-    const awayTeam = getTeam(pendingGame.awayTeamId);
-    const hasRoster = !!(homeTeam?.finderRoster || homeTeam?.roster || awayTeam?.finderRoster || awayTeam?.roster);
-    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, hasRoster || undefined, receivingTeam);
+    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam);
     const updateSchedule = useSeasonStore.getState().setSchedule;
     const currentSeason = useSeasonStore.getState().getSeason(seasonId);
     if (currentSeason) {
@@ -175,7 +183,36 @@ export default function SeasonDashboardPage() {
     }
     setPendingGame(null);
     router.push(`/fdf/game/${gameId}?seasonId=${seasonId}&scheduleGameId=${pendingGame.id}`);
-  }, [pendingGame, receivingTeam, createGame, seasonId, router, getTeam]);
+  }, [pendingGame, createGame, seasonId, router]);
+
+  const handleConfirmReset = useCallback(() => {
+    if (!resetTarget || !season) return;
+
+    if (resetTarget.isPlayoff) {
+      // Playoff: cascade revert
+      const { updatedSchedule, cascadedGameIds } = revertPlayoffResult(season.schedule, resetTarget.id);
+
+      // Delete FdfGames for all affected games
+      if (resetTarget.gameId) deleteGame(resetTarget.gameId);
+      for (const cId of cascadedGameIds) {
+        const cGame = season.schedule.find((g) => g.id === cId);
+        if (cGame?.gameId) deleteGame(cGame.gameId);
+      }
+
+      setSchedule(seasonId, updatedSchedule);
+
+      // If season was completed, reopen to playoffs
+      if (season.status === "completed") {
+        useSeasonStore.getState().setSeasonStatus(seasonId, "playoffs");
+      }
+    } else {
+      // Regular season: simple reset
+      if (resetTarget.gameId) deleteGame(resetTarget.gameId);
+      resetGameResult(seasonId, resetTarget.id);
+    }
+
+    setResetTarget(null);
+  }, [resetTarget, season, seasonId, deleteGame, resetGameResult, setSchedule]);
 
   const handleSimulate = useCallback((scheduleGameId: string) => {
     if (!season) return;
@@ -208,7 +245,7 @@ export default function SeasonDashboardPage() {
     if (!season) return;
     const currentWeek = selectedWeek ?? season.currentWeek;
     const weekGames = season.schedule.filter(
-      (g) => g.week === currentWeek && !g.result && !g.isBye
+      (g) => g.week === currentWeek && !g.result && !g.isBye && !activeGameIds.has(g.id)
     );
 
     for (const game of weekGames) {
@@ -218,7 +255,7 @@ export default function SeasonDashboardPage() {
       const result = simulateInstantResult(homeTeam, awayTeam, season.overtimeRules);
       recordGameResult(seasonId, game.id, result);
     }
-  }, [season, selectedWeek, getTeam, recordGameResult, seasonId]);
+  }, [season, selectedWeek, getTeam, recordGameResult, seasonId, activeGameIds]);
 
   const handleSimulateRemaining = useCallback(() => {
     if (!season) return;
@@ -229,8 +266,8 @@ export default function SeasonDashboardPage() {
         return { homeScore: 0, awayScore: 0, winner: "tie", isOvertime: false, isSimulated: true };
       }
       return simulateInstantResult(homeTeam, awayTeam, season.overtimeRules);
-    });
-  }, [season, seasonId, simulateRemainingGames, getTeam]);
+    }, activeGameIds);
+  }, [season, seasonId, simulateRemainingGames, getTeam, activeGameIds]);
 
   if (!hydrated) {
     return (
@@ -275,106 +312,117 @@ export default function SeasonDashboardPage() {
         />
       )}
 
-      {/* Coin Flip Modal */}
-      {pendingGame && (() => {
-        const pgHome = getTeam(pendingGame.homeTeamId);
-        const pgAway = getTeam(pendingGame.awayTeamId);
+      {/* Bulk Simulation Confirmation Modal */}
+      {confirmAction && (() => {
+        const weekGamesCount = season.schedule.filter(
+          (g) => g.week === currentWeek && !g.result && !g.isBye && !activeGameIds.has(g.id)
+        ).length;
+        const remainingGamesCount = season.schedule.filter(
+          (g) => !g.result && !g.isBye && !g.isPlayoff && !activeGameIds.has(g.id)
+        ).length;
+        const count = confirmAction === "week" ? weekGamesCount : remainingGamesCount;
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
             <div
-              className="w-full max-w-sm rounded-lg p-5 relative"
+              className="w-full max-w-sm rounded-lg p-5"
               style={{ backgroundColor: "var(--fdf-bg-card)", border: "1px solid var(--fdf-border)" }}
             >
-              <button
-                onClick={() => setPendingGame(null)}
-                className="absolute top-3 right-3 p-1 rounded hover:bg-white/10"
-                style={{ color: "var(--fdf-text-muted)" }}
-              >
-                <X size={16} />
-              </button>
-
-              <h2 className="text-sm font-fdf-mono font-bold mb-4" style={{ color: "var(--fdf-text-primary)" }}>
-                Kickoff
-              </h2>
-
-              {/* Teams display */}
-              <div className="flex items-center justify-center gap-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-sm" style={{ backgroundColor: pgAway?.primaryColor || "#666" }} />
-                  <span className="text-xs font-fdf-mono font-bold" style={{ color: "var(--fdf-text-primary)" }}>
-                    {pgAway?.abbreviation || "AWY"}
-                  </span>
-                </div>
-                <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>@</span>
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-sm" style={{ backgroundColor: pgHome?.primaryColor || "#666" }} />
-                  <span className="text-xs font-fdf-mono font-bold" style={{ color: "var(--fdf-text-primary)" }}>
-                    {pgHome?.abbreviation || "HME"}
-                  </span>
-                </div>
+              <div className="flex items-center gap-2 mb-3">
+                <Zap size={16} style={{ color: "#a855f7" }} />
+                <h2 className="text-sm font-fdf-mono font-bold" style={{ color: "var(--fdf-text-primary)" }}>
+                  Confirm Simulation
+                </h2>
               </div>
-
-              {/* Coin Toss button */}
-              <div className="flex justify-center mb-3">
+              <p className="text-sm mb-4" style={{ color: "var(--fdf-text-secondary)" }}>
+                {confirmAction === "week"
+                  ? `Simulate all ${count} unplayed game${count !== 1 ? "s" : ""} in Week ${currentWeek}?`
+                  : `Simulate all ${count} remaining regular season game${count !== 1 ? "s" : ""}? This cannot be undone.`}
+              </p>
+              <div className="flex gap-2">
                 <button
-                  onClick={handleCoinToss}
-                  disabled={coinFlipping}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-fdf-mono font-bold transition-all"
-                  style={{
-                    color: "var(--fdf-accent)",
-                    border: "1px solid var(--fdf-accent)",
-                    opacity: coinFlipping ? 0.5 : 0.9,
+                  onClick={() => {
+                    if (confirmAction === "week") handleSimulateWeek();
+                    else handleSimulateRemaining();
+                    setConfirmAction(null);
                   }}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded text-sm font-bold text-white transition-colors"
+                  style={{ backgroundColor: "#a855f7" }}
                 >
-                  <Coins size={14} className={coinFlipping ? "animate-spin" : ""} />
-                  {coinFlipping ? "Flipping..." : "Coin Toss"}
+                  <Zap size={14} />
+                  Simulate
+                </button>
+                <button
+                  onClick={() => setConfirmAction(null)}
+                  className="flex-1 px-4 py-2 rounded text-sm font-bold transition-colors"
+                  style={{ color: "var(--fdf-text-secondary)", border: "1px solid var(--fdf-border)" }}
+                >
+                  Cancel
                 </button>
               </div>
+            </div>
+          </div>
+        );
+      })()}
 
-              {coinResult && (
-                <p className="text-xs font-fdf-mono mb-3 text-center font-bold" style={{ color: "var(--fdf-accent)" }}>
-                  {coinResult === "away"
-                    ? (pgAway?.name || "Away") + " receives!"
-                    : (pgHome?.name || "Home") + " receives!"}
+      {/* Pre-Game Modal */}
+      {pendingGame && (
+        <PreGameModal
+          game={pendingGame}
+          homeTeam={getTeam(pendingGame.homeTeamId)}
+          awayTeam={getTeam(pendingGame.awayTeamId)}
+          onStart={handleStartPendingGame}
+          onCancel={() => setPendingGame(null)}
+        />
+      )}
+
+      {/* Reset Confirmation Modal */}
+      {resetTarget && (() => {
+        const rtHome = getTeam(resetTarget.homeTeamId);
+        const rtAway = getTeam(resetTarget.awayTeamId);
+        const isPlayoff = !!resetTarget.isPlayoff;
+        const cascadeCount = isPlayoff
+          ? revertPlayoffResult(season.schedule, resetTarget.id).cascadedGameIds.length
+          : 0;
+        const isCompleted = season.status === "completed";
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+            <div
+              className="w-full max-w-sm rounded-lg p-5"
+              style={{ backgroundColor: "var(--fdf-bg-card)", border: "1px solid var(--fdf-border)" }}
+            >
+              <h2 className="text-sm font-fdf-mono font-bold mb-3" style={{ color: "var(--fdf-text-primary)" }}>
+                Reset Game Result
+              </h2>
+              <p className="text-sm mb-2" style={{ color: "var(--fdf-text-secondary)" }}>
+                Reset {rtAway?.abbreviation || "AWY"} @ {rtHome?.abbreviation || "HME"} result
+                {resetTarget.result && ` (${resetTarget.result.awayScore}-${resetTarget.result.homeScore})`}?
+              </p>
+              {cascadeCount > 0 && (
+                <p className="text-xs mb-2 font-medium" style={{ color: "#f59e0b" }}>
+                  This will also clear {cascadeCount} downstream playoff matchup{cascadeCount !== 1 ? "s" : ""}.
                 </p>
               )}
-
-              {/* Manual receiving team selection */}
-              <div className="flex gap-3 mb-4">
-                <label className="flex items-center gap-2 cursor-pointer flex-1">
-                  <input
-                    type="radio"
-                    name="coinflip-receiving"
-                    checked={receivingTeam === "away"}
-                    onChange={() => { setReceivingTeam("away"); setCoinResult(null); }}
-                    className="accent-blue-500"
-                  />
-                  <span className="text-sm" style={{ color: receivingTeam === "away" ? "var(--fdf-text-primary)" : "var(--fdf-text-muted)" }}>
-                    {pgAway?.abbreviation || "Away"} receives
-                  </span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer flex-1">
-                  <input
-                    type="radio"
-                    name="coinflip-receiving"
-                    checked={receivingTeam === "home"}
-                    onChange={() => { setReceivingTeam("home"); setCoinResult(null); }}
-                    className="accent-blue-500"
-                  />
-                  <span className="text-sm" style={{ color: receivingTeam === "home" ? "var(--fdf-text-primary)" : "var(--fdf-text-muted)" }}>
-                    {pgHome?.abbreviation || "Home"} receives
-                  </span>
-                </label>
+              {isCompleted && (
+                <p className="text-xs mb-2 font-medium" style={{ color: "#f59e0b" }}>
+                  This will reopen the season.
+                </p>
+              )}
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={handleConfirmReset}
+                  className="flex-1 px-4 py-2 rounded text-sm font-bold text-white transition-colors"
+                  style={{ backgroundColor: "#ef4444" }}
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => setResetTarget(null)}
+                  className="flex-1 px-4 py-2 rounded text-sm font-bold transition-colors"
+                  style={{ color: "var(--fdf-text-secondary)", border: "1px solid var(--fdf-border)" }}
+                >
+                  Cancel
+                </button>
               </div>
-
-              <button
-                onClick={handleStartPendingGame}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded text-sm font-bold text-white transition-colors"
-                style={{ backgroundColor: "var(--fdf-accent)" }}
-              >
-                <Play size={16} />
-                Start Game
-              </button>
             </div>
           </div>
         );
@@ -507,7 +555,7 @@ export default function SeasonDashboardPage() {
             </Link>
             {season.status === "regular_season" && completedGames < totalRegGames && (
               <button
-                onClick={handleSimulateRemaining}
+                onClick={() => setConfirmAction("remaining")}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-fdf-mono font-bold"
                 style={{ color: "#a855f7", backgroundColor: "#a855f720", border: "1px solid #a855f740" }}
               >
@@ -552,7 +600,10 @@ export default function SeasonDashboardPage() {
             getTeam={getTeam}
             onPlay={handlePlay}
             onSimulate={handleSimulate}
-            onSimulateWeek={handleSimulateWeek}
+            onSimulateWeek={() => setConfirmAction("week")}
+            onResume={handleResume}
+            onReset={setResetTarget}
+            activeGameIds={activeGameIds}
           />
 
           {allRegularSeasonDone && season.status === "regular_season" && (
@@ -605,6 +656,9 @@ export default function SeasonDashboardPage() {
                 getTeam={getTeam}
                 onPlay={handlePlay}
                 onSimulate={handleSimulate}
+                onResume={handleResume}
+                onReset={setResetTarget}
+                activeGameIds={activeGameIds}
               />
             </div>
           )}
@@ -624,6 +678,7 @@ export default function SeasonDashboardPage() {
               getTeam={getTeam}
               onPlay={() => {}}
               onSimulate={() => {}}
+              onReset={setResetTarget}
             />
           )}
 

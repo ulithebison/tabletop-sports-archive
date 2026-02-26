@@ -69,6 +69,7 @@ export const FIELD_POSITIONS: { value: FieldPosition; label: string; color: stri
 
 // Clock constants
 export const TICKS_PER_QUARTER = 12;
+export const TICKS_PER_OT_PERIOD = 8; // 10 minutes (600s / 75s per tick)
 export const TOTAL_TICKS = 48;
 
 // LocalStorage keys

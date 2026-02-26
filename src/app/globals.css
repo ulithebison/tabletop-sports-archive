@@ -377,3 +377,41 @@
   /* Borders */
   --fdf-border: rgba(59, 130, 246, 0.15);
 }
+
+/* ================================================================
+ * PRINT STYLES — browser-native PDF via window.print()
+ * ================================================================ */
+
+@media print {
+  /* Hide non-content elements */
+  header,
+  footer,
+  nav,
+  [data-no-print],
+  .recharts-tooltip-wrapper {
+    display: none !important;
+  }
+
+  /* Preserve dark theme backgrounds & colors */
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  body,
+  [data-theme="fdf"] {
+    background-color: #0a0e17 !important;
+    color: #f1f5f9 !important;
+  }
+
+  /* Prevent cards from splitting across pages */
+  .rounded-lg {
+    break-inside: avoid;
+  }
+
+  /* Tighten spacing for print */
+  body {
+    margin: 0;
+    padding: 8px;
+  }
+}

@@ -207,3 +207,55 @@ export function advancePlayoffWinner(
 
   return schedule;
 }
+
+/**
+ * Revert a playoff game result and cascade-clear any downstream matchups
+ * that depend on the winner of this game.
+ */
+export function revertPlayoffResult(
+  schedule: ScheduleGame[],
+  resetGameId: string
+): { updatedSchedule: ScheduleGame[]; cascadedGameIds: string[] } {
+  const updated = schedule.map((g) => ({ ...g }));
+  const cascadedGameIds: string[] = [];
+
+  const rounds: PlayoffRound[] = ["wild_card", "divisional", "conference", "super_bowl"];
+
+  function revertGame(gameId: string) {
+    const game = updated.find((g) => g.id === gameId);
+    if (!game || !game.result || !game.isPlayoff) return;
+
+    const winnerId = game.result.winner === "home" ? game.homeTeamId : game.awayTeamId;
+
+    // Find next-round game where this winner was placed
+    const currentRoundIdx = rounds.indexOf(game.playoffRound!);
+    if (currentRoundIdx >= 0) {
+      const nextRound = rounds[currentRoundIdx + 1];
+      if (nextRound) {
+        for (const nextGame of updated) {
+          if (nextGame.isPlayoff && nextGame.playoffRound === nextRound) {
+            if (nextGame.homeTeamId === winnerId || nextGame.awayTeamId === winnerId) {
+              // If the next-round game also has a result, cascade-revert it first
+              if (nextGame.result) {
+                cascadedGameIds.push(nextGame.id);
+                revertGame(nextGame.id);
+              }
+              // Clear the winner's slot back to TBD
+              if (nextGame.homeTeamId === winnerId) nextGame.homeTeamId = "__TBD__";
+              if (nextGame.awayTeamId === winnerId) nextGame.awayTeamId = "__TBD__";
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Clear this game's result and gameId
+    game.result = undefined;
+    game.gameId = undefined;
+  }
+
+  revertGame(resetGameId);
+
+  return { updatedSchedule: updated, cascadedGameIds };
+}

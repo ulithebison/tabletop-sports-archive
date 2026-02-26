@@ -4,13 +4,15 @@ import type {
   FdfGame,
   DriveInput,
   DriveEntry,
+  DriveResultType,
   QuarterScore,
   GameClock,
+  OvertimeState,
 } from "../types";
 import { generateId } from "../id";
-import { STORAGE_KEYS, TICKS_PER_QUARTER } from "../constants";
-import { consumeTicks, startOvertime } from "../game-clock";
-import { getPointsForResult, addToQuarterScore, isDefenseScoringTD } from "../scoring";
+import { STORAGE_KEYS, TICKS_PER_QUARTER, TICKS_PER_OT_PERIOD } from "../constants";
+import { consumeTicks, startOvertime, startNewOTPeriod } from "../game-clock";
+import { getPointsForResult, addToQuarterScore, isDefenseScoringTD, isScoringPlay } from "../scoring";
 
 function emptyQuarterScore(): QuarterScore {
   return { q1: 0, q2: 0, q3: 0, q4: 0, ot: 0, total: 0 };
@@ -18,6 +20,196 @@ function emptyQuarterScore(): QuarterScore {
 
 function initialClock(): GameClock {
   return { quarter: 1, ticksRemaining: TICKS_PER_QUARTER, isHalftime: false, isGameOver: false };
+}
+
+/**
+ * Returns true if the drive result does NOT change possession.
+ * KICK_PUNT_KICK_TD and KICK_PUNT_REC_RECOVERS keep possession with the current team.
+ */
+function doesDriveEndPossession(result: DriveResultType): boolean {
+  if (isDefenseScoringTD(result) || result === "KICK_PUNT_REC_RECOVERS") {
+    return false; // no possession change
+  }
+  return true;
+}
+
+/**
+ * Recompute overtime state by replaying OT drives from scratch.
+ * Used after undo to rebuild possession tracking.
+ */
+function recomputeOvertimeState(
+  game: FdfGame,
+  otState: OvertimeState,
+): OvertimeState | undefined {
+  const otDrives = game.drives.filter(d => d.driveNumber >= otState.otStartDriveNumber);
+
+  if (otDrives.length === 0) {
+    // No OT drives left — still at start of OT
+    return {
+      ...otState,
+      phase: "guaranteed_possession",
+      firstTeamPossessionComplete: false,
+      secondTeamPossessionComplete: false,
+    };
+  }
+
+  const receivingTeamId = otState.receivingTeam === "home" ? game.homeTeamId : game.awayTeamId;
+  const kickingTeamId = otState.receivingTeam === "home" ? game.awayTeamId : game.homeTeamId;
+
+  let firstComplete = false;
+  let secondComplete = false;
+
+  for (const drive of otDrives) {
+    const isFirstTeamDrive = drive.teamId === receivingTeamId;
+    const isSecondTeamDrive = drive.teamId === kickingTeamId;
+
+    // Safety on first possession by first team → game over immediately (not tracked here)
+    // Just track possession completions
+    if (isFirstTeamDrive && !firstComplete && doesDriveEndPossession(drive.result)) {
+      firstComplete = true;
+    } else if (isSecondTeamDrive && firstComplete && !secondComplete && doesDriveEndPossession(drive.result)) {
+      secondComplete = true;
+    }
+  }
+
+  const phase = (firstComplete && secondComplete) ? "sudden_death" : "guaranteed_possession";
+
+  return {
+    ...otState,
+    phase,
+    firstTeamPossessionComplete: firstComplete,
+    secondTeamPossessionComplete: secondComplete,
+  };
+}
+
+/**
+ * Evaluate OT state after a drive is added. Returns updated game fields.
+ */
+function evaluateOTAfterDrive(
+  game: FdfGame,
+  driveEntry: DriveEntry,
+  homeScore: QuarterScore,
+  awayScore: QuarterScore,
+  clockExpired: boolean,
+): {
+  overtimeState: OvertimeState;
+  isGameOver: boolean;
+  newClock?: GameClock;
+} {
+  const ot = game.overtimeState!;
+  const receivingTeamId = ot.receivingTeam === "home" ? game.homeTeamId : game.awayTeamId;
+  const kickingTeamId = ot.receivingTeam === "home" ? game.awayTeamId : game.homeTeamId;
+  const scoreDiff = homeScore.total - awayScore.total;
+  const isTied = scoreDiff === 0;
+
+  const isFirstTeamDrive = driveEntry.teamId === receivingTeamId;
+  const isSecondTeamDrive = driveEntry.teamId === kickingTeamId;
+  const possessionEnded = doesDriveEndPossession(driveEntry.result);
+
+  let firstComplete = ot.firstTeamPossessionComplete;
+  let secondComplete = ot.secondTeamPossessionComplete;
+
+  // Track possession completions
+  if (isFirstTeamDrive && !firstComplete && possessionEnded) {
+    firstComplete = true;
+  } else if (isSecondTeamDrive && firstComplete && !secondComplete && possessionEnded) {
+    secondComplete = true;
+  }
+
+  // --- Safety on first possession: immediate game over ---
+  if (driveEntry.result === "SAFETY" && !ot.firstTeamPossessionComplete && isFirstTeamDrive) {
+    return {
+      overtimeState: { ...ot, firstTeamPossessionComplete: true, phase: "sudden_death" },
+      isGameOver: true,
+    };
+  }
+
+  // --- Guaranteed possession phase ---
+  if (!firstComplete || !secondComplete) {
+    // Still in guaranteed possession phase
+    const updatedOt: OvertimeState = {
+      ...ot,
+      phase: "guaranteed_possession",
+      firstTeamPossessionComplete: firstComplete,
+      secondTeamPossessionComplete: secondComplete,
+    };
+
+    if (clockExpired) {
+      // Clock expired but guaranteed possessions not complete → keep playing
+      if (!firstComplete || !secondComplete) {
+        return {
+          overtimeState: updatedOt,
+          isGameOver: false,
+          // Override clock: keep it at 0 ticks but not game over
+          newClock: { quarter: 5, ticksRemaining: 0, isHalftime: false, isGameOver: false },
+        };
+      }
+    }
+
+    return {
+      overtimeState: updatedOt,
+      isGameOver: false,
+    };
+  }
+
+  // --- Both teams had a possession ---
+  // Check if score is different after both teams had their possession
+  if (!isTied) {
+    // Someone is ahead → game over
+    return {
+      overtimeState: { ...ot, firstTeamPossessionComplete: firstComplete, secondTeamPossessionComplete: secondComplete, phase: "sudden_death" },
+      isGameOver: true,
+    };
+  }
+
+  // Both had a possession and still tied → sudden death
+  const suddenDeathOt: OvertimeState = {
+    ...ot,
+    phase: "sudden_death",
+    firstTeamPossessionComplete: firstComplete,
+    secondTeamPossessionComplete: secondComplete,
+  };
+
+  // In sudden death, any scoring play with score difference → game over
+  if (isScoringPlay(driveEntry.result) && !isTied) {
+    return {
+      overtimeState: suddenDeathOt,
+      isGameOver: true,
+    };
+  }
+
+  if (clockExpired) {
+    if (ot.canEndInTie) {
+      // Regular season: tie
+      return {
+        overtimeState: suddenDeathOt,
+        isGameOver: true,
+      };
+    } else {
+      // Playoffs: new OT period
+      const newPeriod = ot.period + 1;
+      // Alternate receiver
+      const newReceiver: "home" | "away" = ot.receivingTeam === "home" ? "away" : "home";
+      return {
+        overtimeState: {
+          ...ot,
+          phase: "guaranteed_possession",
+          receivingTeam: newReceiver,
+          firstTeamPossessionComplete: false,
+          secondTeamPossessionComplete: false,
+          period: newPeriod,
+          otStartDriveNumber: driveEntry.driveNumber + 1,
+        },
+        isGameOver: false,
+        newClock: startNewOTPeriod(),
+      };
+    }
+  }
+
+  return {
+    overtimeState: suddenDeathOt,
+    isGameOver: false,
+  };
 }
 
 interface GameState {
@@ -29,6 +221,7 @@ interface GameState {
   switchPossession: (gameId: string) => void;
   endHalf: (gameId: string) => void;
   endGame: (gameId: string) => void;
+  initOvertime: (gameId: string, coinTossWinner: "home" | "away", canEndInTie: boolean) => void;
   deleteGame: (gameId: string) => void;
   getGame: (id: string) => FdfGame | undefined;
 }
@@ -54,6 +247,39 @@ export const useGameStore = create<GameState>()(
         };
         set((state) => ({ games: { ...state.games, [id]: game } }));
         return id;
+      },
+
+      initOvertime: (gameId, coinTossWinner, canEndInTie) => {
+        set((state) => {
+          const game = state.games[gameId];
+          if (!game || game.status !== "in_progress") return state;
+
+          // Coin toss winner elects to receive (standard NFL)
+          const receivingTeam = coinTossWinner;
+          const otClock = startOvertime();
+          const otState: OvertimeState = {
+            phase: "guaranteed_possession",
+            coinTossWinner,
+            receivingTeam,
+            firstTeamPossessionComplete: false,
+            secondTeamPossessionComplete: false,
+            period: 1,
+            canEndInTie,
+            otStartDriveNumber: game.drives.length + 1,
+          };
+
+          return {
+            games: {
+              ...state.games,
+              [gameId]: {
+                ...game,
+                gameClock: otClock,
+                currentPossession: receivingTeam,
+                overtimeState: otState,
+              },
+            },
+          };
+        });
       },
 
       addDrive: (gameId, input) => {
@@ -82,9 +308,14 @@ export const useGameStore = create<GameState>()(
           const clockResult = consumeTicks(game.gameClock, input.driveTicks);
           let newClock = clockResult.newClock;
 
-          // Check for overtime: if game would end but score is tied
+          // Q4 ends tied: set up "waiting for OT coin toss" state instead of auto-starting OT
           if (clockResult.gameEnded && game.gameClock.quarter === 4 && homeScore.total === awayScore.total) {
-            newClock = startOvertime();
+            newClock = {
+              quarter: 4,
+              ticksRemaining: 0,
+              isHalftime: false,
+              isGameOver: false,
+            };
           }
 
           // Build score-after-drive string
@@ -131,10 +362,36 @@ export const useGameStore = create<GameState>()(
             currentPossession: nextPossession,
           };
 
-          // Auto-complete if game ended
-          if (newClock.isGameOver && homeScore.total !== awayScore.total) {
-            updatedGame.status = "completed";
-            updatedGame.completedAt = new Date().toISOString();
+          // --- OT logic ---
+          if (game.gameClock.quarter === 5 && game.overtimeState) {
+            const otResult = evaluateOTAfterDrive(
+              updatedGame,
+              driveEntry,
+              homeScore,
+              awayScore,
+              clockResult.gameEnded,
+            );
+
+            updatedGame.overtimeState = otResult.overtimeState;
+
+            if (otResult.newClock) {
+              updatedGame.gameClock = otResult.newClock;
+            }
+
+            if (otResult.isGameOver) {
+              updatedGame.gameClock = {
+                ...updatedGame.gameClock,
+                isGameOver: true,
+              };
+              updatedGame.status = "completed";
+              updatedGame.completedAt = new Date().toISOString();
+            }
+          } else if (!game.overtimeState) {
+            // Non-OT: auto-complete if game ended and score is different
+            if (newClock.isGameOver && homeScore.total !== awayScore.total) {
+              updatedGame.status = "completed";
+              updatedGame.completedAt = new Date().toISOString();
+            }
           }
 
           return { games: { ...state.games, [gameId]: updatedGame } };
@@ -164,17 +421,35 @@ export const useGameStore = create<GameState>()(
           }
 
           // Restore clock: add the ticks back to the quarter the drive was in
+          let ticksForQuarter = TICKS_PER_QUARTER;
+          if (lastDrive.quarter === 5) {
+            ticksForQuarter = TICKS_PER_OT_PERIOD;
+          }
           const restoredClock: GameClock = {
             quarter: lastDrive.quarter,
-            ticksRemaining: (game.gameClock.quarter === lastDrive.quarter
-              ? game.gameClock.ticksRemaining
-              : 0) + lastDrive.driveTicks,
+            ticksRemaining: Math.min(
+              ticksForQuarter,
+              (game.gameClock.quarter === lastDrive.quarter
+                ? game.gameClock.ticksRemaining
+                : 0) + lastDrive.driveTicks,
+            ),
             isHalftime: false,
             isGameOver: false,
           };
 
           // Restore possession to whoever had it for the undone drive
           const restoredPossession: "home" | "away" = wasHomePossession ? "home" : "away";
+
+          // Recompute OT state if we have one
+          let restoredOT = game.overtimeState;
+          if (restoredOT) {
+            const tempGame: FdfGame = {
+              ...game,
+              drives: newDrives,
+              gameClock: restoredClock,
+            };
+            restoredOT = recomputeOvertimeState(tempGame, restoredOT);
+          }
 
           return {
             games: {
@@ -187,6 +462,7 @@ export const useGameStore = create<GameState>()(
                 gameClock: restoredClock,
                 drives: newDrives,
                 currentPossession: restoredPossession,
+                overtimeState: restoredOT,
               },
             },
           };
@@ -254,20 +530,83 @@ export const useGameStore = create<GameState>()(
         set((state) => {
           const game = state.games[gameId];
           if (!game || game.status !== "in_progress") return state;
-          // Only works in second half (Q3 or Q4)
+
+          // In OT (Q5)
+          if (game.gameClock.quarter === 5 && game.overtimeState) {
+            const isTied = game.score.home.total === game.score.away.total;
+            if (isTied && game.overtimeState.canEndInTie) {
+              // Regular season: end as tie
+              return {
+                games: {
+                  ...state.games,
+                  [gameId]: {
+                    ...game,
+                    gameClock: { ...game.gameClock, ticksRemaining: 0, isGameOver: true },
+                    status: "completed",
+                    completedAt: new Date().toISOString(),
+                  },
+                },
+              };
+            } else if (isTied && !game.overtimeState.canEndInTie) {
+              // Playoffs: new OT period
+              const newPeriod = game.overtimeState.period + 1;
+              const newReceiver: "home" | "away" = game.overtimeState.receivingTeam === "home" ? "away" : "home";
+              return {
+                games: {
+                  ...state.games,
+                  [gameId]: {
+                    ...game,
+                    gameClock: startNewOTPeriod(),
+                    overtimeState: {
+                      ...game.overtimeState,
+                      phase: "guaranteed_possession",
+                      receivingTeam: newReceiver,
+                      firstTeamPossessionComplete: false,
+                      secondTeamPossessionComplete: false,
+                      period: newPeriod,
+                      otStartDriveNumber: game.drives.length + 1,
+                    },
+                    currentPossession: newReceiver,
+                  },
+                },
+              };
+            } else {
+              // Not tied: end game
+              return {
+                games: {
+                  ...state.games,
+                  [gameId]: {
+                    ...game,
+                    gameClock: { ...game.gameClock, ticksRemaining: 0, isGameOver: true },
+                    status: "completed",
+                    completedAt: new Date().toISOString(),
+                  },
+                },
+              };
+            }
+          }
+
+          // Q3 or Q4 (non-OT)
           if (game.gameClock.quarter < 3) return state;
-          // If tied, start overtime instead
+
+          // If tied at end of Q4, go to OT waiting state (coin toss)
           if (game.score.home.total === game.score.away.total) {
             return {
               games: {
                 ...state.games,
                 [gameId]: {
                   ...game,
-                  gameClock: startOvertime(),
+                  gameClock: {
+                    quarter: 4,
+                    ticksRemaining: 0,
+                    isHalftime: false,
+                    isGameOver: false,
+                  },
                 },
               },
             };
           }
+
           return {
             games: {
               ...state.games,

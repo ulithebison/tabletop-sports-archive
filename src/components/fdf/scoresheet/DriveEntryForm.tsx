@@ -128,8 +128,8 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
     (!showPAT || patResult !== null) &&
     playerValid;
 
-  // Show timing warning only in Q2 and Q4
-  const showTimingWarning = isTimingWarningZone(ticksRemaining) && (quarter === 2 || quarter === 4);
+  // Show timing warning in Q2, Q4, and OT (Q5)
+  const showTimingWarning = isTimingWarningZone(ticksRemaining) && (quarter === 2 || quarter === 4 || quarter === 5);
 
   const handleSubmit = () => {
     if (!isValid || !result) return;
@@ -185,7 +185,7 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
         )}
       </div>
 
-      {/* Timing warning — only Q2/Q4 */}
+      {/* Timing warning — Q2/Q4/OT */}
       {showTimingWarning && (
         <div className="mb-3">
           <TimingWarning ticksRemaining={ticksRemaining} offenseTeam={offenseTeam} />

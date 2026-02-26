@@ -1,14 +1,15 @@
 "use client";
 
-import type { GameClock } from "@/lib/fdf/types";
-import { TICKS_PER_QUARTER } from "@/lib/fdf/constants";
+import type { GameClock, OvertimeState } from "@/lib/fdf/types";
+import { TICKS_PER_QUARTER, TICKS_PER_OT_PERIOD } from "@/lib/fdf/constants";
 import { getClockDisplayTime, isTimingWarningZone } from "@/lib/fdf/game-clock";
 
 interface GameClockWidgetProps {
   clock: GameClock;
+  overtimeState?: OvertimeState;
 }
 
-export function GameClockWidget({ clock }: GameClockWidgetProps) {
+export function GameClockWidget({ clock, overtimeState }: GameClockWidgetProps) {
   const quarterLabels = ["Q1", "Q2", "Q3", "Q4"];
 
   return (
@@ -83,6 +84,51 @@ export function GameClockWidget({ clock }: GameClockWidgetProps) {
             </div>
           );
         })}
+
+        {/* OT row — shown when in OT (Q5) or game completed with OT */}
+        {(clock.quarter === 5 || overtimeState) && (
+          <div className="flex items-center gap-2">
+            <span
+              className="text-xs font-fdf-mono font-bold w-6"
+              style={{
+                color: clock.quarter === 5 ? "var(--fdf-accent)" : "var(--fdf-text-muted)",
+              }}
+            >
+              OT
+            </span>
+            <div className="flex gap-[3px]">
+              {Array.from({ length: TICKS_PER_OT_PERIOD }, (_, ti) => {
+                const isOTCurrent = clock.quarter === 5;
+                const isOTPast = clock.isGameOver && clock.quarter === 5;
+                const otElapsed = isOTPast
+                  ? TICKS_PER_OT_PERIOD
+                  : isOTCurrent
+                  ? TICKS_PER_OT_PERIOD - clock.ticksRemaining
+                  : 0;
+                const isFilled = ti < otElapsed;
+                const isWarning = isOTCurrent && TICKS_PER_OT_PERIOD - ti <= 4 && ti >= otElapsed;
+                return (
+                  <div
+                    key={ti}
+                    className="rounded-full"
+                    style={{
+                      width: 8,
+                      height: 8,
+                      backgroundColor: isFilled
+                        ? "var(--fdf-accent)"
+                        : isWarning
+                        ? "rgba(239,68,68,0.25)"
+                        : "rgba(148,163,184,0.12)",
+                      border: (ti === 3) && !isFilled
+                        ? "1px solid rgba(148,163,184,0.2)"
+                        : undefined,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

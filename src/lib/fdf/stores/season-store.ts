@@ -38,10 +38,12 @@ interface SeasonState {
   ) => void;
   simulateRemainingGames: (
     seasonId: string,
-    simulateFn: (game: ScheduleGame, season: FdfSeason) => SeasonGameResult
+    simulateFn: (game: ScheduleGame, season: FdfSeason) => SeasonGameResult,
+    skipGameIds?: Set<string>
   ) => void;
   startPlayoffs: (id: string, playoffSchedule: ScheduleGame[]) => void;
   completeSeason: (id: string) => void;
+  resetGameResult: (seasonId: string, scheduleGameId: string) => void;
 }
 
 export const useSeasonStore = create<SeasonState>()(
@@ -162,7 +164,7 @@ export const useSeasonStore = create<SeasonState>()(
         });
       },
 
-      simulateRemainingGames: (seasonId, simulateFn) => {
+      simulateRemainingGames: (seasonId, simulateFn, skipGameIds) => {
         set((state) => {
           const season = state.seasons[seasonId];
           if (!season) return state;
@@ -171,6 +173,8 @@ export const useSeasonStore = create<SeasonState>()(
             if (g.result || g.isBye) return g;
             // Only simulate regular season games (not playoff)
             if (g.isPlayoff) return g;
+            // Skip active in-progress games
+            if (skipGameIds?.has(g.id)) return g;
             return { ...g, result: simulateFn(g, season) };
           });
 
@@ -223,6 +227,30 @@ export const useSeasonStore = create<SeasonState>()(
             seasons: {
               ...state.seasons,
               [id]: { ...season, status: "completed", updatedAt: new Date().toISOString() },
+            },
+          };
+        });
+      },
+
+      resetGameResult: (seasonId, scheduleGameId) => {
+        set((state) => {
+          const season = state.seasons[seasonId];
+          if (!season) return state;
+
+          const updatedSchedule = season.schedule.map((g) =>
+            g.id === scheduleGameId
+              ? { ...g, result: undefined, gameId: undefined }
+              : g
+          );
+
+          return {
+            seasons: {
+              ...state.seasons,
+              [seasonId]: {
+                ...season,
+                schedule: updatedSchedule,
+                updatedAt: new Date().toISOString(),
+              },
             },
           };
         });

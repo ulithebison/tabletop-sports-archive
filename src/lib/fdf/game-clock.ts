@@ -1,5 +1,5 @@
 import type { GameClock } from "./types";
-import { TICKS_PER_QUARTER } from "./constants";
+import { TICKS_PER_QUARTER, TICKS_PER_OT_PERIOD } from "./constants";
 
 export interface ClockResult {
   newClock: GameClock;
@@ -21,20 +21,21 @@ export function consumeTicks(clock: GameClock, ticks: number): ClockResult {
   const isHalftime = false;
 
   if (remaining <= 0) {
-    // Quarter ended
+    // Quarter ended — capture overflow for within-half carry
+    const overflow = -remaining;
     remaining = 0;
     quarterChanged = true;
 
     if (quarter === 1) {
       quarter = 2;
-      remaining = TICKS_PER_QUARTER;
+      remaining = TICKS_PER_QUARTER - overflow;
     } else if (quarter === 2) {
       quarter = 3;
-      remaining = TICKS_PER_QUARTER;
+      remaining = TICKS_PER_QUARTER; // halftime: no overflow
       halfEnded = true;
     } else if (quarter === 3) {
       quarter = 4;
-      remaining = TICKS_PER_QUARTER;
+      remaining = TICKS_PER_QUARTER - overflow;
     } else if (quarter === 4) {
       gameEnded = true;
     } else if (quarter === 5) {
@@ -75,13 +76,21 @@ export function isTimingWarningZone(ticksRemaining: number): boolean {
 }
 
 /**
- * Start a new OT period.
+ * Start a new OT period (8 ticks = 10 minutes).
  */
 export function startOvertime(): GameClock {
   return {
     quarter: 5,
-    ticksRemaining: TICKS_PER_QUARTER,
+    ticksRemaining: TICKS_PER_OT_PERIOD,
     isHalftime: false,
     isGameOver: false,
   };
+}
+
+/**
+ * Start an additional OT period (playoffs only).
+ * Same clock as startOvertime — separate function for clarity.
+ */
+export function startNewOTPeriod(): GameClock {
+  return startOvertime();
 }

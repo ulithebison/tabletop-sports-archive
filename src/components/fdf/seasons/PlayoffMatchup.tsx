@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Zap } from "lucide-react";
+import { Play, Zap, RotateCcw, X } from "lucide-react";
 import type { ScheduleGame, FdfTeam } from "@/lib/fdf/types";
 import type { PlayoffSeed } from "@/lib/fdf/playoff-seeding";
 
@@ -11,6 +11,9 @@ interface PlayoffMatchupProps {
   seeds: PlayoffSeed[];
   onPlay?: (game: ScheduleGame) => void;
   onSimulate?: (gameId: string) => void;
+  onResume?: (game: ScheduleGame) => void;
+  onReset?: (game: ScheduleGame) => void;
+  isActiveGame?: boolean;
 }
 
 function getSeed(teamId: string, seeds: PlayoffSeed[]): number | undefined {
@@ -82,10 +85,14 @@ export function PlayoffMatchup({
   seeds,
   onPlay,
   onSimulate,
+  onResume,
+  onReset,
+  isActiveGame,
 }: PlayoffMatchupProps) {
   const hasResult = !!game.result;
   const isTBD = game.homeTeamId === "__TBD__" || game.awayTeamId === "__TBD__";
-  const canPlay = !hasResult && !isTBD;
+  const isActive = isActiveGame && !!game.gameId && !hasResult;
+  const canPlay = !hasResult && !isTBD && !isActive;
 
   return (
     <div
@@ -117,6 +124,21 @@ export function PlayoffMatchup({
       />
 
       {/* Actions */}
+      {isActive && (
+        <div
+          className="flex gap-1 p-1"
+          style={{ borderTop: "1px solid var(--fdf-border)" }}
+        >
+          <button
+            onClick={() => onResume?.(game)}
+            className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-[9px] font-fdf-mono font-bold text-white"
+            style={{ backgroundColor: "#f59e0b" }}
+          >
+            <RotateCcw size={8} />
+            Resume
+          </button>
+        </div>
+      )}
       {canPlay && (
         <div
           className="flex gap-1 p-1"
@@ -137,6 +159,23 @@ export function PlayoffMatchup({
           >
             <Zap size={8} />
             Sim
+          </button>
+        </div>
+      )}
+
+      {/* Reset button for completed games */}
+      {hasResult && onReset && (
+        <div
+          className="flex gap-1 p-1"
+          style={{ borderTop: "1px solid var(--fdf-border)" }}
+        >
+          <button
+            onClick={() => onReset(game)}
+            className="flex-1 flex items-center justify-center gap-1 py-1 rounded text-[9px] font-fdf-mono font-bold"
+            style={{ color: "#ef4444", backgroundColor: "#ef444415" }}
+          >
+            <X size={8} />
+            Reset
           </button>
         </div>
       )}

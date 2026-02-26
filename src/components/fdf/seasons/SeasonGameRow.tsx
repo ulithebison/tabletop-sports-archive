@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Play, Zap } from "lucide-react";
+import { Play, Zap, RotateCcw } from "lucide-react";
 import type { ScheduleGame, FdfTeam } from "@/lib/fdf/types";
 
 interface SeasonGameRowProps {
@@ -11,6 +11,9 @@ interface SeasonGameRowProps {
   seasonId: string;
   onSimulate?: (gameId: string) => void;
   onPlay?: (game: ScheduleGame) => void;
+  onResume?: (game: ScheduleGame) => void;
+  onReset?: (game: ScheduleGame) => void;
+  isActiveGame?: boolean;
 }
 
 export function SeasonGameRow({
@@ -20,6 +23,9 @@ export function SeasonGameRow({
   seasonId,
   onSimulate,
   onPlay,
+  onResume,
+  onReset,
+  isActiveGame,
 }: SeasonGameRowProps) {
   if (game.isBye) {
     return (
@@ -119,13 +125,48 @@ export function SeasonGameRow({
       {/* Actions */}
       <div className="flex items-center gap-1 ml-2 flex-shrink-0">
         {hasResult && game.gameId ? (
-          <Link
-            href={`/fdf/game/${game.gameId}`}
-            className="text-[10px] font-fdf-mono px-2 py-1 rounded"
-            style={{ color: "var(--fdf-accent)", backgroundColor: "var(--fdf-accent)" + "15" }}
+          <>
+            <Link
+              href={`/fdf/game/${game.gameId}`}
+              className="text-[10px] font-fdf-mono px-2 py-1 rounded"
+              style={{ color: "var(--fdf-accent)", backgroundColor: "var(--fdf-accent)" + "15" }}
+            >
+              View
+            </Link>
+            {onReset && (
+              <button
+                onClick={() => onReset(game)}
+                className="text-[10px] font-fdf-mono font-bold px-2 py-1 rounded"
+                style={{ color: "#ef4444", backgroundColor: "#ef444415" }}
+                title="Reset game result"
+              >
+                Reset
+              </button>
+            )}
+          </>
+        ) : hasResult && !game.gameId ? (
+          <>
+            {onReset && (
+              <button
+                onClick={() => onReset(game)}
+                className="text-[10px] font-fdf-mono font-bold px-2 py-1 rounded"
+                style={{ color: "#ef4444", backgroundColor: "#ef444415" }}
+                title="Reset game result"
+              >
+                Reset
+              </button>
+            )}
+          </>
+        ) : isActiveGame && game.gameId && !hasResult ? (
+          <button
+            onClick={() => onResume?.(game)}
+            className="flex items-center gap-1 text-[10px] font-fdf-mono font-bold px-2 py-1 rounded text-white"
+            style={{ backgroundColor: "#f59e0b" }}
+            title="Resume in-progress game"
           >
-            View
-          </Link>
+            <RotateCcw size={10} />
+            Resume
+          </button>
         ) : !hasResult ? (
           <>
             <button

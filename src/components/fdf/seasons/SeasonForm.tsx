@@ -8,18 +8,12 @@ import { DivisionEditor } from "./DivisionEditor";
 import { LEAGUE_TYPE_LABELS, PLAYOFF_FORMAT_OPTIONS } from "@/lib/fdf/constants";
 import type {
   LeagueType,
-  OvertimeType,
   Division,
   SeasonConfig,
   OvertimeConfig,
 } from "@/lib/fdf/types";
 
 const LEAGUE_OPTIONS = Object.entries(LEAGUE_TYPE_LABELS) as [LeagueType, string][];
-const OT_OPTIONS: { value: OvertimeType; label: string }[] = [
-  { value: "sudden_death", label: "Sudden Death" },
-  { value: "modified_sudden_death", label: "Modified Sudden Death" },
-  { value: "guaranteed_possession", label: "Guaranteed Possession" },
-];
 
 export function SeasonForm() {
   const router = useRouter();
@@ -39,7 +33,6 @@ export function SeasonForm() {
   const [playoffTeams, setPlayoffTeams] = useState(7);
   const [hasByeWeeks, setHasByeWeeks] = useState(true);
   const [homeFieldInPlayoffs, setHomeFieldInPlayoffs] = useState(true);
-  const [otType, setOtType] = useState<OvertimeType>("modified_sudden_death");
   const [canEndInTie, setCanEndInTie] = useState(true);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [divisions, setDivisions] = useState<Division[]>([]);
@@ -78,7 +71,7 @@ export function SeasonForm() {
       hasByeWeeks,
       homeFieldInPlayoffs,
     };
-    const overtimeRules: OvertimeConfig = { type: otType, canEndInTie };
+    const overtimeRules: OvertimeConfig = { type: "guaranteed_possession", canEndInTie };
 
     const id = createSeason({
       name: name.trim(),
@@ -239,22 +232,9 @@ export function SeasonForm() {
           Overtime Rules
         </h3>
 
-        <div className="flex flex-wrap gap-2">
-          {OT_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setOtType(opt.value)}
-              className="px-3 py-1.5 rounded text-xs font-fdf-mono font-bold transition-colors"
-              style={{
-                backgroundColor: otType === opt.value ? "var(--fdf-accent)" : "var(--fdf-bg-primary)",
-                color: otType === opt.value ? "#fff" : "var(--fdf-text-secondary)",
-                border: `1px solid ${otType === opt.value ? "var(--fdf-accent)" : "var(--fdf-border)"}`,
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <p className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-secondary)" }}>
+          NFL Overtime Rules (guaranteed possession)
+        </p>
 
         <label className="flex items-center gap-2 cursor-pointer">
           <input

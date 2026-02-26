@@ -276,6 +276,23 @@ export interface GameClock {
   isGameOver: boolean;
 }
 
+// ============================================================
+// NFL Overtime State
+// ============================================================
+
+export type OvertimePhase = "coin_toss" | "guaranteed_possession" | "sudden_death";
+
+export interface OvertimeState {
+  phase: OvertimePhase;
+  coinTossWinner: "home" | "away";
+  receivingTeam: "home" | "away";
+  firstTeamPossessionComplete: boolean;
+  secondTeamPossessionComplete: boolean;
+  period: number;          // 1-based, playoffs can have multiple
+  canEndInTie: boolean;    // false for playoffs
+  otStartDriveNumber: number;
+}
+
 export type GameStatus = "in_progress" | "completed";
 
 export interface FdfGame {
@@ -291,6 +308,7 @@ export interface FdfGame {
   drives: DriveEntry[];
   currentPossession: "home" | "away";
   enhancedMode?: boolean;
+  overtimeState?: OvertimeState;
   startedAt: string;
   completedAt?: string;
 }

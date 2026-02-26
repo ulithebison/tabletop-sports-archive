@@ -9,9 +9,10 @@ import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
 import { PlayoffBracket } from "@/components/fdf/seasons/PlayoffBracket";
 import { SimulationModal } from "@/components/fdf/seasons/SimulationModal";
+import { PreGameModal } from "@/components/fdf/seasons/PreGameModal";
 import { simulateInstantResult } from "@/lib/fdf/instant-results";
 import { calculateStandings, sortStandings } from "@/lib/fdf/standings";
-import { generatePlayoffSeeds, advancePlayoffWinner } from "@/lib/fdf/playoff-seeding";
+import { generatePlayoffSeeds, advancePlayoffWinner, revertPlayoffResult } from "@/lib/fdf/playoff-seeding";
 import type { ScheduleGame, SeasonGameResult } from "@/lib/fdf/types";
 import type { PlayoffSeed } from "@/lib/fdf/playoff-seeding";
 
@@ -23,6 +24,8 @@ export default function PlayoffsPage() {
     result: SeasonGameResult;
     scheduleGameId: string;
   } | null>(null);
+  const [pendingGame, setPendingGame] = useState<ScheduleGame | null>(null);
+  const [resetTarget, setResetTarget] = useState<ScheduleGame | null>(null);
 
   const seasonId = params.id as string;
   const season = useSeasonStore((s) => s.getSeason(seasonId));
@@ -31,8 +34,21 @@ export default function PlayoffsPage() {
   const completeSeason = useSeasonStore((s) => s.completeSeason);
   const getTeam = useTeamStore((s) => s.getTeam);
   const createGame = useGameStore((s) => s.createGame);
+  const deleteGame = useGameStore((s) => s.deleteGame);
+  const gamesMap = useGameStore((s) => s.games);
 
   useEffect(() => setHydrated(true), []);
+
+  const activeGameIds = useMemo(() => {
+    if (!season) return new Set<string>();
+    const ids = new Set<string>();
+    for (const sg of season.schedule) {
+      if (sg.gameId && !sg.result && gamesMap[sg.gameId]?.status === "in_progress") {
+        ids.add(sg.id);
+      }
+    }
+    return ids;
+  }, [season, gamesMap]);
 
   const standings = useMemo(() => {
     if (!season) return [];
@@ -44,17 +60,33 @@ export default function PlayoffsPage() {
     return generatePlayoffSeeds(standings, season);
   }, [standings, season]);
 
+  const handleResume = useCallback((game: ScheduleGame) => {
+    if (game.gameId) {
+      router.push(`/fdf/game/${game.gameId}?seasonId=${seasonId}&scheduleGameId=${game.id}`);
+    }
+  }, [router, seasonId]);
+
   const handlePlay = useCallback((game: ScheduleGame) => {
-    const gameId = createGame(game.homeTeamId, game.awayTeamId);
+    if (game.gameId && activeGameIds.has(game.id)) {
+      handleResume(game);
+      return;
+    }
+    setPendingGame(game);
+  }, [activeGameIds, handleResume]);
+
+  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away") => {
+    if (!pendingGame) return;
+    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam);
     const currentSeason = useSeasonStore.getState().getSeason(seasonId);
     if (currentSeason) {
       const updatedSchedule = currentSeason.schedule.map((g) =>
-        g.id === game.id ? { ...g, gameId } : g
+        g.id === pendingGame.id ? { ...g, gameId } : g
       );
       setSchedule(seasonId, updatedSchedule);
     }
-    router.push(`/fdf/game/${gameId}?seasonId=${seasonId}&scheduleGameId=${game.id}`);
-  }, [createGame, seasonId, router, setSchedule]);
+    setPendingGame(null);
+    router.push(`/fdf/game/${gameId}?seasonId=${seasonId}&scheduleGameId=${pendingGame.id}`);
+  }, [pendingGame, createGame, seasonId, router, setSchedule]);
 
   const handleSimulate = useCallback((scheduleGameId: string) => {
     if (!season) return;
@@ -95,6 +127,28 @@ export default function PlayoffsPage() {
     setSimResult(null);
   }, [simResult, season, seasonId, recordGameResult, setSchedule, completeSeason]);
 
+  const handleConfirmReset = useCallback(() => {
+    if (!resetTarget || !season) return;
+
+    const { updatedSchedule, cascadedGameIds } = revertPlayoffResult(season.schedule, resetTarget.id);
+
+    // Delete FdfGames for all affected games
+    if (resetTarget.gameId) deleteGame(resetTarget.gameId);
+    for (const cId of cascadedGameIds) {
+      const cGame = season.schedule.find((g) => g.id === cId);
+      if (cGame?.gameId) deleteGame(cGame.gameId);
+    }
+
+    setSchedule(seasonId, updatedSchedule);
+
+    // If season was completed, reopen to playoffs
+    if (season.status === "completed") {
+      useSeasonStore.getState().setSeasonStatus(seasonId, "playoffs");
+    }
+
+    setResetTarget(null);
+  }, [resetTarget, season, seasonId, deleteGame, setSchedule]);
+
   if (!hydrated) {
     return (
       <div className="max-w-5xl mx-auto">
@@ -112,6 +166,11 @@ export default function PlayoffsPage() {
   const simHomeTeam = simGame ? getTeam(simGame.homeTeamId) : undefined;
   const simAwayTeam = simGame ? getTeam(simGame.awayTeamId) : undefined;
 
+  // Calculate cascade info for reset modal
+  const cascadeCount = resetTarget
+    ? revertPlayoffResult(season.schedule, resetTarget.id).cascadedGameIds.length
+    : 0;
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Simulation Modal */}
@@ -124,6 +183,66 @@ export default function PlayoffsPage() {
           onClose={() => setSimResult(null)}
         />
       )}
+
+      {/* Pre-Game Modal */}
+      {pendingGame && (
+        <PreGameModal
+          game={pendingGame}
+          homeTeam={getTeam(pendingGame.homeTeamId)}
+          awayTeam={getTeam(pendingGame.awayTeamId)}
+          onStart={handleStartPendingGame}
+          onCancel={() => setPendingGame(null)}
+        />
+      )}
+
+      {/* Reset Confirmation Modal */}
+      {resetTarget && (() => {
+        const rtHome = getTeam(resetTarget.homeTeamId);
+        const rtAway = getTeam(resetTarget.awayTeamId);
+        const isCompleted = season.status === "completed";
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
+            <div
+              className="w-full max-w-sm rounded-lg p-5"
+              style={{ backgroundColor: "var(--fdf-bg-card)", border: "1px solid var(--fdf-border)" }}
+            >
+              <h2 className="text-sm font-fdf-mono font-bold mb-3" style={{ color: "var(--fdf-text-primary)" }}>
+                Reset Playoff Result
+              </h2>
+              <p className="text-sm mb-2" style={{ color: "var(--fdf-text-secondary)" }}>
+                Reset {rtAway?.abbreviation || "AWY"} @ {rtHome?.abbreviation || "HME"} result
+                {resetTarget.result && ` (${resetTarget.result.awayScore}-${resetTarget.result.homeScore})`}?
+              </p>
+              {cascadeCount > 0 && (
+                <p className="text-xs mb-2 font-medium" style={{ color: "#f59e0b" }}>
+                  This will also clear {cascadeCount} downstream playoff matchup{cascadeCount !== 1 ? "s" : ""}.
+                </p>
+              )}
+              {isCompleted && (
+                <p className="text-xs mb-2 font-medium" style={{ color: "#f59e0b" }}>
+                  This will reopen the season.
+                </p>
+              )}
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={handleConfirmReset}
+                  className="flex-1 px-4 py-2 rounded text-sm font-bold text-white transition-colors"
+                  style={{ backgroundColor: "#ef4444" }}
+                >
+                  Reset
+                </button>
+                <button
+                  onClick={() => setResetTarget(null)}
+                  className="flex-1 px-4 py-2 rounded text-sm font-bold transition-colors"
+                  style={{ color: "var(--fdf-text-secondary)", border: "1px solid var(--fdf-border)" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -149,6 +268,9 @@ export default function PlayoffsPage() {
         getTeam={getTeam}
         onPlay={handlePlay}
         onSimulate={handleSimulate}
+        onResume={handleResume}
+        onReset={setResetTarget}
+        activeGameIds={activeGameIds}
       />
 
       {/* Seeds reference */}

@@ -1,4 +1,5 @@
 import type { FdfGame, WinProbabilitySnapshot, WPAnalytics } from "./types";
+import { TICKS_PER_OT_PERIOD } from "./constants";
 
 /**
  * Logistic win probability model.
@@ -64,7 +65,8 @@ export function computeWPHistory(game: FdfGame): WinProbabilitySnapshot[] {
 
     // Accumulate ticks
     ticksConsumedPerQuarter[drive.quarter] += drive.driveTicks;
-    const ticksInQuarter = Math.max(0, 12 - ticksConsumedPerQuarter[drive.quarter]);
+    const maxTicksForQuarter = drive.quarter === 5 ? TICKS_PER_OT_PERIOD : 12;
+    const ticksInQuarter = Math.max(0, maxTicksForQuarter - ticksConsumedPerQuarter[drive.quarter]);
     const totalTicks = totalTicksRemaining(drive.quarter, ticksInQuarter);
 
     // Parse score from scoreAfterDrive (format: "away-home")

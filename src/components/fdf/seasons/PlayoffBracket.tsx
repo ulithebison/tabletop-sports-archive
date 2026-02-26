@@ -10,6 +10,9 @@ interface PlayoffBracketProps {
   getTeam: (id: string) => FdfTeam | undefined;
   onPlay: (game: ScheduleGame) => void;
   onSimulate: (gameId: string) => void;
+  onResume?: (game: ScheduleGame) => void;
+  onReset?: (game: ScheduleGame) => void;
+  activeGameIds?: Set<string>;
 }
 
 const ROUND_LABELS: Record<PlayoffRound, string> = {
@@ -27,6 +30,9 @@ export function PlayoffBracket({
   getTeam,
   onPlay,
   onSimulate,
+  onResume,
+  onReset,
+  activeGameIds,
 }: PlayoffBracketProps) {
   // Group playoff games by round
   const playoffGames = season.schedule.filter((g) => g.isPlayoff);
@@ -82,6 +88,9 @@ export function PlayoffBracket({
                       seeds={seeds}
                       onPlay={onPlay}
                       onSimulate={onSimulate}
+                      onResume={onResume}
+                      onReset={onReset}
+                      isActiveGame={!!game.gameId && (activeGameIds?.has(game.id) ?? false)}
                     />
                     {/* Connector line to next round */}
                     {roundIdx < activeRounds.length - 1 && (

@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { TeamList } from "@/components/fdf/teams/TeamList";
+import { TeamImportModal } from "@/components/fdf/teams/TeamImportModal";
 
 export default function TeamsPage() {
   const [hydrated, setHydrated] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const teamsMap = useTeamStore((s) => s.teams);
   const teams = useMemo(
     () => Object.values(teamsMap).sort((a, b) => a.name.localeCompare(b.name)),
@@ -30,14 +32,24 @@ export default function TeamsPage() {
         <h1 className="text-2xl font-bold font-fdf-mono" style={{ color: "var(--fdf-text-primary)" }}>
           Teams
         </h1>
-        <Link
-          href="/fdf/teams/new"
-          className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold text-white transition-colors"
-          style={{ backgroundColor: "var(--fdf-accent)" }}
-        >
-          <Plus size={16} />
-          New Team
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            style={{ color: "var(--fdf-text-secondary)", border: "1px solid var(--fdf-border)" }}
+          >
+            <Upload size={16} />
+            Import
+          </button>
+          <Link
+            href="/fdf/teams/new"
+            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-bold text-white transition-colors"
+            style={{ backgroundColor: "var(--fdf-accent)" }}
+          >
+            <Plus size={16} />
+            New Team
+          </Link>
+        </div>
       </div>
 
       {teams.length === 0 ? (
@@ -63,6 +75,16 @@ export default function TeamsPage() {
       ) : (
         <TeamList teams={teams} />
       )}
+
+      <TeamImportModal
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+        onImported={(count) => {
+          setShowImport(false);
+          // Teams auto-update via Zustand store reactivity
+          void count;
+        }}
+      />
     </div>
   );
 }

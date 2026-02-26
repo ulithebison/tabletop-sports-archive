@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { FdfGame, FdfTeam, DriveInput } from "@/lib/fdf/types";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
+import { useSeasonStore } from "@/lib/fdf/stores/season-store";
 import { calculatePlayerGameStats, getGameMVP } from "@/lib/fdf/player-stats";
 import { computeWPHistory, computeWPAnalytics } from "@/lib/fdf/win-probability";
 import { Scoreboard } from "./Scoreboard";
@@ -16,6 +18,7 @@ import { DriveEntryForm } from "./DriveEntryForm";
 import { DriveLog } from "./DriveLog";
 import { GameBoxScore } from "./GameBoxScore";
 import { TeamStatsTable } from "./GameSummary";
+import { OTCoinToss } from "./OTCoinToss";
 import { Trophy, BarChart3, Clock, ArrowLeftRight } from "lucide-react";
 
 interface ScoresheetProps {
@@ -28,6 +31,9 @@ interface ScoresheetProps {
 export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: ScoresheetProps) {
   const { addDrive, undoLastDrive, completeGame, endHalf, endGame, switchPossession } = useGameStore();
   const getTeam = useTeamStore((s) => s.getTeam);
+  const searchParams = useSearchParams();
+  const seasonId = searchParams.get("seasonId");
+  const season = useSeasonStore((s) => seasonId ? s.getSeason(seasonId) : undefined);
   const [showStats, setShowStats] = useState(false);
   const [lastDice, setLastDice] = useState<number[]>([]);
 
@@ -69,6 +75,32 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
 
   const isFirstHalf = game.gameClock.quarter <= 2;
   const isSecondHalf = game.gameClock.quarter >= 3 && game.gameClock.quarter <= 4;
+  const isOT = game.gameClock.quarter === 5;
+
+  // Detect waiting-for-OT-coin-toss state
+  const isWaitingForOTCoinToss = !game.gameClock.isGameOver
+    && game.gameClock.quarter === 4
+    && game.gameClock.ticksRemaining === 0
+    && game.score.home.total === game.score.away.total
+    && !game.overtimeState;
+
+  // Determine season canEndInTie (playoffs never allow ties)
+  const scheduleGameId = searchParams.get("scheduleGameId");
+  const scheduleGame = season?.schedule.find(g => g.id === scheduleGameId);
+  const isPlayoffGame = scheduleGame?.isPlayoff ?? false;
+  const seasonCanEndInTie = season
+    ? (isPlayoffGame ? false : season.overtimeRules.canEndInTie)
+    : undefined;
+
+  // OT phase display
+  const getOTPhaseLabel = () => {
+    if (!game.overtimeState) return "OVERTIME";
+    const ot = game.overtimeState;
+    const periodPrefix = ot.period > 1 ? `OT P${ot.period}` : "OT";
+    if (ot.phase === "guaranteed_possession") return `${periodPrefix} — GUARANTEED`;
+    if (ot.phase === "sudden_death") return `${periodPrefix} — SUDDEN DEATH`;
+    return periodPrefix;
+  };
 
   return (
     <div className="space-y-4">
@@ -122,9 +154,16 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
 
       {/* Main layout: Drive form + sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-4">
-        {/* Left: Drive entry */}
+        {/* Left: Drive entry or OT Coin Toss */}
         <div className="space-y-4">
-          {!game.gameClock.isGameOver ? (
+          {isWaitingForOTCoinToss ? (
+            <OTCoinToss
+              homeTeam={homeTeam}
+              awayTeam={awayTeam}
+              gameId={game.id}
+              seasonCanEndInTie={seasonCanEndInTie}
+            />
+          ) : !game.gameClock.isGameOver ? (
             <>
               {/* Switch Possession Button */}
               <div className="flex items-center justify-between">
@@ -188,7 +227,7 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
 
         {/* Right sidebar */}
         <div className="space-y-3">
-          {/* Half indicator */}
+          {/* Half / OT phase indicator */}
           <div
             className="rounded-lg p-2 text-center"
             style={{ backgroundColor: "var(--fdf-bg-card)", border: "1px solid var(--fdf-border)" }}
@@ -196,8 +235,10 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
             <span className="text-sm font-fdf-mono font-bold" style={{ color: "var(--fdf-scoreboard-text)" }}>
               {game.gameClock.isGameOver
                 ? "FINAL"
-                : game.gameClock.quarter === 5
-                ? "OVERTIME"
+                : isWaitingForOTCoinToss
+                ? "OT COIN TOSS"
+                : isOT
+                ? getOTPhaseLabel()
                 : isFirstHalf
                 ? "1ST HALF"
                 : "2ND HALF"}
@@ -205,7 +246,7 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
           </div>
 
           {/* Clock Widget */}
-          <GameClockWidget clock={game.gameClock} />
+          <GameClockWidget clock={game.gameClock} overtimeState={game.overtimeState} />
 
           {/* Dice Roller */}
           <DiceRoller onRoll={setLastDice} />
@@ -213,8 +254,8 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
           {/* Timing Die Reference */}
           <TimingDieReference />
 
-          {/* End Half / End Game buttons */}
-          {!game.gameClock.isGameOver && (
+          {/* End Half / End Game / End OT Period buttons */}
+          {!game.gameClock.isGameOver && !isWaitingForOTCoinToss && (
             <div className="space-y-2">
               {isFirstHalf && game.drives.length > 0 && (
                 <button
@@ -244,6 +285,21 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
                 >
                   <Clock size={14} />
                   End Game
+                </button>
+              )}
+              {isOT && game.drives.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleEndGameAction}
+                  className="w-full py-2 rounded-md text-sm font-fdf-mono font-bold transition-colors flex items-center justify-center gap-1.5"
+                  style={{
+                    color: "#ef4444",
+                    border: "1px solid rgba(239,68,68,0.4)",
+                    backgroundColor: "rgba(239,68,68,0.08)",
+                  }}
+                >
+                  <Clock size={14} />
+                  End OT Period
                 </button>
               )}
               {game.drives.length > 0 && (
