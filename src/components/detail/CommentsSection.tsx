@@ -14,10 +14,11 @@ function formatDate(iso: string): string {
 
 interface CommentsSectionProps {
   comments: Comment[];
-  gameId: number;
+  gameId?: number;
+  blogPostId?: number;
 }
 
-export function CommentsSection({ comments: initialComments, gameId }: CommentsSectionProps) {
+export function CommentsSection({ comments: initialComments, gameId, blogPostId }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [author, setAuthor] = useState("");
   const [body, setBody] = useState("");
@@ -48,7 +49,7 @@ export function CommentsSection({ comments: initialComments, gameId }: CommentsS
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          game_id: gameId,
+          ...(gameId ? { game_id: gameId } : { blog_post_id: blogPostId }),
           author: author.trim(),
           body: body.trim(),
           _hp: honeypot,
@@ -66,7 +67,8 @@ export function CommentsSection({ comments: initialComments, gameId }: CommentsS
       // Optimistic add
       const newComment: Comment = data.comment ?? {
         id: Date.now(),
-        game_id: gameId,
+        game_id: gameId ?? null,
+        blog_post_id: blogPostId ?? null,
         author: author.trim(),
         body: body.trim(),
         created_at: new Date().toISOString(),

@@ -113,7 +113,7 @@ export default async function AdminCommentsPage() {
                 className="text-sm mt-1"
                 style={{ color: "var(--color-text-faint)" }}
               >
-                Comments will appear here when users post on game pages.
+                Comments will appear here when users post on game or blog pages.
               </p>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default async function AdminCommentsPage() {
                       borderBottom: "1px solid var(--color-border-subtle)",
                     }}
                   >
-                    {["Author", "Game", "Comment", "Date", "Actions"].map(
+                    {["Author", "Source", "Comment", "Date", "Actions"].map(
                       (col) => (
                         <th
                           key={col}
@@ -179,17 +179,36 @@ export default async function AdminCommentsPage() {
                         </div>
                       </td>
 
-                      {/* Game */}
+                      {/* Source */}
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <Link
-                          href={`/games/${comment.game_id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-mono text-xs transition-colors"
-                          style={{ color: "var(--color-text-link)" }}
-                        >
-                          #{comment.game_id}
-                        </Link>
+                        {comment.game_id ? (
+                          <Link
+                            href={`/games/${comment.game_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-xs transition-colors"
+                            style={{ color: "var(--color-text-link)" }}
+                          >
+                            Game #{comment.game_id}
+                          </Link>
+                        ) : comment.blog_post_id ? (
+                          <Link
+                            href="/blog"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-xs transition-colors"
+                            style={{ color: "var(--color-text-link)" }}
+                          >
+                            Blog #{comment.blog_post_id}
+                          </Link>
+                        ) : (
+                          <span
+                            className="font-mono text-xs"
+                            style={{ color: "var(--color-text-faint)" }}
+                          >
+                            —
+                          </span>
+                        )}
                       </td>
 
                       {/* Comment body excerpt */}

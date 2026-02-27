@@ -2,6 +2,7 @@ import { getAllNews } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 import { SITE_NAME } from "@/lib/constants";
 import { Newspaper, Inbox } from "lucide-react";
+import { BlogBody } from "@/lib/blog-renderer";
 import type { NewsItem } from "@/lib/types";
 
 export const revalidate = 3600;
@@ -89,15 +90,15 @@ export default async function NewsPage() {
                     >
                       {item.title}
                     </h3>
-                    <p
+                    <div
                       className="text-sm leading-relaxed"
                       style={{
                         color: "var(--color-text-muted)",
                         fontFamily: "var(--font-lora)",
                       }}
                     >
-                      {item.body}
-                    </p>
+                      <BlogBody body={item.body} />
+                    </div>
                     <p
                       className="text-xs mt-3 font-mono"
                       style={{ color: "var(--color-text-faint)" }}

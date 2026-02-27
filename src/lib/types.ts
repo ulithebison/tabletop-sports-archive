@@ -134,7 +134,8 @@ export interface ReviewVote {
 
 export interface Comment {
   id: number;
-  game_id: number;
+  game_id: number | null;
+  blog_post_id?: number | null;
   author: string;
   body: string;
   created_at: string;

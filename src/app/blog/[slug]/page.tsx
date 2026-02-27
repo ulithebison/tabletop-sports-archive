@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
-import { getBlogPost } from "@/lib/queries";
+import { getBlogPost, getBlogPostComments } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 import { SITE_NAME } from "@/lib/constants";
 import { BlogBody } from "@/lib/blog-renderer";
+import { CommentsSection } from "@/components/detail/CommentsSection";
 
 export const revalidate = 3600;
 
@@ -28,6 +30,8 @@ export default async function BlogPostPage({ params }: PageProps) {
   const post = await getBlogPost(slug);
 
   if (!post) notFound();
+
+  const comments = await getBlogPostComments(post.id);
 
   return (
     <div
@@ -89,6 +93,16 @@ export default async function BlogPostPage({ params }: PageProps) {
 
         {/* Body */}
         <BlogBody body={post.body} />
+
+        {/* Comments */}
+        <div
+          className="mt-12 pt-8"
+          style={{ borderTop: "1px solid var(--color-border-subtle)" }}
+        >
+          <Suspense fallback={null}>
+            <CommentsSection comments={comments} blogPostId={post.id} />
+          </Suspense>
+        </div>
 
         {/* Footer */}
         <div

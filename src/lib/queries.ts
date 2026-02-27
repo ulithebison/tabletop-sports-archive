@@ -552,6 +552,17 @@ export async function getComments(gameId: number): Promise<Comment[]> {
   return (data ?? []) as Comment[];
 }
 
+export async function getBlogPostComments(blogPostId: number): Promise<Comment[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("comments")
+    .select("*")
+    .eq("blog_post_id", blogPostId)
+    .order("created_at", { ascending: false });
+
+  return (data ?? []) as Comment[];
+}
+
 // ================================================================
 // NEWS
 // ================================================================

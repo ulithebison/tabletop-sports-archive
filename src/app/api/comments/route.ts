@@ -13,7 +13,7 @@ function getClientIP(req: NextRequest): string {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { game_id, author, body: commentBody, _hp, _t } = body;
+    const { game_id, blog_post_id, author, body: commentBody, _hp, _t } = body;
 
     // Honeypot check — silently "succeed" to avoid tipping off bots
     if (_hp) {
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       rateLimit.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
     }
 
-    if (!game_id || !author || !commentBody) {
+    if ((!game_id && !blog_post_id) || !author || !commentBody) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -64,13 +64,16 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createClient();
 
+    const insertData: Record<string, unknown> = {
+      author: author.trim(),
+      body: commentBody.trim(),
+    };
+    if (game_id) insertData.game_id = Number(game_id);
+    if (blog_post_id) insertData.blog_post_id = Number(blog_post_id);
+
     const { data, error } = await supabase
       .from("comments")
-      .insert({
-        game_id: Number(game_id),
-        author: author.trim(),
-        body: commentBody.trim(),
-      })
+      .insert(insertData)
       .select()
       .single();
 
