@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Zap, Users, History, Trophy, HardDrive, X } from "lucide-react";
+import { LayoutDashboard, Zap, Users, History, Trophy, HardDrive, BookOpen, X, Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSettingsStore, type FdfTheme } from "@/lib/fdf/stores/settings-store";
 
 const NAV_ITEMS = [
   { href: "/fdf", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -12,7 +13,15 @@ const NAV_ITEMS = [
   { href: "/fdf/seasons", label: "Seasons", icon: Trophy },
   { href: "/fdf/history", label: "History", icon: History },
   { href: "/fdf/data", label: "Data", icon: HardDrive },
+  { href: "/fdf/guide", label: "Guide", icon: BookOpen },
 ];
+
+const THEME_CYCLE: FdfTheme[] = ["system", "light", "dark"];
+const THEME_CONFIG: Record<FdfTheme, { icon: typeof Sun; label: string }> = {
+  system: { icon: Monitor, label: "System" },
+  light: { icon: Sun, label: "Light" },
+  dark: { icon: Moon, label: "Dark" },
+};
 
 interface FdfSidebarProps {
   open: boolean;
@@ -21,11 +30,20 @@ interface FdfSidebarProps {
 
 export function FdfSidebar({ open, onClose }: FdfSidebarProps) {
   const pathname = usePathname();
+  const theme = useSettingsStore((s) => s.theme);
+  const setTheme = useSettingsStore((s) => s.setTheme);
 
   const isActive = (href: string, exact?: boolean) => {
     if (exact) return pathname === href;
     return pathname === href || pathname.startsWith(href + "/");
   };
+
+  const cycleTheme = () => {
+    const idx = THEME_CYCLE.indexOf(theme);
+    setTheme(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length]);
+  };
+
+  const { icon: ThemeIcon, label: themeLabel } = THEME_CONFIG[theme];
 
   return (
     <>
@@ -76,7 +94,7 @@ export function FdfSidebar({ open, onClose }: FdfSidebarProps) {
           </span>
         </div>
 
-        {/* Nav links */}
+        {/* Nav links + theme toggle */}
         <nav className="flex-1 px-2 py-3 flex flex-col gap-0.5">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
@@ -100,6 +118,18 @@ export function FdfSidebar({ open, onClose }: FdfSidebarProps) {
               </Link>
             );
           })}
+
+          {/* Theme toggle — directly after nav items */}
+          <div className="mt-1 pt-2" style={{ borderTop: "1px solid var(--fdf-border)" }}>
+            <button
+              onClick={cycleTheme}
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full"
+              style={{ color: "var(--fdf-text-secondary)", borderLeft: "3px solid transparent" }}
+            >
+              <ThemeIcon size={18} />
+              {themeLabel}
+            </button>
+          </div>
         </nav>
       </aside>
     </>

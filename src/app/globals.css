@@ -378,6 +378,48 @@
   --fdf-border: rgba(59, 130, 246, 0.15);
 }
 
+[data-theme="fdf-light"] {
+  /* Backgrounds — clean white/slate palette */
+  --fdf-bg-primary: #f1f5f9;
+  --fdf-bg-secondary: #e2e8f0;
+  --fdf-bg-card: #ffffff;
+  --fdf-bg-elevated: #f8fafc;
+
+  /* Text — dark slate for readability */
+  --fdf-text-primary: #0f172a;
+  --fdf-text-secondary: #475569;
+  --fdf-text-muted: #94a3b8;
+
+  /* Accent — slightly darker blue for light bg contrast */
+  --fdf-accent: #2563eb;
+
+  /* Drive results — darker variants for light bg */
+  --fdf-td: #16a34a;
+  --fdf-fg: #d97706;
+  --fdf-turnover: #dc2626;
+  --fdf-punt: #475569;
+  --fdf-safety: #9333ea;
+  --fdf-unusual: #ea580c;
+  --fdf-desperation: #db2777;
+
+  /* Field position */
+  --fdf-fp-poor: #dc2626;
+  --fdf-fp-average: #d97706;
+  --fdf-fp-great: #16a34a;
+
+  /* Quality badges */
+  --fdf-quality-positive: #16a34a;
+  --fdf-quality-negative: #dc2626;
+  --fdf-quality-semi: #d97706;
+
+  /* Scoreboard — keep dark for contrast/drama */
+  --fdf-scoreboard-bg: #0f172a;
+  --fdf-scoreboard-text: #fbbf24;
+
+  /* Border — slate-based */
+  --fdf-border: rgba(15, 23, 42, 0.12);
+}
+
 /* ================================================================
  * PRINT STYLES — browser-native PDF via window.print()
  * ================================================================ */

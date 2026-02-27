@@ -1,15 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import { FdfSidebar } from "@/components/fdf/layout/FdfSidebar";
+import { useSettingsStore } from "@/lib/fdf/stores/settings-store";
+
+function useResolvedTheme() {
+  const theme = useSettingsStore((s) => s.theme);
+  const [resolved, setResolved] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    if (theme !== "system") {
+      setResolved(theme);
+      return;
+    }
+
+    const mql = window.matchMedia("(prefers-color-scheme: light)");
+    setResolved(mql.matches ? "light" : "dark");
+
+    const handler = (e: MediaQueryListEvent) => {
+      setResolved(e.matches ? "light" : "dark");
+    };
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, [theme]);
+
+  return resolved;
+}
 
 export default function FdfLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const resolved = useResolvedTheme();
+  const dataTheme = resolved === "light" ? "fdf-light" : "fdf";
 
   return (
     <div
-      data-theme="fdf"
+      data-theme={dataTheme}
       className="flex min-h-[calc(100vh-60px)]"
       style={{ backgroundColor: "var(--fdf-bg-primary)", color: "var(--fdf-text-primary)" }}
     >

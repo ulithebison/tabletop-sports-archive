@@ -169,50 +169,107 @@ export function TeamImportModal({ isOpen, onClose, onImported }: TeamImportModal
                   backgroundColor: "var(--fdf-bg-elevated)",
                   color: "var(--fdf-text-secondary)",
                   border: "1px solid var(--fdf-border)",
+                  maxHeight: "320px",
+                  overflowY: "auto",
                 }}
-              >{`NAME: Green Bay Packers
+              >{`# Lines starting with # are comments (ignored by the importer).
+# You can paste this entire block into the text area.
+# To import multiple teams, separate them with ---
+
+# --- TEAM INFO ---
+# Required fields: NAME and ABR
+# All other fields are optional with sensible defaults.
+NAME: Green Bay Packers
 ABR: GB
 SEASON: 2024
 LEAGUE: NFL
+# Valid leagues: NFL | AFL | USFL | XFL | AAF | WFL | Custom
 CONFERENCE: NFC
 DIVISION: North
 RECORD: 12-5
 HEAD COACH: Matt LaFleur
 COLOR: #203731
+# COLOR is the primary team color (hex code)
 COLOR2: #FFB612
+# COLOR2 is the secondary team color (hex code)
+LOGO: https://example.com/packers-logo.png
+# LOGO is a URL to the team logo image
 FG: 11-62
+# FG is the Field Goal success range (two-dice roll)
 XP: 11-63
+# XP is the Extra Point success range (two-dice roll)
+NOTES: 2024 NFC North Champions
 
+# --- OFFENSE ---
+# Append * for semi (requires a 1d6 check), or use \u2014 for none.
+#
+# Scoring:       PROLIFIC | PROLIFIC* | DULL* | DULL | \u2014
+# Yards:         DYNAMIC | DYNAMIC* | ERRATIC* | ERRATIC | \u2014
+# Protection:    SOLID | SOLID* | POROUS* | POROUS | \u2014
+# Ball Security: RELIABLE | RELIABLE* | SHAKY* | SHAKY | \u2014
+# Fumbles:       SECURE | SECURE* | CLUMSY* | CLUMSY | \u2014
+# Discipline:    DISCIPLINED | DISCIPLINED* | UNDISCIPLINED* | UNDISCIPLINED | \u2014
+# Clock:         SUPER EFFICIENT | EFFICIENT | EFFICIENT* | INEFFICIENT* | INEFFICIENT | SUPER INEFFICIENT | \u2014
+# Tendency:      P+ | P | R | R+ | \u2014
 OFFENSE
 Scoring: PROLIFIC
 Yards: DYNAMIC*
+Protection: SOLID
+Ball Security: RELIABLE*
+Fumbles: \u2014
+Discipline: DISCIPLINED
+Clock: EFFICIENT
 Tendency: P
 
+# --- DEFENSE ---
+# Scoring:         STAUNCH | STAUNCH* | INEPT* | INEPT | \u2014
+# Yards:           STIFF | STIFF* | SOFT* | SOFT | \u2014
+# Pass Rush:       PUNISHING | PUNISHING* | MILD* | MILD | \u2014
+# Coverage:        AGGRESSIVE | AGGRESSIVE* | MEEK* | MEEK | \u2014
+# Fumble Recovery: ACTIVE | ACTIVE* | PASSIVE* | PASSIVE | \u2014
+# Discipline:      DISCIPLINED | DISCIPLINED* | UNDISCIPLINED* | UNDISCIPLINED | \u2014
 DEFENSE
 Scoring: STAUNCH*
 Yards: STIFF
+Pass Rush: PUNISHING*
+Coverage: AGGRESSIVE
+Fumble Recovery: ACTIVE
+Discipline: \u2014
 
+# --- SPECIAL TEAMS ---
+# Only ELECTRIC is available (no negative counterpart).
+# KR: ELECTRIC | ELECTRIC* | \u2014
+# PR: ELECTRIC | ELECTRIC* | \u2014
 SPECIAL TEAMS
 KR: ELECTRIC*
+PR: ELECTRIC
 
+# --- ROSTER ---
+# Format: Player Name, Range
+# Range is a two-dice roll range like 11-40.
 RUSHING TD
 Josh Jacobs, 11-40
 Emanuel Wilson, 41-55
+Chris Brooks, 56-62
+MarShawn Lloyd, 63-66
 
 PASSING TD
 Jordan Love, 11-66
 
 RECEIVING TD
-Jayden Reed, 11-33
-Romeo Doubs, 34-55
+Jayden Reed, 11-24
+Romeo Doubs, 25-40
+Dontayvion Wicks, 41-50
+Tucker Kraft, 51-60
+Christian Watson, 61-66
 
 FG & XP
-Brayden Narveson, 11-62`}</pre>
+Brayden Narveson, 11-66`}</pre>
               <p
                 className="text-[10px] mt-1.5 font-fdf-mono"
                 style={{ color: "var(--fdf-text-muted)" }}
               >
-                * = semi quality | — = none | Only NAME &amp; ABR required
+                * = semi quality | \u2014 = none | Only NAME &amp; ABR required
               </p>
             </details>
 

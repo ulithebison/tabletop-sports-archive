@@ -202,6 +202,7 @@ function parseTeamBlock(lines: string[], blockIndex: number): ParseBlockResult {
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (!line) continue;
+    if (line.startsWith("#")) continue;
 
     // Check for section header
     const upperLine = line.toUpperCase();
