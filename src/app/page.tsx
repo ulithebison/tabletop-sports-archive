@@ -42,9 +42,14 @@ async function NewsFeed() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {items.map((item: NewsItem) => (
             <article key={item.id} className="p-5 rounded-md" style={{ background: "var(--color-bg-surface)", border: "1px solid var(--color-border-subtle)" }}>
-              <h3 className="font-heading font-semibold text-base mb-2" style={{ color: "var(--color-text-primary)" }}>{item.title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--color-text-muted)" }}>{item.body}</p>
-              <p className="text-xs mt-3" style={{ color: "var(--color-text-faint)" }}>{formatDate(item.created_at)}</p>
+              <Link href="/news" className="block group">
+                <h3 className="font-heading font-semibold text-base mb-2 group-hover:text-gold-300 transition-colors" style={{ color: "var(--color-text-primary)" }}>{item.title}</h3>
+                <p className="text-sm leading-relaxed line-clamp-3" style={{ color: "var(--color-text-muted)" }}>{item.body}</p>
+                <p className="text-xs mt-3" style={{ color: "var(--color-text-faint)" }}>{formatDate(item.created_at)}</p>
+                <span className="inline-flex items-center gap-1 text-xs mt-2 transition-colors" style={{ color: "var(--color-text-link)" }}>
+                  Read more <ArrowRight size={12} />
+                </span>
+              </Link>
             </article>
           ))}
         </div>

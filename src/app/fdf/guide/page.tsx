@@ -1168,7 +1168,7 @@ export default function GuidePage() {
         </div>
         <P>
           Everything you need to know about the Fast Drive Football Digital Companion &mdash; from creating your first
-          team to crowning a season champion.
+        team to crowning a season champion.
         </P>
       </div>
 
