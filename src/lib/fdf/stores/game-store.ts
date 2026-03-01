@@ -242,6 +242,7 @@ export const useGameStore = create<GameState>()(
           gameClock: initialClock(),
           drives: [],
           currentPossession: receivingTeam || "away", // receiving team gets first offensive drive
+          openingKickoffReceiver: receivingTeam || "away",
           enhancedMode: enhancedMode || undefined,
           startedAt: new Date().toISOString(),
         };
@@ -349,9 +350,9 @@ export const useGameStore = create<GameState>()(
             nextPossession = game.currentPossession === "home" ? "away" : "home";
           }
 
-          // After halftime, away team receives (reset to "away")
+          // After halftime, the team that kicked off at game start receives
           if (clockResult.halfEnded) {
-            nextPossession = "home"; // home team gets ball to start 2nd half
+            nextPossession = game.openingKickoffReceiver === "home" ? "away" : "home";
           }
 
           const updatedGame: FdfGame = {
@@ -519,7 +520,7 @@ export const useGameStore = create<GameState>()(
                   isHalftime: false,
                   isGameOver: false,
                 },
-                currentPossession: "home", // home gets ball to start 2nd half
+                currentPossession: game.openingKickoffReceiver === "home" ? "away" : "home",
               },
             },
           };
@@ -635,6 +636,24 @@ export const useGameStore = create<GameState>()(
 
       getGame: (id) => get().games[id],
     }),
-    { name: STORAGE_KEYS.GAMES }
+    {
+      name: STORAGE_KEYS.GAMES,
+      version: 1,
+      migrate: (persisted, version) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const state = persisted as any;
+        // v0 → v1: add openingKickoffReceiver (default "away" for existing games)
+        if (version === 0 && state?.games) {
+          for (const game of Object.values(state.games)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const g = game as any;
+            if (!g.openingKickoffReceiver) {
+              g.openingKickoffReceiver = "away";
+            }
+          }
+        }
+        return state;
+      },
+    }
   )
 );

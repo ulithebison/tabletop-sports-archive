@@ -307,6 +307,7 @@ export interface FdfGame {
   gameClock: GameClock;
   drives: DriveEntry[];
   currentPossession: "home" | "away";
+  openingKickoffReceiver: "home" | "away";
   enhancedMode?: boolean;
   overtimeState?: OvertimeState;
   startedAt: string;
