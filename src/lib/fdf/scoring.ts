@@ -85,7 +85,8 @@ export function isDefenseScoringTD(result: DriveResultType): boolean {
  */
 export function isInstantResult(result: DriveResultType): boolean {
   return isReturnTD(result) || isDefenseScoringTD(result) || result === "KICK_PUNT_REC_RECOVERS"
-    || result === "ONSIDE_KICK_SUCCESS" || result === "ONSIDE_KICK_FAIL";
+    || result === "ONSIDE_KICK_SUCCESS" || result === "ONSIDE_KICK_FAIL"
+    || result === "UNUSUAL_RESULT";
 }
 
 /**
