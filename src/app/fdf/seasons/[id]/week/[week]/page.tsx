@@ -12,7 +12,7 @@ import { WeekNavigation } from "@/components/fdf/seasons/WeekNavigation";
 import { SimulationModal } from "@/components/fdf/seasons/SimulationModal";
 import { PreGameModal } from "@/components/fdf/seasons/PreGameModal";
 import { simulateInstantResult } from "@/lib/fdf/instant-results";
-import type { ScheduleGame, SeasonGameResult } from "@/lib/fdf/types";
+import type { ScheduleGame, SeasonGameResult, GameMode } from "@/lib/fdf/types";
 
 export default function WeekDetailPage() {
   const params = useParams();
@@ -64,9 +64,9 @@ export default function WeekDetailPage() {
     setPendingGame(game);
   }, [activeGameIds, handleResume]);
 
-  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away") => {
+  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode) => {
     if (!pendingGame) return;
-    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam);
+    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam, gameMode);
     const updateSchedule = useSeasonStore.getState().setSchedule;
     const currentSeason = useSeasonStore.getState().getSeason(seasonId);
     if (currentSeason) {

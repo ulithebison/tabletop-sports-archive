@@ -1,4 +1,5 @@
 import type { GameClock } from "./types";
+import type { TimingConfig } from "./constants";
 import { TICKS_PER_QUARTER, TICKS_PER_OT_PERIOD } from "./constants";
 
 export interface ClockResult {
@@ -12,7 +13,8 @@ export interface ClockResult {
  * Consume ticks from the game clock, handling quarter and half transitions.
  * Q1→Q2→halftime→Q3→Q4→end (or OT if tied, handled at game level)
  */
-export function consumeTicks(clock: GameClock, ticks: number): ClockResult {
+export function consumeTicks(clock: GameClock, ticks: number, config?: TimingConfig): ClockResult {
+  const ticksPerQ = config?.ticksPerQuarter ?? TICKS_PER_QUARTER;
   let remaining = clock.ticksRemaining - ticks;
   let quarter = clock.quarter;
   let quarterChanged = false;
@@ -28,14 +30,14 @@ export function consumeTicks(clock: GameClock, ticks: number): ClockResult {
 
     if (quarter === 1) {
       quarter = 2;
-      remaining = TICKS_PER_QUARTER - overflow;
+      remaining = ticksPerQ - overflow;
     } else if (quarter === 2) {
       quarter = 3;
-      remaining = TICKS_PER_QUARTER; // halftime: no overflow
+      remaining = ticksPerQ; // halftime: no overflow
       halfEnded = true;
     } else if (quarter === 3) {
       quarter = 4;
-      remaining = TICKS_PER_QUARTER - overflow;
+      remaining = ticksPerQ - overflow;
     } else if (quarter === 4) {
       gameEnded = true;
     } else if (quarter === 5) {
@@ -59,29 +61,30 @@ export function consumeTicks(clock: GameClock, ticks: number): ClockResult {
 
 /**
  * Convert ticks remaining to display time (MM:SS).
- * Each tick = 75 seconds (1m15s). 12 ticks = 15:00 (full quarter).
+ * Each tick = secondsPerTick (default 75 for Dice, 30 for FAC).
  */
-export function getClockDisplayTime(ticksRemaining: number): string {
-  const totalSeconds = ticksRemaining * 75;
+export function getClockDisplayTime(ticksRemaining: number, secondsPerTick?: number): string {
+  const totalSeconds = ticksRemaining * (secondsPerTick ?? 75);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
 
 /**
- * True when ≤4 ticks remain in the current quarter (the EFFICIENT/INEFFICIENT zone).
+ * True when ticks remaining ≤ threshold (the EFFICIENT/INEFFICIENT zone).
+ * Default threshold = 4 (Dice). FAC = 10.
  */
-export function isTimingWarningZone(ticksRemaining: number): boolean {
-  return ticksRemaining <= 4;
+export function isTimingWarningZone(ticksRemaining: number, threshold?: number): boolean {
+  return ticksRemaining <= (threshold ?? 4);
 }
 
 /**
- * Start a new OT period (8 ticks = 10 minutes).
+ * Start a new OT period.
  */
-export function startOvertime(): GameClock {
+export function startOvertime(config?: TimingConfig): GameClock {
   return {
     quarter: 5,
-    ticksRemaining: TICKS_PER_OT_PERIOD,
+    ticksRemaining: config?.ticksPerOTPeriod ?? TICKS_PER_OT_PERIOD,
     isHalftime: false,
     isGameOver: false,
   };
@@ -91,6 +94,6 @@ export function startOvertime(): GameClock {
  * Start an additional OT period (playoffs only).
  * Same clock as startOvertime — separate function for clarity.
  */
-export function startNewOTPeriod(): GameClock {
-  return startOvertime();
+export function startNewOTPeriod(config?: TimingConfig): GameClock {
+  return startOvertime(config);
 }

@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Zap, Users, Sparkles, Coins } from "lucide-react";
+import { Zap, Users, Sparkles, Coins, Dice5, Layers } from "lucide-react";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
 import { useSettingsStore } from "@/lib/fdf/stores/settings-store";
+import type { GameMode } from "@/lib/fdf/types";
 import { TeamSelector } from "@/components/fdf/teams/TeamSelector";
 
 export default function QuickGamePage() {
@@ -19,10 +20,12 @@ export default function QuickGamePage() {
   );
   const createGame = useGameStore((s) => s.createGame);
   const globalEnhanced = useSettingsStore((s) => s.enhancedMode);
+  const globalGameMode = useSettingsStore((s) => s.defaultGameMode);
 
   const [awayTeamId, setAwayTeamId] = useState("");
   const [homeTeamId, setHomeTeamId] = useState("");
   const [enhancedMode, setEnhancedMode] = useState(globalEnhanced);
+  const [gameMode, setGameMode] = useState<GameMode>(globalGameMode);
   const [receivingTeam, setReceivingTeam] = useState<"home" | "away">("away");
   const [coinFlipping, setCoinFlipping] = useState(false);
   const [coinResult, setCoinResult] = useState<"home" | "away" | null>(null);
@@ -59,7 +62,7 @@ export default function QuickGamePage() {
 
   const handleStart = () => {
     if (!canStart) return;
-    const gameId = createGame(homeTeamId, awayTeamId, enhancedMode || undefined, receivingTeam);
+    const gameId = createGame(homeTeamId, awayTeamId, enhancedMode || undefined, receivingTeam, gameMode);
     router.push(`/fdf/game/${gameId}`);
   };
 
@@ -155,6 +158,49 @@ export default function QuickGamePage() {
               Warning: {!(awayTeam?.finderRoster || awayTeam?.roster) && !(homeTeam?.finderRoster || homeTeam?.roster) ? "Both teams need" : (!(awayTeam?.finderRoster || awayTeam?.roster) ? awayTeam?.name + " needs" : homeTeam?.name + " needs")} a roster for Enhanced Mode. Player tracking will be limited.
             </p>
           )}
+        </div>
+
+        {/* Game Mode Toggle */}
+        <div
+          className="mt-4 rounded-md p-3"
+          style={{ backgroundColor: "var(--fdf-bg-elevated)", border: "1px solid var(--fdf-border)" }}
+        >
+          <span className="text-xs font-bold font-fdf-mono uppercase tracking-wider" style={{ color: "var(--fdf-text-secondary)" }}>
+            Game Mode
+          </span>
+          <div className="flex gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => setGameMode("dice")}
+              className="flex items-center gap-2 flex-1 px-3 py-2 rounded-md text-sm font-bold font-fdf-mono transition-all"
+              style={{
+                backgroundColor: gameMode === "dice" ? "var(--fdf-accent)" : "var(--fdf-bg-card)",
+                color: gameMode === "dice" ? "#000" : "var(--fdf-text-secondary)",
+                border: `1px solid ${gameMode === "dice" ? "var(--fdf-accent)" : "var(--fdf-border)"}`,
+              }}
+            >
+              <Dice5 size={16} />
+              Dice
+            </button>
+            <button
+              type="button"
+              onClick={() => setGameMode("fac")}
+              className="flex items-center gap-2 flex-1 px-3 py-2 rounded-md text-sm font-bold font-fdf-mono transition-all"
+              style={{
+                backgroundColor: gameMode === "fac" ? "var(--fdf-accent)" : "var(--fdf-bg-card)",
+                color: gameMode === "fac" ? "#000" : "var(--fdf-text-secondary)",
+                border: `1px solid ${gameMode === "fac" ? "var(--fdf-accent)" : "var(--fdf-border)"}`,
+              }}
+            >
+              <Layers size={16} />
+              FAC
+            </button>
+          </div>
+          <p className="text-xs mt-1.5" style={{ color: "var(--fdf-text-muted)" }}>
+            {gameMode === "fac"
+              ? "Fast Action Cards — 30 cards/quarter, no timing die"
+              : "Chartbook + 3 dice — 12 ticks/quarter, timing die"}
+          </p>
         </div>
 
         {/* Kickoff — Coin Toss / Receiver Selection */}

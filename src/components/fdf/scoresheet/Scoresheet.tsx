@@ -197,6 +197,7 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
                 quarter={game.gameClock.quarter}
                 hasDrives={game.drives.length > 0}
                 enhancedMode={game.enhancedMode}
+                gameMode={game.gameMode}
                 offenseFinderRoster={offenseTeam.finderRoster}
                 defenseFinderRoster={defenseTeam.finderRoster}
                 onSubmit={handleDrive}
@@ -249,13 +250,15 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
           </div>
 
           {/* Clock Widget */}
-          <GameClockWidget clock={game.gameClock} overtimeState={game.overtimeState} />
+          <GameClockWidget clock={game.gameClock} overtimeState={game.overtimeState} gameMode={game.gameMode} />
 
-          {/* Dice Roller */}
-          <DiceRoller onRoll={(values, deciderValue) => { setLastDice(values); setLastDecider(deciderValue); }} />
+          {/* Dice Roller — hidden in FAC mode (no dice) */}
+          {game.gameMode !== "fac" && (
+            <DiceRoller onRoll={(values, deciderValue) => { setLastDice(values); setLastDecider(deciderValue); }} />
+          )}
 
-          {/* Timing Die Reference */}
-          <TimingDieReference />
+          {/* Timing Die Reference — only shown in Dice mode */}
+          {game.gameMode !== "fac" && <TimingDieReference />}
 
           {/* End Half / End Game / End OT Period buttons */}
           {!game.gameClock.isGameOver && !isWaitingForOTCoinToss && (

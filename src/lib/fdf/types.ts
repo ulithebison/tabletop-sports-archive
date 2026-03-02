@@ -2,6 +2,9 @@
 // FDF Companion App — Types (Sprint 1 + Sprint 2 Enhanced Mode)
 // ============================================================
 
+// Game mode: "dice" = Chartbook + 3 dice, "fac" = Fast Action Cards
+export type GameMode = "dice" | "fac";
+
 // Quality level: "full" = always active, "semi" (•) = 1d6 check needed, null = not present
 export type QualityLevel = "full" | "semi" | null;
 
@@ -311,6 +314,7 @@ export interface FdfGame {
   currentPossession: "home" | "away";
   openingKickoffReceiver: "home" | "away";
   enhancedMode?: boolean;
+  gameMode?: GameMode;
   overtimeState?: OvertimeState;
   startedAt: string;
   completedAt?: string;

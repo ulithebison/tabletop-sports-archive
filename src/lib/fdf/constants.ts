@@ -1,4 +1,4 @@
-import type { DriveResultType, PATResult, FieldPosition, RosterPosition, LeagueType, PlayoffRound } from "./types";
+import type { DriveResultType, PATResult, FieldPosition, RosterPosition, LeagueType, PlayoffRound, GameMode } from "./types";
 
 // Timing die: face value → ticks consumed
 export const TIMING_DIE_MAP: Record<number, number> = {
@@ -67,10 +67,42 @@ export const FIELD_POSITIONS: { value: FieldPosition; label: string; color: stri
   { value: "GREAT", label: "GREAT", color: "var(--fdf-fp-great, #22c55e)" },
 ];
 
-// Clock constants
+// Clock constants (Dice defaults — kept for backward compat)
 export const TICKS_PER_QUARTER = 12;
 export const TICKS_PER_OT_PERIOD = 8; // 10 minutes (600s / 75s per tick)
 export const TOTAL_TICKS = 48;
+
+// ── Timing Config (Dice vs FAC) ─────────────────────────────
+export interface TimingConfig {
+  ticksPerQuarter: number;
+  ticksPerOTPeriod: number;
+  totalTicks: number;
+  secondsPerTick: number;
+  warningZoneTicks: number;  // EFFICIENT/INEFFICIENT threshold
+  maxDriveTicks: number;
+}
+
+const DICE_TIMING: TimingConfig = {
+  ticksPerQuarter: 12,
+  ticksPerOTPeriod: 8,
+  totalTicks: 48,
+  secondsPerTick: 75,
+  warningZoneTicks: 4,
+  maxDriveTicks: 4,
+};
+
+const FAC_TIMING: TimingConfig = {
+  ticksPerQuarter: 30,
+  ticksPerOTPeriod: 20,
+  totalTicks: 120,
+  secondsPerTick: 30,
+  warningZoneTicks: 10,
+  maxDriveTicks: 10,
+};
+
+export function getTimingConfig(mode?: GameMode): TimingConfig {
+  return mode === "fac" ? FAC_TIMING : DICE_TIMING;
+}
 
 // LocalStorage keys
 export const STORAGE_KEYS = {

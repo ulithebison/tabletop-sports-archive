@@ -7,10 +7,11 @@ import type {
   DriveResultType,
   QuarterScore,
   GameClock,
+  GameMode,
   OvertimeState,
 } from "../types";
 import { generateId } from "../id";
-import { STORAGE_KEYS, TICKS_PER_QUARTER, TICKS_PER_OT_PERIOD } from "../constants";
+import { STORAGE_KEYS, getTimingConfig } from "../constants";
 import { consumeTicks, startOvertime, startNewOTPeriod } from "../game-clock";
 import { getPointsForResult, addToQuarterScore, isDefenseScoringTD, isScoringPlay } from "../scoring";
 
@@ -18,8 +19,9 @@ function emptyQuarterScore(): QuarterScore {
   return { q1: 0, q2: 0, q3: 0, q4: 0, ot: 0, total: 0 };
 }
 
-function initialClock(): GameClock {
-  return { quarter: 1, ticksRemaining: TICKS_PER_QUARTER, isHalftime: false, isGameOver: false };
+function initialClock(mode?: GameMode): GameClock {
+  const config = getTimingConfig(mode);
+  return { quarter: 1, ticksRemaining: config.ticksPerQuarter, isHalftime: false, isGameOver: false };
 }
 
 /**
@@ -214,7 +216,7 @@ function evaluateOTAfterDrive(
 
 interface GameState {
   games: Record<string, FdfGame>;
-  createGame: (homeTeamId: string, awayTeamId: string, enhancedMode?: boolean, receivingTeam?: "home" | "away") => string;
+  createGame: (homeTeamId: string, awayTeamId: string, enhancedMode?: boolean, receivingTeam?: "home" | "away", gameMode?: GameMode) => string;
   addDrive: (gameId: string, input: DriveInput) => void;
   undoLastDrive: (gameId: string) => void;
   completeGame: (gameId: string) => void;
@@ -231,7 +233,7 @@ export const useGameStore = create<GameState>()(
     (set, get) => ({
       games: {},
 
-      createGame: (homeTeamId, awayTeamId, enhancedMode, receivingTeam) => {
+      createGame: (homeTeamId, awayTeamId, enhancedMode, receivingTeam, gameMode) => {
         const id = generateId();
         const game: FdfGame = {
           id,
@@ -239,11 +241,12 @@ export const useGameStore = create<GameState>()(
           awayTeamId,
           status: "in_progress",
           score: { home: emptyQuarterScore(), away: emptyQuarterScore() },
-          gameClock: initialClock(),
+          gameClock: initialClock(gameMode),
           drives: [],
           currentPossession: receivingTeam || "away", // receiving team gets first offensive drive
           openingKickoffReceiver: receivingTeam || "away",
           enhancedMode: enhancedMode || undefined,
+          gameMode: gameMode || undefined,
           startedAt: new Date().toISOString(),
         };
         set((state) => ({ games: { ...state.games, [id]: game } }));
@@ -257,7 +260,8 @@ export const useGameStore = create<GameState>()(
 
           // Coin toss winner elects to receive (standard NFL)
           const receivingTeam = coinTossWinner;
-          const otClock = startOvertime();
+          const config = getTimingConfig(game.gameMode);
+          const otClock = startOvertime(config);
           const otState: OvertimeState = {
             phase: "guaranteed_possession",
             coinTossWinner,
@@ -306,7 +310,8 @@ export const useGameStore = create<GameState>()(
           }
 
           // Consume clock ticks
-          const clockResult = consumeTicks(game.gameClock, input.driveTicks);
+          const config = getTimingConfig(game.gameMode);
+          const clockResult = consumeTicks(game.gameClock, input.driveTicks, config);
           let newClock = clockResult.newClock;
 
           // Q4 ends tied: set up "waiting for OT coin toss" state instead of auto-starting OT
@@ -423,9 +428,10 @@ export const useGameStore = create<GameState>()(
           }
 
           // Restore clock: add the ticks back to the quarter the drive was in
-          let ticksForQuarter = TICKS_PER_QUARTER;
+          const undoConfig = getTimingConfig(game.gameMode);
+          let ticksForQuarter = undoConfig.ticksPerQuarter;
           if (lastDrive.quarter === 5) {
-            ticksForQuarter = TICKS_PER_OT_PERIOD;
+            ticksForQuarter = undoConfig.ticksPerOTPeriod;
           }
           const restoredClock: GameClock = {
             quarter: lastDrive.quarter,
@@ -510,6 +516,7 @@ export const useGameStore = create<GameState>()(
           if (!game || game.status !== "in_progress") return state;
           // Only works in first half (Q1 or Q2)
           if (game.gameClock.quarter > 2) return state;
+          const halfConfig = getTimingConfig(game.gameMode);
           return {
             games: {
               ...state.games,
@@ -517,7 +524,7 @@ export const useGameStore = create<GameState>()(
                 ...game,
                 gameClock: {
                   quarter: 3,
-                  ticksRemaining: TICKS_PER_QUARTER,
+                  ticksRemaining: halfConfig.ticksPerQuarter,
                   isHalftime: false,
                   isGameOver: false,
                 },
@@ -553,12 +560,13 @@ export const useGameStore = create<GameState>()(
               // Playoffs: new OT period
               const newPeriod = game.overtimeState.period + 1;
               const newReceiver: "home" | "away" = game.overtimeState.receivingTeam === "home" ? "away" : "home";
+              const otConfig = getTimingConfig(game.gameMode);
               return {
                 games: {
                   ...state.games,
                   [gameId]: {
                     ...game,
-                    gameClock: startNewOTPeriod(),
+                    gameClock: startNewOTPeriod(otConfig),
                     overtimeState: {
                       ...game.overtimeState,
                       phase: "guaranteed_possession",

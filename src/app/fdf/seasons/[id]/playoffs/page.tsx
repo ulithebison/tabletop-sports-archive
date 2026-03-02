@@ -13,7 +13,7 @@ import { PreGameModal } from "@/components/fdf/seasons/PreGameModal";
 import { simulateInstantResult } from "@/lib/fdf/instant-results";
 import { calculateStandings, sortStandings } from "@/lib/fdf/standings";
 import { generatePlayoffSeeds, advancePlayoffWinner, revertPlayoffResult } from "@/lib/fdf/playoff-seeding";
-import type { ScheduleGame, SeasonGameResult } from "@/lib/fdf/types";
+import type { ScheduleGame, SeasonGameResult, GameMode } from "@/lib/fdf/types";
 import type { PlayoffSeed } from "@/lib/fdf/playoff-seeding";
 
 export default function PlayoffsPage() {
@@ -74,9 +74,9 @@ export default function PlayoffsPage() {
     setPendingGame(game);
   }, [activeGameIds, handleResume]);
 
-  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away") => {
+  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode) => {
     if (!pendingGame) return;
-    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam);
+    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam, gameMode);
     const currentSeason = useSeasonStore.getState().getSeason(seasonId);
     if (currentSeason) {
       const updatedSchedule = currentSeason.schedule.map((g) =>

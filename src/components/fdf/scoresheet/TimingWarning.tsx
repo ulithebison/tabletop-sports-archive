@@ -1,32 +1,46 @@
 "use client";
 
-import type { FdfTeam } from "@/lib/fdf/types";
+import type { FdfTeam, GameMode } from "@/lib/fdf/types";
 import { AlertTriangle } from "lucide-react";
 
 interface TimingWarningProps {
   ticksRemaining: number;
   offenseTeam: FdfTeam;
+  gameMode?: GameMode;
 }
 
-export function TimingWarning({ ticksRemaining, offenseTeam }: TimingWarningProps) {
+export function TimingWarning({ ticksRemaining, offenseTeam, gameMode }: TimingWarningProps) {
   const clockQuality = offenseTeam.qualities.offense.clockManagement;
   const clockLevel = offenseTeam.qualities.offense.clockManagementLevel;
+  const isFAC = gameMode === "fac";
 
   let status: string;
   let detail: string;
 
   if (clockQuality === "EFFICIENT") {
     status = clockLevel === "super" ? "SUPER EFFICIENT" : "EFFICIENT";
-    const ticks = clockLevel === "super" ? 2 : 1;
-    detail = `May adjust timing die by ${ticks} tick${ticks > 1 ? "s" : ""} up or down (gamer's choice, min 1 tick). Does not apply on turnovers.`;
+    if (isFAC) {
+      const cards = clockLevel === "super" ? 5 : "1-3";
+      detail = `May adjust timing by ${cards} card${clockLevel === "super" ? "s" : "(s)"} up or down (gamer's choice, min 1 card). Does not apply on turnovers.`;
+    } else {
+      const ticks = clockLevel === "super" ? 2 : 1;
+      detail = `May adjust timing die by ${ticks} tick${ticks > 1 ? "s" : ""} up or down (gamer's choice, min 1 tick). Does not apply on turnovers.`;
+    }
   } else if (clockQuality === "INEFFICIENT") {
     status = clockLevel === "super" ? "SUPER INEFFICIENT" : "INEFFICIENT";
-    const ticks = clockLevel === "super" ? 2 : 1;
-    detail = `Increase timing die by ${ticks} tick${ticks > 1 ? "s" : ""} — only applies when this team is losing.`;
+    if (isFAC) {
+      const cards = clockLevel === "super" ? 5 : 3;
+      detail = `Increase timing by ${cards} card${cards > 1 ? "s" : ""} — only applies when this team is losing.`;
+    } else {
+      const ticks = clockLevel === "super" ? 2 : 1;
+      detail = `Increase timing die by ${ticks} tick${ticks > 1 ? "s" : ""} — only applies when this team is losing.`;
+    }
   } else {
     status = "NEUTRAL";
     detail = "No clock management modifier";
   }
+
+  const unitLabel = isFAC ? "card" : "tick";
 
   return (
     <div
@@ -39,7 +53,7 @@ export function TimingWarning({ ticksRemaining, offenseTeam }: TimingWarningProp
       <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" style={{ color: "#ef4444" }} />
       <div>
         <span className="font-fdf-mono font-bold" style={{ color: "#ef4444" }}>
-          {ticksRemaining} tick{ticksRemaining !== 1 ? "s" : ""} remaining
+          {ticksRemaining} {unitLabel}{ticksRemaining !== 1 ? "s" : ""} remaining
         </span>
         <span className="mx-1.5" style={{ color: "var(--fdf-text-muted)" }}>·</span>
         <span className="font-fdf-mono font-bold" style={{ color: "var(--fdf-text-primary)" }}>

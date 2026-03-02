@@ -238,6 +238,7 @@ export async function exportGameToExcel(
     ["Date", new Date(game.startedAt).toLocaleDateString()],
     ["Away Team", `${awayTeam.name} (${awayTeam.abbreviation})`],
     ["Home Team", `${homeTeam.name} (${homeTeam.abbreviation})`],
+    ["Game Mode", game.gameMode === "fac" ? "FAC (Fast Action Cards)" : "Dice (Chartbook)"],
     ["Overtime", hasOT ? "Yes" : "No"],
     ["Enhanced Mode", game.enhancedMode ? "Yes" : "No"],
     ["Total Drives", game.drives.length],

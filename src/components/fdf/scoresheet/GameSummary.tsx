@@ -209,7 +209,7 @@ export function GameSummary({ game, homeTeam, awayTeam, seasonId }: GameSummaryP
   const scoringDrives = game.drives.filter((d) => isScoringPlay(d.result));
 
   const handleRematch = () => {
-    const newGameId = createGame(game.homeTeamId, game.awayTeamId, game.enhancedMode || undefined);
+    const newGameId = createGame(game.homeTeamId, game.awayTeamId, game.enhancedMode || undefined, undefined, game.gameMode);
     router.push(`/fdf/game/${newGameId}`);
   };
 

@@ -21,7 +21,7 @@ import { simulateInstantResult } from "@/lib/fdf/instant-results";
 import { calculateStandings, sortStandings, getStandingsByDivision } from "@/lib/fdf/standings";
 import { generatePlayoffSeeds, generatePlayoffSchedule, advancePlayoffWinner, revertPlayoffResult } from "@/lib/fdf/playoff-seeding";
 import { calculateSeasonPlayerStats, calculateTeamSeasonStats, calculateSeasonAwards } from "@/lib/fdf/season-stats";
-import type { ScheduleGame, SeasonGameResult } from "@/lib/fdf/types";
+import type { ScheduleGame, SeasonGameResult, GameMode } from "@/lib/fdf/types";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   setup: { label: "Setup", color: "#f59e0b" },
@@ -170,9 +170,9 @@ export default function SeasonDashboardPage() {
     setPendingGame(game);
   }, [activeGameIds, handleResume]);
 
-  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away") => {
+  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode) => {
     if (!pendingGame) return;
-    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam);
+    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam, gameMode);
     const updateSchedule = useSeasonStore.getState().setSchedule;
     const currentSeason = useSeasonStore.getState().getSeason(seasonId);
     if (currentSeason) {

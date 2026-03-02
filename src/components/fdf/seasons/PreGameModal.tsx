@@ -1,21 +1,23 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { X, Play, Coins, Sparkles } from "lucide-react";
+import { X, Play, Coins, Sparkles, Dice5, Layers } from "lucide-react";
 import { useSettingsStore } from "@/lib/fdf/stores/settings-store";
-import type { ScheduleGame, FdfTeam } from "@/lib/fdf/types";
+import type { ScheduleGame, FdfTeam, GameMode } from "@/lib/fdf/types";
 
 interface PreGameModalProps {
   game: ScheduleGame;
   homeTeam: FdfTeam | undefined;
   awayTeam: FdfTeam | undefined;
-  onStart: (enhancedMode: boolean, receivingTeam: "home" | "away") => void;
+  onStart: (enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode) => void;
   onCancel: () => void;
 }
 
 export function PreGameModal({ game, homeTeam, awayTeam, onStart, onCancel }: PreGameModalProps) {
   const globalEnhanced = useSettingsStore((s) => s.enhancedMode);
+  const globalGameMode = useSettingsStore((s) => s.defaultGameMode);
   const [enhancedMode, setEnhancedMode] = useState(globalEnhanced);
+  const [gameMode, setGameMode] = useState<GameMode>(globalGameMode);
   const [receivingTeam, setReceivingTeam] = useState<"home" | "away">("away");
   const [coinFlipping, setCoinFlipping] = useState(false);
   const [coinResult, setCoinResult] = useState<"home" | "away" | null>(null);
@@ -104,6 +106,44 @@ export function PreGameModal({ game, homeTeam, awayTeam, onStart, onCancel }: Pr
           )}
         </div>
 
+        {/* Game Mode Toggle */}
+        <div
+          className="rounded-md p-3 mb-4"
+          style={{ backgroundColor: "var(--fdf-bg-elevated)", border: "1px solid var(--fdf-border)" }}
+        >
+          <span className="text-[10px] font-bold font-fdf-mono uppercase tracking-wider" style={{ color: "var(--fdf-text-secondary)" }}>
+            Game Mode
+          </span>
+          <div className="flex gap-2 mt-1.5">
+            <button
+              type="button"
+              onClick={() => setGameMode("dice")}
+              className="flex items-center gap-1.5 flex-1 px-2.5 py-1.5 rounded text-xs font-bold font-fdf-mono transition-all"
+              style={{
+                backgroundColor: gameMode === "dice" ? "var(--fdf-accent)" : "var(--fdf-bg-card)",
+                color: gameMode === "dice" ? "#000" : "var(--fdf-text-secondary)",
+                border: `1px solid ${gameMode === "dice" ? "var(--fdf-accent)" : "var(--fdf-border)"}`,
+              }}
+            >
+              <Dice5 size={12} />
+              Dice
+            </button>
+            <button
+              type="button"
+              onClick={() => setGameMode("fac")}
+              className="flex items-center gap-1.5 flex-1 px-2.5 py-1.5 rounded text-xs font-bold font-fdf-mono transition-all"
+              style={{
+                backgroundColor: gameMode === "fac" ? "var(--fdf-accent)" : "var(--fdf-bg-card)",
+                color: gameMode === "fac" ? "#000" : "var(--fdf-text-secondary)",
+                border: `1px solid ${gameMode === "fac" ? "var(--fdf-accent)" : "var(--fdf-border)"}`,
+              }}
+            >
+              <Layers size={12} />
+              FAC
+            </button>
+          </div>
+        </div>
+
         {/* Coin Toss button */}
         <div className="flex justify-center mb-3">
           <button
@@ -158,7 +198,7 @@ export function PreGameModal({ game, homeTeam, awayTeam, onStart, onCancel }: Pr
         </div>
 
         <button
-          onClick={() => onStart(enhancedMode, receivingTeam)}
+          onClick={() => onStart(enhancedMode, receivingTeam, gameMode)}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded text-sm font-bold text-white transition-colors"
           style={{ backgroundColor: "var(--fdf-accent)" }}
         >

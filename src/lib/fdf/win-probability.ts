@@ -1,5 +1,5 @@
 import type { FdfGame, WinProbabilitySnapshot, WPAnalytics } from "./types";
-import { TICKS_PER_OT_PERIOD } from "./constants";
+import { getTimingConfig } from "./constants";
 
 /**
  * Logistic win probability model.
@@ -9,8 +9,10 @@ export function calculateWinProbability(
   scoreDiff: number,
   ticksRemaining: number,
   homePossession: boolean,
+  totalGameTicks?: number,
 ): number {
-  const k = 0.15 + (1 - ticksRemaining / 48) * 0.35;
+  const total = totalGameTicks ?? 48;
+  const k = 0.15 + (1 - ticksRemaining / total) * 0.35;
   const possessionBonus = homePossession ? 1.5 : -1.5;
   const homeFieldAdv = 1.5;
   const adjustedDiff = scoreDiff + possessionBonus + homeFieldAdv;
@@ -20,15 +22,17 @@ export function calculateWinProbability(
 
 /**
  * Total ticks remaining in the game given quarter and ticks left in that quarter.
- * Q1-4: (4 - quarter) * 12 + ticksInQuarter
+ * Q1-4: (4 - quarter) * ticksPerQuarter + ticksInQuarter
  * Q5 (OT): just ticksInQuarter (no further quarters)
  */
 export function totalTicksRemaining(
   quarter: 1 | 2 | 3 | 4 | 5,
   ticksInQuarter: number,
+  ticksPerQuarter?: number,
 ): number {
   if (quarter === 5) return ticksInQuarter;
-  return (4 - quarter) * 12 + ticksInQuarter;
+  const tpq = ticksPerQuarter ?? 12;
+  return (4 - quarter) * tpq + ticksInQuarter;
 }
 
 /**
@@ -36,12 +40,14 @@ export function totalTicksRemaining(
  * Returns one snapshot per drive plus an initial pre-game snapshot.
  */
 export function computeWPHistory(game: FdfGame): WinProbabilitySnapshot[] {
+  const config = getTimingConfig(game.gameMode);
+  const totalTicks = config.totalTicks;
+  const ticksPerQ = config.ticksPerQuarter;
+  const otTicks = config.ticksPerOTPeriod;
+
   const snapshots: WinProbabilitySnapshot[] = [];
 
   // Snapshot 0: pre-game (home has ~53% WP from home field advantage)
-  const initialHomePossession = game.currentPossession === "home" ||
-    (game.drives.length > 0 && game.drives[0].teamId === game.awayTeamId);
-  // At game start, away typically receives — so first drive possession is away
   const firstDriveIsHome = game.drives.length > 0
     ? game.drives[0].teamId === game.homeTeamId
     : game.currentPossession === "home";
@@ -49,11 +55,11 @@ export function computeWPHistory(game: FdfGame): WinProbabilitySnapshot[] {
   snapshots.push({
     afterDriveNumber: 0,
     quarter: 1,
-    ticksRemaining: 48,
+    ticksRemaining: totalTicks,
     homeScore: 0,
     awayScore: 0,
     scoreDifferential: 0,
-    homeWinProbability: calculateWinProbability(0, 48, firstDriveIsHome),
+    homeWinProbability: calculateWinProbability(0, totalTicks, firstDriveIsHome, totalTicks),
     possessionTeamId: game.drives.length > 0 ? game.drives[0].teamId : game.homeTeamId,
   });
 
@@ -65,9 +71,9 @@ export function computeWPHistory(game: FdfGame): WinProbabilitySnapshot[] {
 
     // Accumulate ticks
     ticksConsumedPerQuarter[drive.quarter] += drive.driveTicks;
-    const maxTicksForQuarter = drive.quarter === 5 ? TICKS_PER_OT_PERIOD : 12;
+    const maxTicksForQuarter = drive.quarter === 5 ? otTicks : ticksPerQ;
     const ticksInQuarter = Math.max(0, maxTicksForQuarter - ticksConsumedPerQuarter[drive.quarter]);
-    const totalTicks = totalTicksRemaining(drive.quarter, ticksInQuarter);
+    const totalRemaining = totalTicksRemaining(drive.quarter, ticksInQuarter, ticksPerQ);
 
     // Parse score from scoreAfterDrive (format: "away-home")
     const [awayStr, homeStr] = drive.scoreAfterDrive.split("-");
@@ -89,13 +95,13 @@ export function computeWPHistory(game: FdfGame): WinProbabilitySnapshot[] {
       else if (scoreDiff < 0) wp = 0.01;
       else wp = 0.50;
     } else {
-      wp = calculateWinProbability(scoreDiff, totalTicks, nextIsHomePossession);
+      wp = calculateWinProbability(scoreDiff, totalRemaining, nextIsHomePossession, totalTicks);
     }
 
     snapshots.push({
       afterDriveNumber: drive.driveNumber,
       quarter: drive.quarter,
-      ticksRemaining: totalTicks,
+      ticksRemaining: totalRemaining,
       homeScore,
       awayScore,
       scoreDifferential: scoreDiff,
@@ -136,7 +142,6 @@ export function computeWPAnalytics(
       ? Math.abs(biggestLead.snapshot.homeWinProbability - 0.5)
       : 0;
     if (deviation > currentBiggestDeviation) {
-      const leadTeamId = curr.homeWinProbability > 0.5 ? homeTeamId : curr.possessionTeamId;
       // Determine which team has the lead based on score
       const actualLeadTeamId = curr.scoreDifferential > 0
         ? homeTeamId

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { FieldPosition, DriveResultType, PATResult, DriveInput, FdfTeam, FinderRoster, DrivePlayerInvolvement } from "@/lib/fdf/types";
+import type { FieldPosition, DriveResultType, PATResult, DriveInput, FdfTeam, FinderRoster, DrivePlayerInvolvement, GameMode } from "@/lib/fdf/types";
 import { needsPAT, isInstantResult, isNoClockPlay } from "@/lib/fdf/scoring";
 import { isTimingWarningZone } from "@/lib/fdf/game-clock";
+import { getTimingConfig } from "@/lib/fdf/constants";
 import { getFinderPlayerFieldsForResult } from "@/lib/fdf/player-mapping";
 import { generateSummary, generateSimpleSummary, type SummaryContext } from "@/lib/fdf/summary-generator";
 import { FieldPositionSelector } from "./FieldPositionSelector";
@@ -22,6 +23,7 @@ interface DriveEntryFormProps {
   quarter: 1 | 2 | 3 | 4 | 5;
   hasDrives: boolean;
   enhancedMode?: boolean;
+  gameMode?: GameMode;
   offenseFinderRoster?: FinderRoster;
   defenseFinderRoster?: FinderRoster;
   onSubmit: (input: DriveInput) => void;
@@ -36,11 +38,13 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
     quarter,
     hasDrives,
     enhancedMode,
+    gameMode,
     offenseFinderRoster,
     defenseFinderRoster,
     onSubmit,
     onUndo,
   } = props;
+  const timingConfig = getTimingConfig(gameMode);
   const [fieldPosition, setFieldPosition] = useState<FieldPosition | null>(null);
   const [driveTicks, setDriveTicks] = useState<number>(0);
   const [result, setResult] = useState<DriveResultType | null>(null);
@@ -129,7 +133,7 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
     playerValid;
 
   // Show timing warning in Q2, Q4, and OT (Q5)
-  const showTimingWarning = isTimingWarningZone(ticksRemaining) && (quarter === 2 || quarter === 4 || quarter === 5);
+  const showTimingWarning = isTimingWarningZone(ticksRemaining, timingConfig.warningZoneTicks) && (quarter === 2 || quarter === 4 || quarter === 5);
 
   const handleSubmit = () => {
     if (!isValid || !result) return;
@@ -188,7 +192,7 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
       {/* Timing warning — Q2/Q4/OT */}
       {showTimingWarning && (
         <div className="mb-3">
-          <TimingWarning ticksRemaining={ticksRemaining} offenseTeam={offenseTeam} />
+          <TimingWarning ticksRemaining={ticksRemaining} offenseTeam={offenseTeam} gameMode={gameMode} />
         </div>
       )}
 
@@ -197,7 +201,7 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
           <>
             <FieldPositionSelector value={fieldPosition} onChange={setFieldPosition} />
             {!noClockPlay && (
-              <DriveTimeSelector value={driveTicks} onChange={setDriveTicks} />
+              <DriveTimeSelector value={driveTicks} onChange={setDriveTicks} maxTicks={timingConfig.maxDriveTicks} gameMode={gameMode} />
             )}
           </>
         )}
