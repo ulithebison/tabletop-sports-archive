@@ -533,7 +533,14 @@ export async function exportGameToExcel(
         patLabel(d.patResult),
         d.summary || "",
         d.scoreAfterDrive,
-        d.diceValues ? d.diceValues.join(", ") : "",
+        (() => {
+          const parts: string[] = [];
+          if (d.diceValues) parts.push(d.diceValues.join(", "));
+          if (d.deciderDieValue != null && d.deciderDieValue > 0) {
+            parts.push(`D:${d.deciderDieValue % 2 !== 0 ? "YES" : "NO"}`);
+          }
+          return parts.join(" | ");
+        })(),
       ], 1, i % 2 !== 0);
 
       row.getCell(1).alignment = { horizontal: "center", vertical: "middle" };

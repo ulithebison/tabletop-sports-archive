@@ -337,6 +337,7 @@ export const useGameStore = create<GameState>()(
             scoreAfterDrive,
             playerInvolvement: input.playerInvolvement,
             diceValues: input.diceValues,
+            deciderDieValue: input.deciderDieValue,
             createdAt: new Date().toISOString(),
           };
 

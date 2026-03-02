@@ -1,4 +1,4 @@
-import type { DriveResultType, PATResult, FieldPosition, RosterPosition, LeagueType } from "./types";
+import type { DriveResultType, PATResult, FieldPosition, RosterPosition, LeagueType, PlayoffRound } from "./types";
 
 // Timing die: face value → ticks consumed
 export const TIMING_DIE_MAP: Record<number, number> = {
@@ -126,4 +126,19 @@ export const PLAYOFF_FORMAT_OPTIONS = [
   { value: 8, label: "8 teams" },
   { value: 12, label: "12 teams" },
   { value: 14, label: "14 teams" },
+  { value: 18, label: "18 teams" },
+  { value: 24, label: "24 teams" },
+  { value: 32, label: "32 teams" },
+  { value: 36, label: "36 teams" },
+  { value: 64, label: "64 teams" },
+];
+
+/** Canonical round ordering from earliest to final */
+export const ALL_PLAYOFF_ROUNDS: PlayoffRound[] = [
+  "round_of_64",
+  "round_of_32",
+  "wild_card",
+  "divisional",
+  "conference",
+  "super_bowl",
 ];

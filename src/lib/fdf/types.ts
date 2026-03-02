@@ -239,6 +239,7 @@ export interface DriveInput {
   summary: string;
   playerInvolvement?: DrivePlayerInvolvement;
   diceValues?: number[];
+  deciderDieValue?: number;
 }
 
 // Full drive entry stored in game
@@ -257,6 +258,7 @@ export interface DriveEntry {
   scoreAfterDrive: string;
   playerInvolvement?: DrivePlayerInvolvement;
   diceValues?: number[];
+  deciderDieValue?: number;
   createdAt: string;
 }
 
@@ -346,7 +348,7 @@ export type LeagueType = "NFL" | "USFL" | "AFL" | "CFL" | "XFL" | "Custom";
 
 export type OvertimeType = "sudden_death" | "modified_sudden_death" | "guaranteed_possession";
 
-export type PlayoffRound = "wild_card" | "divisional" | "conference" | "super_bowl";
+export type PlayoffRound = "round_of_64" | "round_of_32" | "wild_card" | "divisional" | "conference" | "super_bowl";
 
 export interface SeasonConfig {
   totalRegularSeasonWeeks: number;

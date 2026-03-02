@@ -36,15 +36,18 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
   const season = useSeasonStore((s) => seasonId ? s.getSeason(seasonId) : undefined);
   const [showStats, setShowStats] = useState(false);
   const [lastDice, setLastDice] = useState<number[]>([]);
+  const [lastDecider, setLastDecider] = useState(0);
 
   const offenseTeam = game.currentPossession === "home" ? homeTeam : awayTeam;
   const defenseTeam = game.currentPossession === "home" ? awayTeam : homeTeam;
 
   const handleDrive = (input: DriveInput) => {
     // Attach dice values if available
-    const driveInput = lastDice.some(v => v > 0)
-      ? { ...input, diceValues: lastDice }
-      : input;
+    const driveInput: DriveInput = {
+      ...input,
+      ...(lastDice.some(v => v > 0) ? { diceValues: lastDice } : {}),
+      ...(lastDecider > 0 ? { deciderDieValue: lastDecider } : {}),
+    };
     addDrive(game.id, driveInput);
   };
 
@@ -249,7 +252,7 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
           <GameClockWidget clock={game.gameClock} overtimeState={game.overtimeState} />
 
           {/* Dice Roller */}
-          <DiceRoller onRoll={setLastDice} />
+          <DiceRoller onRoll={(values, deciderValue) => { setLastDice(values); setLastDecider(deciderValue); }} />
 
           {/* Timing Die Reference */}
           <TimingDieReference />

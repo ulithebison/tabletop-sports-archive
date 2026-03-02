@@ -105,9 +105,18 @@ export function EventLog({ drives, homeTeam, awayTeam }: EventLogProps) {
                   {drive.summary}
                 </p>
               )}
-              {drive.diceValues && drive.diceValues.length > 0 && (
+              {(drive.diceValues && drive.diceValues.length > 0 || drive.deciderDieValue) && (
                 <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>
-                  {td ? "🎲" : ""} {drive.diceValues.join("-")}
+                  {td ? "\uD83C\uDFB2" : ""}{" "}
+                  {drive.diceValues && drive.diceValues.length > 0 && drive.diceValues.join("-")}
+                  {drive.deciderDieValue != null && drive.deciderDieValue > 0 && (
+                    <>
+                      {drive.diceValues && drive.diceValues.length > 0 ? " | " : ""}
+                      <span style={{ color: drive.deciderDieValue % 2 !== 0 ? "#22c55e" : "#ef4444" }}>
+                        {drive.deciderDieValue % 2 !== 0 ? "\u25CF" : "\u25CB"}
+                      </span>
+                    </>
+                  )}
                 </span>
               )}
             </div>

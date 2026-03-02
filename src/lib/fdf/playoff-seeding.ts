@@ -7,6 +7,7 @@ import type {
 } from "./types";
 import { generateId } from "./id";
 import { calculateStandings, sortStandings, getStandingsByDivision } from "./standings";
+import { ALL_PLAYOFF_ROUNDS } from "./constants";
 
 export interface PlayoffSeed {
   seed: number;
@@ -86,11 +87,29 @@ export function generatePlayoffSeeds(
 
 /**
  * Map # of playoff teams to round structure.
+ * Supports up to 64 teams (6 rounds).
  */
 function getPlayoffRounds(numTeams: number): PlayoffRound[] {
+  if (numTeams <= 2) return ["super_bowl"];
   if (numTeams <= 4) return ["conference", "super_bowl"];
   if (numTeams <= 8) return ["wild_card", "conference", "super_bowl"];
-  return ["wild_card", "divisional", "conference", "super_bowl"];
+  if (numTeams <= 16) return ["wild_card", "divisional", "conference", "super_bowl"];
+  if (numTeams <= 32) return ["round_of_32", "wild_card", "divisional", "conference", "super_bowl"];
+  return ["round_of_64", "round_of_32", "wild_card", "divisional", "conference", "super_bowl"];
+}
+
+/**
+ * Extract the playoff rounds present in existing schedule data.
+ * Useful when rounds need to be derived from a saved season.
+ */
+export function getPlayoffRoundsFromSchedule(schedule: ScheduleGame[]): PlayoffRound[] {
+  const presentRounds = new Set<PlayoffRound>();
+  for (const game of schedule) {
+    if (game.isPlayoff && game.playoffRound) {
+      presentRounds.add(game.playoffRound);
+    }
+  }
+  return ALL_PLAYOFF_ROUNDS.filter((r) => presentRounds.has(r));
 }
 
 /**
@@ -180,8 +199,8 @@ export function advancePlayoffWinner(
     ? completedGame.homeTeamId
     : completedGame.awayTeamId;
 
-  // Find the round ordering
-  const rounds: PlayoffRound[] = ["wild_card", "divisional", "conference", "super_bowl"];
+  // Derive round ordering from actual schedule
+  const rounds = getPlayoffRoundsFromSchedule(schedule);
   const currentRoundIdx = rounds.indexOf(completedGame.playoffRound!);
   if (currentRoundIdx < 0) return schedule;
 
@@ -219,7 +238,8 @@ export function revertPlayoffResult(
   const updated = schedule.map((g) => ({ ...g }));
   const cascadedGameIds: string[] = [];
 
-  const rounds: PlayoffRound[] = ["wild_card", "divisional", "conference", "super_bowl"];
+  // Derive round ordering from actual schedule
+  const rounds = getPlayoffRoundsFromSchedule(updated);
 
   function revertGame(gameId: string) {
     const game = updated.find((g) => g.id === gameId);

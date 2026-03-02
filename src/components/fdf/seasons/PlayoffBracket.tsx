@@ -16,13 +16,22 @@ interface PlayoffBracketProps {
 }
 
 const ROUND_LABELS: Record<PlayoffRound, string> = {
+  round_of_64: "Round of 64",
+  round_of_32: "Round of 32",
   wild_card: "Wild Card",
   divisional: "Divisional",
   conference: "Conference",
   super_bowl: "Championship",
 };
 
-const ROUND_ORDER: PlayoffRound[] = ["wild_card", "divisional", "conference", "super_bowl"];
+const ROUND_ORDER: PlayoffRound[] = [
+  "round_of_64",
+  "round_of_32",
+  "wild_card",
+  "divisional",
+  "conference",
+  "super_bowl",
+];
 
 export function PlayoffBracket({
   season,
@@ -61,8 +70,8 @@ export function PlayoffBracket({
       <div className="flex gap-6 min-w-max py-2">
         {activeRounds.map((round, roundIdx) => {
           const games = roundMap.get(round) || [];
-          // Calculate spacing based on round depth
-          const gapMultiplier = Math.pow(2, roundIdx);
+          // Calculate spacing based on round depth (capped for large brackets)
+          const gapMultiplier = Math.min(Math.pow(2, roundIdx), 8);
 
           return (
             <div key={round} className="flex flex-col">
