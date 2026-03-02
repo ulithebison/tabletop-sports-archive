@@ -228,7 +228,10 @@ export type DriveResultType =
   // Kick-Off/Punt fumble outcomes
   | "KICK_PUNT_REC_RECOVERS"
   | "KICK_PUNT_KICK_RECOVERS"
-  | "KICK_PUNT_KICK_TD";
+  | "KICK_PUNT_KICK_TD"
+  // Onside kick
+  | "ONSIDE_KICK_SUCCESS"
+  | "ONSIDE_KICK_FAIL";
 
 // PAT result after a touchdown
 export type PATResult = "XP_GOOD" | "XP_MISSED" | "2PT_GOOD" | "2PT_FAILED";

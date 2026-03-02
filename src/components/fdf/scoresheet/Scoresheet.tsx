@@ -252,10 +252,8 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
           {/* Clock Widget */}
           <GameClockWidget clock={game.gameClock} overtimeState={game.overtimeState} gameMode={game.gameMode} />
 
-          {/* Dice Roller — hidden in FAC mode (no dice) */}
-          {game.gameMode !== "fac" && (
-            <DiceRoller onRoll={(values, deciderValue) => { setLastDice(values); setLastDecider(deciderValue); }} />
-          )}
+          {/* Dice Roller */}
+          <DiceRoller onRoll={(values, deciderValue) => { setLastDice(values); setLastDecider(deciderValue); }} />
 
           {/* Timing Die Reference — only shown in Dice mode */}
           {game.gameMode !== "fac" && <TimingDieReference />}

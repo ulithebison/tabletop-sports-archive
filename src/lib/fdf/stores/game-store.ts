@@ -29,7 +29,8 @@ function initialClock(mode?: GameMode): GameClock {
  * KICK_PUNT_KICK_TD and KICK_PUNT_REC_RECOVERS keep possession with the current team.
  */
 function doesDriveEndPossession(result: DriveResultType): boolean {
-  if (isDefenseScoringTD(result) || result === "KICK_PUNT_REC_RECOVERS") {
+  if (isDefenseScoringTD(result) || result === "KICK_PUNT_REC_RECOVERS"
+      || result === "ONSIDE_KICK_SUCCESS") {
     return false; // no possession change
   }
   return true;
@@ -348,11 +349,12 @@ export const useGameStore = create<GameState>()(
 
           // Toggle possession
           let nextPossession: "home" | "away";
-          if (isDefenseScoringTD(input.result) || input.result === "KICK_PUNT_REC_RECOVERS") {
-            // Defense scored TD or receiving team recovered fumble → no possession change
+          if (isDefenseScoringTD(input.result) || input.result === "KICK_PUNT_REC_RECOVERS"
+              || input.result === "ONSIDE_KICK_SUCCESS") {
+            // Defense scored TD, receiving team recovered fumble, or onside kick recovered → no possession change
             nextPossession = game.currentPossession;
           } else {
-            // Normal toggle (including Return TDs, KICK_PUNT_KICK_RECOVERS)
+            // Normal toggle (including Return TDs, KICK_PUNT_KICK_RECOVERS, onside kick failed)
             nextPossession = game.currentPossession === "home" ? "away" : "home";
           }
 

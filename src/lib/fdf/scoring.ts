@@ -84,7 +84,8 @@ export function isDefenseScoringTD(result: DriveResultType): boolean {
  * Return TDs and some kick/punt fumbles happen instantly — no FP, no time consumed, 0 ticks.
  */
 export function isInstantResult(result: DriveResultType): boolean {
-  return isReturnTD(result) || isDefenseScoringTD(result) || result === "KICK_PUNT_REC_RECOVERS";
+  return isReturnTD(result) || isDefenseScoringTD(result) || result === "KICK_PUNT_REC_RECOVERS"
+    || result === "ONSIDE_KICK_SUCCESS" || result === "ONSIDE_KICK_FAIL";
 }
 
 /**

@@ -49,6 +49,8 @@ export const DRIVE_RESULT_CATEGORIES = {
     { value: "KICK_PUNT_REC_RECOVERS" as DriveResultType, label: "Recv. Team Recovers", points: 0 },
     { value: "KICK_PUNT_KICK_RECOVERS" as DriveResultType, label: "Kick. Team Recovers", points: 0 },
     { value: "KICK_PUNT_KICK_TD" as DriveResultType, label: "Kick. Team TD", points: 6 },
+    { value: "ONSIDE_KICK_SUCCESS" as DriveResultType, label: "Onside Kick — Recovered", points: 0 },
+    { value: "ONSIDE_KICK_FAIL" as DriveResultType, label: "Onside Kick — Failed", points: 0 },
   ],
 } as const;
 

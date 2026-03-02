@@ -23,6 +23,8 @@ function getResultColor(result: DriveResultType): string {
   if (result.startsWith("TD_") || result === "DESPERATION_TD") return "var(--fdf-td)";
   if (result.startsWith("FGA_") || result === "DESPERATION_FGA") return "var(--fdf-fg)";
   if (result === "SAFETY") return "var(--fdf-safety)";
+  if (result === "ONSIDE_KICK_SUCCESS") return "var(--fdf-td)";
+  if (result === "ONSIDE_KICK_FAIL") return "var(--fdf-turnover)";
   if (result.startsWith("KICK_PUNT_")) return "var(--fdf-turnover)";
   if (result === "INTERCEPTION" || result === "FUMBLE" || result === "TURNOVER_ON_DOWNS") return "var(--fdf-turnover)";
   if (result.startsWith("PUNT")) return "var(--fdf-punt)";
@@ -182,6 +184,39 @@ export function DriveResultPicker({ value, onChange }: DriveResultPickerProps) {
               </div>
             </>
           )}
+
+          {/* Onside Kick */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px" style={{ backgroundColor: "var(--fdf-border)" }} />
+            <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>Onside Kick</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: "var(--fdf-border)" }} />
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleKickPuntSelect("ONSIDE_KICK_SUCCESS")}
+              className="px-3 py-2.5 rounded text-xs font-fdf-mono font-medium transition-all text-left"
+              style={{
+                backgroundColor: value === "ONSIDE_KICK_SUCCESS" ? "var(--fdf-td)" : "var(--fdf-bg-elevated)",
+                color: value === "ONSIDE_KICK_SUCCESS" ? "#000" : "var(--fdf-td)",
+                border: `1px solid ${value === "ONSIDE_KICK_SUCCESS" ? "var(--fdf-td)" : "var(--fdf-border)"}`,
+              }}
+            >
+              Recovered
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKickPuntSelect("ONSIDE_KICK_FAIL")}
+              className="px-3 py-2.5 rounded text-xs font-fdf-mono font-medium transition-all text-left"
+              style={{
+                backgroundColor: value === "ONSIDE_KICK_FAIL" ? "var(--fdf-turnover)" : "var(--fdf-bg-elevated)",
+                color: value === "ONSIDE_KICK_FAIL" ? "#000" : "var(--fdf-turnover)",
+                border: `1px solid ${value === "ONSIDE_KICK_FAIL" ? "var(--fdf-turnover)" : "var(--fdf-border)"}`,
+              }}
+            >
+              Failed
+            </button>
+          </div>
         </div>
       ) : (
         /* Standard result buttons */
