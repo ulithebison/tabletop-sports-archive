@@ -298,22 +298,33 @@ export const useGameStore = create<GameState>()(
           // Determine which team is on offense for this drive
           const offenseTeamId = game.currentPossession === "home" ? game.homeTeamId : game.awayTeamId;
 
+          // Consume clock ticks FIRST to determine which quarter the drive ends in
+          const config = getTimingConfig(game.gameMode);
+          const clockResult = consumeTicks(game.gameClock, input.driveTicks, config);
+          let newClock = clockResult.newClock;
+
+          // Effective quarter: where the drive result actually occurs.
+          // - Quarter crossed (Q1→Q2, Q3→Q4): score in the new quarter (overflow carried)
+          // - Halftime (Q2→Q3): score in Q2 (half ended, overflow discarded)
+          // - Game ended (Q4/Q5): score in the original quarter
+          // - No change: score in the current quarter
+          const effectiveQuarter: 1 | 2 | 3 | 4 | 5 = (
+            clockResult.quarterChanged && !clockResult.halfEnded && !clockResult.gameEnded
+              ? newClock.quarter
+              : game.gameClock.quarter
+          ) as 1 | 2 | 3 | 4 | 5;
+
           // Attribution: offense points go to offense team, defense points to other team
           let homeScore = { ...game.score.home };
           let awayScore = { ...game.score.away };
 
           if (game.currentPossession === "home") {
-            homeScore = addToQuarterScore(homeScore, game.gameClock.quarter, offensePoints);
-            awayScore = addToQuarterScore(awayScore, game.gameClock.quarter, defensePoints);
+            homeScore = addToQuarterScore(homeScore, effectiveQuarter, offensePoints);
+            awayScore = addToQuarterScore(awayScore, effectiveQuarter, defensePoints);
           } else {
-            awayScore = addToQuarterScore(awayScore, game.gameClock.quarter, offensePoints);
-            homeScore = addToQuarterScore(homeScore, game.gameClock.quarter, defensePoints);
+            awayScore = addToQuarterScore(awayScore, effectiveQuarter, offensePoints);
+            homeScore = addToQuarterScore(homeScore, effectiveQuarter, defensePoints);
           }
-
-          // Consume clock ticks
-          const config = getTimingConfig(game.gameMode);
-          const clockResult = consumeTicks(game.gameClock, input.driveTicks, config);
-          let newClock = clockResult.newClock;
 
           // Q4 ends tied: set up "waiting for OT coin toss" state instead of auto-starting OT
           if (clockResult.gameEnded && game.gameClock.quarter === 4 && homeScore.total === awayScore.total) {
@@ -331,7 +342,7 @@ export const useGameStore = create<GameState>()(
           const driveEntry: DriveEntry = {
             id: generateId(),
             driveNumber: game.drives.length + 1,
-            quarter: game.gameClock.quarter,
+            quarter: effectiveQuarter,
             teamId: offenseTeamId,
             fieldPosition: input.fieldPosition,
             driveTicks: input.driveTicks,
