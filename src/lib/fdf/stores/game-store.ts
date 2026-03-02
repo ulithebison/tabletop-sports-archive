@@ -30,7 +30,7 @@ function initialClock(mode?: GameMode): GameClock {
  */
 function doesDriveEndPossession(result: DriveResultType): boolean {
   if (isDefenseScoringTD(result) || result === "KICK_PUNT_REC_RECOVERS"
-      || result === "ONSIDE_KICK_SUCCESS") {
+      || result === "ONSIDE_KICK_FAIL") {
     return false; // no possession change
   }
   return true;
@@ -350,11 +350,14 @@ export const useGameStore = create<GameState>()(
           // Toggle possession
           let nextPossession: "home" | "away";
           if (isDefenseScoringTD(input.result) || input.result === "KICK_PUNT_REC_RECOVERS"
-              || input.result === "ONSIDE_KICK_SUCCESS") {
-            // Defense scored TD, receiving team recovered fumble, or onside kick recovered → no possession change
+              || input.result === "ONSIDE_KICK_FAIL") {
+            // Defense scored TD, receiving team recovered fumble, or onside kick failed → no possession change
             nextPossession = game.currentPossession;
+          } else if (input.result === "ONSIDE_KICK_SUCCESS") {
+            // Onside kick recovered: possession switches back to kicking team
+            nextPossession = game.currentPossession === "home" ? "away" : "home";
           } else {
-            // Normal toggle (including Return TDs, KICK_PUNT_KICK_RECOVERS, onside kick failed)
+            // Normal toggle
             nextPossession = game.currentPossession === "home" ? "away" : "home";
           }
 
