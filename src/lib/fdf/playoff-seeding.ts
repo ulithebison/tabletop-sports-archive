@@ -159,6 +159,7 @@ export function generatePlayoffSchedule(
   }
 
   // Create placeholder games for subsequent rounds
+  // Pre-fill bye teams into the second round so they appear in the bracket
   let currentWeek = baseWeek + 1;
   for (let roundIdx = 1; roundIdx < rounds.length; roundIdx++) {
     const round = rounds[roundIdx];
@@ -168,15 +169,44 @@ export function generatePlayoffSchedule(
       : Math.pow(2, rounds.length - roundIdx);
     const gamesInRound = Math.floor(prevGames / 2);
 
-    for (let i = 0; i < gamesInRound; i++) {
-      games.push({
-        id: generateId(),
-        week: currentWeek,
-        homeTeamId: "__TBD__",
-        awayTeamId: "__TBD__",
-        isPlayoff: true,
-        playoffRound: round,
-      });
+    if (roundIdx === 1 && numByes > 0) {
+      // Build slot pairs for the second round, then fill bye teams in
+      const slots: { home: string; away: string }[] = [];
+      for (let i = 0; i < gamesInRound; i++) {
+        slots.push({ home: "__TBD__", away: "__TBD__" });
+      }
+
+      // Place bye teams: home slots first (game 0, 1, ...), then away
+      // slots from the last game back to first (keeps top seeds apart)
+      let byeIdx = 0;
+      for (let i = 0; i < gamesInRound && byeIdx < numByes; i++, byeIdx++) {
+        slots[i].home = seeds[byeIdx].teamId;
+      }
+      for (let i = gamesInRound - 1; i >= 0 && byeIdx < numByes; i--, byeIdx++) {
+        slots[i].away = seeds[byeIdx].teamId;
+      }
+
+      for (const slot of slots) {
+        games.push({
+          id: generateId(),
+          week: currentWeek,
+          homeTeamId: slot.home,
+          awayTeamId: slot.away,
+          isPlayoff: true,
+          playoffRound: round,
+        });
+      }
+    } else {
+      for (let i = 0; i < gamesInRound; i++) {
+        games.push({
+          id: generateId(),
+          week: currentWeek,
+          homeTeamId: "__TBD__",
+          awayTeamId: "__TBD__",
+          isPlayoff: true,
+          playoffRound: round,
+        });
+      }
     }
     currentWeek++;
   }
