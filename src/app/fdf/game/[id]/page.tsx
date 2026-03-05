@@ -7,6 +7,7 @@ import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { useSeasonStore } from "@/lib/fdf/stores/season-store";
 import { Scoresheet } from "@/components/fdf/scoresheet/Scoresheet";
 import { GameSummary } from "@/components/fdf/scoresheet/GameSummary";
+import { advancePlayoffWinner } from "@/lib/fdf/playoff-seeding";
 import type { SeasonGameResult } from "@/lib/fdf/types";
 
 export default function GamePage() {
@@ -45,6 +46,20 @@ export default function GamePage() {
     };
 
     recordGameResult(seasonId, scheduleGameId, result, gameId);
+
+    // Advance playoff bracket if this was a playoff game
+    const currentSeason = useSeasonStore.getState().getSeason(seasonId);
+    const schedGame = currentSeason?.schedule.find((g) => g.id === scheduleGameId);
+    if (schedGame?.isPlayoff && currentSeason) {
+      const advanced = advancePlayoffWinner(currentSeason, scheduleGameId);
+      useSeasonStore.getState().setSchedule(seasonId, advanced);
+
+      // Check if championship game is complete → finish season
+      const finalGame = advanced.find((g) => g.playoffRound === "super_bowl" && g.result);
+      if (finalGame) {
+        useSeasonStore.getState().completeSeason(seasonId);
+      }
+    }
   }, [seasonId, scheduleGameId, gameId, recordGameResult]);
 
   // Auto-detect game completion and write result

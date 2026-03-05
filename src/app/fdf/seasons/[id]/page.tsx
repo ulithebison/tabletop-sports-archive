@@ -19,7 +19,7 @@ import { SeasonComplete } from "@/components/fdf/seasons/SeasonComplete";
 import { PreGameModal } from "@/components/fdf/seasons/PreGameModal";
 import { simulateInstantResult } from "@/lib/fdf/instant-results";
 import { calculateStandings, sortStandings, getStandingsByDivision } from "@/lib/fdf/standings";
-import { generatePlayoffSeeds, generatePlayoffSchedule, advancePlayoffWinner, revertPlayoffResult } from "@/lib/fdf/playoff-seeding";
+import { generatePlayoffSeeds, generatePlayoffSchedule, advancePlayoffWinner, revertPlayoffResult, getPlayoffRoundsFromSchedule } from "@/lib/fdf/playoff-seeding";
 import { calculateSeasonPlayerStats, calculateTeamSeasonStats, calculateSeasonAwards } from "@/lib/fdf/season-stats";
 import type { ScheduleGame, SeasonGameResult, GameMode } from "@/lib/fdf/types";
 
@@ -77,6 +77,54 @@ export default function SeasonDashboardPage() {
       setSelectedWeek(season.currentWeek);
     }
   }, [season, selectedWeek]);
+
+  // Auto-repair: detect completed playoff games whose winners were never advanced
+  useEffect(() => {
+    if (!hydrated || !season || season.status !== "playoffs") return;
+    const playoffGames = season.schedule.filter((g) => g.isPlayoff);
+    const rounds = getPlayoffRoundsFromSchedule(playoffGames);
+
+    let needsRepair = false;
+    for (const game of playoffGames) {
+      if (!game.result || !game.playoffRound) continue;
+      const roundIdx = rounds.indexOf(game.playoffRound);
+      const nextRound = rounds[roundIdx + 1];
+      if (!nextRound) continue; // final round, no next
+
+      const winnerId = game.result.winner === "home" ? game.homeTeamId : game.awayTeamId;
+      const nextRoundGames = playoffGames.filter((g) => g.playoffRound === nextRound);
+      const winnerPlaced = nextRoundGames.some(
+        (g) => g.homeTeamId === winnerId || g.awayTeamId === winnerId
+      );
+      if (!winnerPlaced) {
+        needsRepair = true;
+        break;
+      }
+    }
+
+    if (needsRepair) {
+      // Re-advance all completed playoff games in round order
+      let currentSchedule = [...season.schedule];
+      for (const round of rounds) {
+        const roundGames = currentSchedule.filter(
+          (g) => g.isPlayoff && g.playoffRound === round && g.result
+        );
+        for (const game of roundGames) {
+          currentSchedule = advancePlayoffWinner(
+            { ...season, schedule: currentSchedule },
+            game.id
+          );
+        }
+      }
+      setSchedule(seasonId, currentSchedule);
+
+      // Check if championship is now complete
+      const finalGame = currentSchedule.find((g) => g.playoffRound === "super_bowl" && g.result);
+      if (finalGame) {
+        completeSeason(seasonId);
+      }
+    }
+  }, [hydrated, season, seasonId, setSchedule, completeSeason]);
 
   // Calculate standings
   const standings = useMemo(() => {
