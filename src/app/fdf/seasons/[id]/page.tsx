@@ -16,6 +16,7 @@ import { SimulationModal } from "@/components/fdf/seasons/SimulationModal";
 import { SeedingPreview } from "@/components/fdf/seasons/SeedingPreview";
 import { PlayoffBracket } from "@/components/fdf/seasons/PlayoffBracket";
 import { SeasonComplete } from "@/components/fdf/seasons/SeasonComplete";
+import { NewSeasonModal } from "@/components/fdf/seasons/NewSeasonModal";
 import { PreGameModal } from "@/components/fdf/seasons/PreGameModal";
 import { simulateInstantResult } from "@/lib/fdf/instant-results";
 import { calculateStandings, sortStandings, getStandingsByDivision } from "@/lib/fdf/standings";
@@ -45,6 +46,7 @@ export default function SeasonDashboardPage() {
   } | null>(null);
   const [pendingGame, setPendingGame] = useState<ScheduleGame | null>(null);
   const [resetTarget, setResetTarget] = useState<ScheduleGame | null>(null);
+  const [showNewSeasonModal, setShowNewSeasonModal] = useState(false);
 
   const seasonId = params.id as string;
   const season = useSeasonStore((s) => s.getSeason(seasonId));
@@ -349,6 +351,15 @@ export default function SeasonDashboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
+      {/* New Season Modal */}
+      {showNewSeasonModal && season.status === "completed" && (
+        <NewSeasonModal
+          previousSeason={season}
+          onConfirm={(newId) => router.push(`/fdf/seasons/${newId}`)}
+          onClose={() => setShowNewSeasonModal(false)}
+        />
+      )}
+
       {/* Simulation Modal */}
       {simResult && simHomeTeam && simAwayTeam && (
         <SimulationModal
@@ -716,7 +727,7 @@ export default function SeasonDashboardPage() {
       {/* Completed */}
       {season.status === "completed" && (
         <div className="space-y-4">
-          <SeasonComplete season={season} standings={standings} getTeam={getTeam} seasonId={seasonId} awards={seasonAwards} />
+          <SeasonComplete season={season} standings={standings} getTeam={getTeam} seasonId={seasonId} awards={seasonAwards} onNewSeason={() => setShowNewSeasonModal(true)} />
 
           {/* Final bracket */}
           {season.schedule.some((g) => g.isPlayoff) && (

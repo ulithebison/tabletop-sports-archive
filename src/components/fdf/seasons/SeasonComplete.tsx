@@ -11,9 +11,10 @@ interface SeasonCompleteProps {
   getTeam: (id: string) => FdfTeam | undefined;
   seasonId: string;
   awards?: SeasonAward[];
+  onNewSeason?: () => void;
 }
 
-export function SeasonComplete({ season, standings, getTeam, seasonId, awards }: SeasonCompleteProps) {
+export function SeasonComplete({ season, standings, getTeam, seasonId, awards, onNewSeason }: SeasonCompleteProps) {
   const setLeaguePhase = useCommissionerStore((s) => s.setLeaguePhase);
   const commissionerLeague = useCommissionerStore((s) =>
     season.commissionerLeagueId ? s.leagues[season.commissionerLeagueId] : undefined
@@ -161,15 +162,15 @@ export function SeasonComplete({ season, standings, getTeam, seasonId, awards }:
           <BookOpen size={12} />
           Season Recap
         </Link>
-        {!season.commissionerLeagueId && (
-          <Link
-            href={`/fdf/seasons/new?teams=${season.teamIds.join(",")}&divisions=${encodeURIComponent(JSON.stringify(season.divisions))}`}
+        {!season.commissionerLeagueId && onNewSeason && (
+          <button
+            onClick={onNewSeason}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-fdf-mono font-bold transition-colors hover:bg-white/5"
             style={{ color: "#22c55e", backgroundColor: "#22c55e15" }}
           >
             <RefreshCw size={12} />
             New Season
-          </Link>
+          </button>
         )}
         {season.commissionerLeagueId && (
           <Link
