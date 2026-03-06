@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Zap, Users, History, ChevronRight, Trash2 } from "lucide-react";
+import { Zap, Users, History, Shield, ChevronRight, Trash2 } from "lucide-react";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
+import { useCommissionerStore } from "@/lib/fdf/commissioner/commissioner-store";
 
 export default function FdfDashboard() {
   const [hydrated, setHydrated] = useState(false);
@@ -13,6 +14,7 @@ export default function FdfDashboard() {
   const gamesMap = useGameStore((s) => s.games);
   const deleteGame = useGameStore((s) => s.deleteGame);
   const getTeam = useTeamStore((s) => s.getTeam);
+  const commissionerLeagues = useCommissionerStore((s) => s.leagues);
 
   const teams = useMemo(
     () => Object.values(teamsMap).sort((a, b) => a.name.localeCompare(b.name)),
@@ -29,6 +31,10 @@ export default function FdfDashboard() {
       .filter((g) => g.status === "completed")
       .sort((a, b) => (b.completedAt ?? b.startedAt).localeCompare(a.completedAt ?? a.startedAt)),
     [gamesMap]
+  );
+  const leagueList = useMemo(
+    () => Object.values(commissionerLeagues).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
+    [commissionerLeagues]
   );
 
   useEffect(() => setHydrated(true), []);
@@ -112,6 +118,47 @@ export default function FdfDashboard() {
           </p>
         </Link>
       </div>
+
+      {/* Commissioner Leagues */}
+      {leagueList.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-bold font-fdf-mono uppercase tracking-wider" style={{ color: "var(--fdf-accent)" }}>
+              Commissioner Leagues
+            </h2>
+            <Link href="/fdf/commissioner" className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>
+              View all
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {leagueList.slice(0, 3).map((league) => (
+              <Link
+                key={league.id}
+                href={`/fdf/commissioner/${league.id}`}
+                className="flex items-center gap-3 p-3 rounded-lg transition-colors"
+                style={{ backgroundColor: "var(--fdf-bg-card)", border: "1px solid var(--fdf-border)" }}
+              >
+                <Shield size={16} style={{ color: "var(--fdf-accent)" }} />
+                <div className="flex-1 min-w-0">
+                  <span className="font-bold text-sm" style={{ color: "var(--fdf-text-primary)" }}>
+                    {league.name}
+                  </span>
+                  <span className="ml-2 text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>
+                    S{league.currentSeason} W{league.currentWeek} · {league.teams.length} teams
+                  </span>
+                </div>
+                <span
+                  className="text-[10px] font-fdf-mono px-2 py-0.5 rounded"
+                  style={{ backgroundColor: "rgba(59,130,246,0.15)", color: "var(--fdf-accent)" }}
+                >
+                  {league.currentPhase.replace(/_/g, " ")}
+                </span>
+                <ChevronRight size={14} style={{ color: "var(--fdf-text-muted)" }} />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Active Games */}
       {activeGames.length > 0 && (

@@ -112,6 +112,7 @@ export const STORAGE_KEYS = {
   GAMES: "fdf_games",
   SETTINGS: "fdf_settings",
   SEASONS: "fdf_seasons",
+  COMMISSIONER: "fdf_commissioner",
 } as const;
 
 // ============================================================

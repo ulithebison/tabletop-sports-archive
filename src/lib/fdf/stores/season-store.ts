@@ -23,6 +23,7 @@ interface SeasonState {
     overtimeRules: OvertimeConfig;
     teamIds: string[];
     divisions: Division[];
+    commissionerLeagueId?: string;
   }) => string;
   updateSeason: (id: string, updates: Partial<FdfSeason>) => void;
   deleteSeason: (id: string) => void;
@@ -66,6 +67,7 @@ export const useSeasonStore = create<SeasonState>()(
           teamIds: data.teamIds,
           divisions: data.divisions,
           schedule: [],
+          ...(data.commissionerLeagueId && { commissionerLeagueId: data.commissionerLeagueId }),
           createdAt: now,
           updatedAt: now,
         };

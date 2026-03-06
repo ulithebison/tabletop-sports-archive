@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Trophy, BarChart3, BookOpen } from "lucide-react";
+import { Trophy, BarChart3, BookOpen, Shield, RefreshCw } from "lucide-react";
+import { useCommissionerStore } from "@/lib/fdf/commissioner/commissioner-store";
 import type { FdfSeason, FdfTeam, TeamStanding, SeasonAward } from "@/lib/fdf/types";
 
 interface SeasonCompleteProps {
@@ -13,6 +14,17 @@ interface SeasonCompleteProps {
 }
 
 export function SeasonComplete({ season, standings, getTeam, seasonId, awards }: SeasonCompleteProps) {
+  const setLeaguePhase = useCommissionerStore((s) => s.setLeaguePhase);
+  const commissionerLeague = useCommissionerStore((s) =>
+    season.commissionerLeagueId ? s.leagues[season.commissionerLeagueId] : undefined
+  );
+
+  // Ensure league is in postseason when season is completed
+  const needsPhaseTransition = commissionerLeague && commissionerLeague.currentPhase === "regular_season";
+  if (needsPhaseTransition && season.commissionerLeagueId) {
+    setLeaguePhase(season.commissionerLeagueId, "postseason");
+  }
+
   // Find champion (winner of the last playoff game)
   const playoffGames = season.schedule
     .filter((g) => g.isPlayoff && g.result)
@@ -149,6 +161,26 @@ export function SeasonComplete({ season, standings, getTeam, seasonId, awards }:
           <BookOpen size={12} />
           Season Recap
         </Link>
+        {!season.commissionerLeagueId && (
+          <Link
+            href={`/fdf/seasons/new?teams=${season.teamIds.join(",")}&divisions=${encodeURIComponent(JSON.stringify(season.divisions))}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-fdf-mono font-bold transition-colors hover:bg-white/5"
+            style={{ color: "#22c55e", backgroundColor: "#22c55e15" }}
+          >
+            <RefreshCw size={12} />
+            New Season
+          </Link>
+        )}
+        {season.commissionerLeagueId && (
+          <Link
+            href={`/fdf/commissioner/${season.commissionerLeagueId}/offseason`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-fdf-mono font-bold transition-colors hover:bg-white/5"
+            style={{ color: "#22c55e", backgroundColor: "#22c55e15" }}
+          >
+            <Shield size={12} />
+            Start Off-Season
+          </Link>
+        )}
       </div>
     </div>
   );

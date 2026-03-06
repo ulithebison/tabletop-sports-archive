@@ -15,7 +15,12 @@ import type {
 
 const LEAGUE_OPTIONS = Object.entries(LEAGUE_TYPE_LABELS) as [LeagueType, string][];
 
-export function SeasonForm() {
+interface SeasonFormProps {
+  initialTeamIds?: string[];
+  initialDivisions?: Division[];
+}
+
+export function SeasonForm({ initialTeamIds, initialDivisions }: SeasonFormProps) {
   const router = useRouter();
   const teamsMap = useTeamStore((s) => s.teams);
   const createSeason = useSeasonStore((s) => s.createSeason);
@@ -34,8 +39,8 @@ export function SeasonForm() {
   const [hasByeWeeks, setHasByeWeeks] = useState(true);
   const [homeFieldInPlayoffs, setHomeFieldInPlayoffs] = useState(true);
   const [canEndInTie, setCanEndInTie] = useState(true);
-  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
-  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>(initialTeamIds ?? []);
+  const [divisions, setDivisions] = useState<Division[]>(initialDivisions ?? []);
 
   const toggleTeam = (teamId: string) => {
     setSelectedTeamIds((prev) =>

@@ -10,7 +10,7 @@ interface WeekViewProps {
   getTeam: (id: string) => FdfTeam | undefined;
   onPlay: (game: ScheduleGame) => void;
   onSimulate: (gameId: string) => void;
-  onSimulateWeek: () => void;
+  onSimulateWeek?: () => void;
   onResume?: (game: ScheduleGame) => void;
   onReset?: (game: ScheduleGame) => void;
   activeGameIds?: Set<string>;

@@ -420,6 +420,7 @@ export interface FdfSeason {
   teamIds: string[];
   divisions: Division[];
   schedule: ScheduleGame[];
+  commissionerLeagueId?: string;
   createdAt: string;
   updatedAt: string;
 }

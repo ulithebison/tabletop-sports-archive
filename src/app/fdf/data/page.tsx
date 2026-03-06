@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from "@/lib/fdf/constants";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
 import { useSeasonStore } from "@/lib/fdf/stores/season-store";
+import { useCommissionerStore } from "@/lib/fdf/commissioner/commissioner-store";
 
 const EXPORT_VERSION = 1;
 
@@ -15,6 +16,7 @@ interface FdfBackup {
   teams: Record<string, unknown>;
   games: Record<string, unknown>;
   seasons: Record<string, unknown>;
+  commissioner?: Record<string, unknown>;
   settings: unknown;
 }
 
@@ -22,6 +24,7 @@ interface ImportPreview {
   teamCount: number;
   gameCount: number;
   seasonCount: number;
+  leagueCount: number;
   hasSettings: boolean;
   raw: FdfBackup;
 }
@@ -46,11 +49,13 @@ export default function DataPage() {
   const teamCount = Object.keys(useTeamStore((s) => s.teams)).length;
   const gameCount = Object.keys(useGameStore((s) => s.games)).length;
   const seasonCount = Object.keys(useSeasonStore((s) => s.seasons)).length;
+  const leagueCount = Object.keys(useCommissionerStore((s) => s.leagues)).length;
 
   const handleExport = () => {
     const teams = useTeamStore.getState().teams;
     const games = useGameStore.getState().games;
     const seasons = useSeasonStore.getState().seasons;
+    const commissioner = useCommissionerStore.getState().leagues;
 
     // Read settings directly from localStorage (no dedicated store)
     let settings: unknown = null;
@@ -65,6 +70,7 @@ export default function DataPage() {
       teams,
       games,
       seasons,
+      commissioner,
       settings,
     };
 
@@ -98,6 +104,7 @@ export default function DataPage() {
           teamCount: Object.keys(data.teams).length,
           gameCount: Object.keys(data.games).length,
           seasonCount: Object.keys(data.seasons).length,
+          leagueCount: data.commissioner ? Object.keys(data.commissioner).length : 0,
           hasSettings: data.settings != null,
           raw: data,
         });
@@ -116,6 +123,11 @@ export default function DataPage() {
     useTeamStore.setState({ teams: raw.teams as ReturnType<typeof useTeamStore.getState>["teams"] });
     useGameStore.setState({ games: raw.games as ReturnType<typeof useGameStore.getState>["games"] });
     useSeasonStore.setState({ seasons: raw.seasons as ReturnType<typeof useSeasonStore.getState>["seasons"] });
+
+    // Restore commissioner data if present
+    if (raw.commissioner) {
+      useCommissionerStore.setState({ leagues: raw.commissioner as ReturnType<typeof useCommissionerStore.getState>["leagues"] });
+    }
 
     // Write settings directly to localStorage
     if (raw.settings != null) {
@@ -155,11 +167,12 @@ export default function DataPage() {
         >
           Current Data
         </h2>
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-4 gap-4 text-center">
           {[
             { label: "Teams", count: teamCount },
             { label: "Games", count: gameCount },
             { label: "Seasons", count: seasonCount },
+            { label: "Leagues", count: leagueCount },
           ].map((item) => (
             <div key={item.label}>
               <p className="text-2xl font-fdf-mono font-bold" style={{ color: "var(--fdf-text-primary)" }}>
@@ -252,6 +265,7 @@ export default function DataPage() {
                 <p>{importPreview.teamCount} team{importPreview.teamCount !== 1 ? "s" : ""}</p>
                 <p>{importPreview.gameCount} game{importPreview.gameCount !== 1 ? "s" : ""}</p>
                 <p>{importPreview.seasonCount} season{importPreview.seasonCount !== 1 ? "s" : ""}</p>
+                {importPreview.leagueCount > 0 && <p>{importPreview.leagueCount} commissioner league{importPreview.leagueCount !== 1 ? "s" : ""}</p>}
                 {importPreview.hasSettings && <p>Settings included</p>}
               </div>
             </div>

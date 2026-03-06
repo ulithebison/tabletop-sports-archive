@@ -738,6 +738,23 @@ export default function SeasonDashboardPage() {
             getTeam={getTeam}
             divisions={season.divisions.length > 0 ? season.divisions : undefined}
           />
+
+          {/* Season Review — browse past weeks */}
+          <h2 className="text-xs font-bold font-fdf-mono uppercase tracking-wider" style={{ color: "var(--fdf-accent)" }}>
+            Season Review
+          </h2>
+          <WeekNavigation
+            season={season}
+            selectedWeek={currentWeek}
+            onSelectWeek={setSelectedWeek}
+          />
+          <WeekView
+            season={season}
+            week={currentWeek}
+            getTeam={getTeam}
+            onPlay={() => {}}
+            onSimulate={() => {}}
+          />
         </div>
       )}
 

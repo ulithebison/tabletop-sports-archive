@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Zap, Users, History, Trophy, HardDrive, BookOpen, X, Sun, Moon, Monitor } from "lucide-react";
+import { LayoutDashboard, Zap, Users, History, Trophy, HardDrive, BookOpen, Shield, X, Sun, Moon, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSettingsStore, type FdfTheme } from "@/lib/fdf/stores/settings-store";
 
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/fdf/quick-game", label: "Quick Game", icon: Zap },
   { href: "/fdf/teams", label: "Teams", icon: Users },
   { href: "/fdf/seasons", label: "Seasons", icon: Trophy },
+  { href: "/fdf/commissioner", label: "Commissioner", icon: Shield },
   { href: "/fdf/history", label: "History", icon: History },
   { href: "/fdf/data", label: "Data", icon: HardDrive },
   { href: "/fdf/guide", label: "Guide", icon: BookOpen },
