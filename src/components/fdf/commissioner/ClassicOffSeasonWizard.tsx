@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Zap, Check, CheckCircle, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, Zap, Check, CheckCircle, AlertCircle, Trophy } from "lucide-react";
 import { FdfCard } from "../shared/FdfCard";
 import { NarrativeBox } from "./NarrativeBox";
+import { InfoTooltip } from "./InfoTooltip";
 import { DiceModeToggle, DigitalDicePanel } from "./CommissionerDicePanel";
 import type { DiceMode } from "./CommissionerDicePanel";
 import { DiceInput } from "./DiceInput";
@@ -37,6 +38,7 @@ import {
   drawClockManagement,
   processUnexpectedEvent,
   getQVandCDV,
+  createHeadCoachGrade,
 } from "@/lib/fdf/commissioner/classic-mode";
 import { randomD6, randomDiceResult } from "@/lib/fdf/commissioner/dice-engine";
 import { generateCoachName } from "@/lib/fdf/commissioner/name-generator";
@@ -48,8 +50,8 @@ const OFF_SEASON_STEPS = [
   "Coaching Carousel",
   "Franchise Points",
   "Ownership Impact",
-  "Annual Draft: Offense",
-  "Annual Draft: Defense",
+  "Annual Draft / Free Agency: Offense",
+  "Annual Draft / Free Agency: Defense",
   "FO Grade Adjustment",
   "Training Camp: Qualities",
   "Special Teams",
@@ -75,6 +77,7 @@ interface TeamOffSeasonState {
 interface ClassicOffSeasonWizardProps {
   league: CommissionerLeague;
   standings: { teamId: string; wins: number; losses: number; rank: number }[];
+  championTeamId?: string;
   onComplete: () => void;
   onCancel: () => void;
 }
@@ -82,6 +85,7 @@ interface ClassicOffSeasonWizardProps {
 export function ClassicOffSeasonWizard({
   league,
   standings,
+  championTeamId,
   onComplete,
   onCancel,
 }: ClassicOffSeasonWizardProps) {
@@ -90,6 +94,7 @@ export function ClassicOffSeasonWizard({
   const [diceMode, setDiceMode] = useState<DiceMode>("auto");
   const [digitalTeamIdx, setDigitalTeamIdx] = useState(0);
   const [processedSteps, setProcessedSteps] = useState<Set<number>>(new Set([0]));
+  const [lastRolls, setLastRolls] = useState<Record<string, string>>({});
 
   const updateTeamInLeague = useCommissionerStore((s) => s.updateTeamInLeague);
   const updateLeague = useCommissionerStore((s) => s.updateLeague);
@@ -148,17 +153,18 @@ export function ClassicOffSeasonWizard({
     setTeamStates((prev) =>
       prev.map((ts) => {
         const standing = getStanding(ts.teamId);
+        const ct = league.teams.find((t) => t.id === ts.teamId);
         const hadWinning = standing.wins > standing.losses;
-        const isChampion = standing.rank === 1;
+        const isChampion = championTeamId ? ct?.teamStoreId === championTeamId : standing.rank === 1;
         const outcome = isChampion ? "champion" : hadWinning ? "winning" : "losing";
         const newGrade = adjustCoachGrade(ts.classicData.headCoachGrade, outcome);
         const newData = checkHotSeat({ ...ts.classicData, headCoachGrade: newGrade }, hadWinning);
-        const narrative = `Coach grade: ${ts.classicData.headCoachGrade} → ${newGrade} (${outcome})`;
+        const narrative = `Coach grade: ${ts.classicData.headCoachGrade} → ${newGrade} (${outcome}${isChampion ? " — League Champion!" : ""})`;
         return { ...ts, classicData: newData, narratives: [...ts.narratives, narrative] };
       })
     );
     setProcessedSteps((prev) => new Set([...prev, 0]));
-  }, [standings, league.teams]);
+  }, [standings, league.teams, championTeamId]);
 
   const processStep1Carousel = useCallback(() => {
     setTeamStates((prev) =>
@@ -167,9 +173,13 @@ export function ClassicOffSeasonWizard({
         const { classicData, fired, narrative } = processCoachingCarousel(ts.classicData, roll);
         let updated = classicData;
         if (fired) {
-          updated = { ...updated, headCoachName: generateCoachName(), seasonsWithCoach: 0 };
+          const newGrade = createHeadCoachGrade(randomDiceResult(), updated.frontOfficeGrade, updated.ownership.competence);
+          updated = { ...updated, headCoachName: generateCoachName(), headCoachGrade: newGrade, seasonsWithCoach: 0 };
         }
-        return { ...ts, classicData: updated, narratives: [...ts.narratives, narrative] };
+        const fullNarrative = fired
+          ? `${narrative} New HC: ${updated.headCoachName} (Grade ${updated.headCoachGrade})`
+          : narrative;
+        return { ...ts, classicData: updated, narratives: [...ts.narratives, fullNarrative] };
       })
     );
     setProcessedSteps((prev) => new Set([...prev, 1]));
@@ -378,7 +388,7 @@ export function ClassicOffSeasonWizard({
     const isAutoStep = AUTO_STEPS.has(s);
     return (
       <span
-        className="inline-flex items-center gap-1 text-[10px] font-fdf-mono px-1.5 py-0.5 rounded"
+        className="inline-flex items-center gap-1 text-xs font-fdf-mono px-1.5 py-0.5 rounded"
         style={{
           backgroundColor: isProcessed ? "rgba(34,197,94,0.15)" : "rgba(245,158,11,0.15)",
           color: isProcessed ? "#22c55e" : "#f59e0b",
@@ -392,16 +402,16 @@ export function ClassicOffSeasonWizard({
 
   // ── Step narrative text ───────────────────────────────────
   const stepExplanations: Record<number, string> = {
-    0: EXPLANATIONS.coachAdjustment,
-    1: EXPLANATIONS.coachingCarousel,
-    2: EXPLANATIONS.bonusFP,
-    3: EXPLANATIONS.ownershipImpact,
-    4: EXPLANATIONS.annualDraft,
-    5: EXPLANATIONS.annualDraft,
-    6: "FO Grade adjusts based on draft outcomes: two improvements → upgrade, two diminishments → downgrade.",
-    7: EXPLANATIONS.trainingCamp,
-    8: "Fresh Table E rolls for KR, PR, FG range, and XP range.",
-    9: EXPLANATIONS.unexpectedEvents,
+    0: "Head Coach grades adjust based on last season's performance. The league champion's HC gets +2 grade levels (max A). A winning record grants +1 (max B). A losing record results in -1 (min F). Hot Seat is cleared if the team had a winning season.",
+    1: "Coaches on the Hot Seat face a 1d6 roll — rolls of 1-3 mean they're fired. Coaches with grade D or F (depending on the roll) may be placed on the Hot Seat. Fired coaches are immediately replaced: a new name is generated and their grade is determined via Table A (2d6, modified by FO Grade and Ownership).",
+    2: "Franchise Points (FP) are calculated from the FO Grade × HC Grade matrix. Bottom-performing teams receive bonus FP for parity: worst team +3, bottom 15% +2, bottom 30% +1. FP determines team development opportunities for the upcoming season.",
+    3: "A 2d6 roll on the Ownership Impact table. Results can change Franchise Points, alter ownership traits (loyalty/competence), or adjust the Front Office grade. Savvy owners tend to get better outcomes; meddling owners can hurt the team.",
+    4: "The Annual Draft and Free Agency phase for offense. A 2d6 roll determines if the offense improves or diminishes its scoring quality (PROLIFIC/DULL). The current offensive profile influences the odds — weak teams have a better chance to improve.",
+    5: "The Annual Draft and Free Agency phase for defense. A 2d6 roll determines if the defense improves or diminishes its scoring prevention quality (STAUNCH/INEPT). Works the same as the offense phase but uses the defensive profile table.",
+    6: "The Front Office grade adjusts based on combined draft outcomes. If both offense and defense improved → FO grade +2. One improved → +1. One diminished → -1. Both diminished → -2. No change → no adjustment.",
+    7: "Training Camp re-draws all quality pairs for the new season. Ball Security (RELIABLE/SHAKY), Fumbles (SECURE/CLUMSY), Discipline, Coverage, Fumble Recovery, and Clock Management are all re-assigned via the card draw system. Scoring Tendency (P+/P/R/R+) is also re-rolled.",
+    8: "Fresh rolls for all Special Teams categories: Kick Return and Punt Return (ELECTRIC quality check), Field Goal success range, and Extra Point success range. Each team gets new 2d6 rolls on Table E.",
+    9: "About 1 in 3 teams face an unexpected off-season event: front office shakeups, ownership changes, FP bonuses or penalties, or even franchise relocation. A 2d6 roll on Table U determines the event.",
   };
 
   // ── Render ──────────────────────────────────────────────
@@ -479,191 +489,476 @@ export function ClassicOffSeasonWizard({
           />
         )}
 
-        {/* Team list */}
-        <div className="space-y-1.5 max-h-[400px] overflow-y-auto">
-          {teamStates.map((ts, idx) => {
-            const ct = league.teams.find((t) => t.id === ts.teamId);
-            const team = ct ? getTeam(ct.teamStoreId) : null;
-            const lastNarrative = ts.narratives[ts.narratives.length - 1] || "";
-            return (
-              <div
-                key={ts.teamId}
-                className="px-3 py-2 rounded text-xs"
-                style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}
-              >
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-fdf-mono font-bold w-12" style={{ color: team?.primaryColor }}>
-                    {team?.abbreviation || "???"}
-                  </span>
-                  <span className="flex-1" style={{ color: "var(--fdf-text-secondary)" }}>
-                    {lastNarrative}
-                  </span>
+        {/* Team list — step-specific grids */}
+        {step === 0 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip text={EXPLANATIONS.headCoachGrade} />
+              <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>HC Grade adjusts by season outcome</span>
+            </div>
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                const standing = getStanding(ts.teamId);
+                const isChamp = championTeamId ? ct?.teamStoreId === championTeamId : false;
+                const lastNarrative = ts.narratives[ts.narratives.length - 1] || "";
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: isChamp ? "1px solid #f59e0b" : "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr_auto_auto] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>
+                        {team?.abbreviation || "???"}
+                        {isChamp && <Trophy size={10} className="inline ml-1" style={{ color: "#f59e0b" }} />}
+                      </span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>
+                        {standing.wins}W-{standing.losses}L
+                      </span>
+                      <span className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>HC:</span>
+                      <EditableGrade
+                        value={ts.classicData.headCoachGrade}
+                        options={["A", "B", "C", "D", "F"]}
+                        onChange={(v) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, headCoachGrade: v as HeadCoachGrade } }))}
+                      />
+                    </div>
+                    {lastNarrative && (
+                      <div className="mt-1 text-xs" style={{ color: "var(--fdf-text-muted)" }}>{lastNarrative}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                  {/* Editable values based on step */}
-                  {step === 0 && (
-                    <EditableGrade
-                      value={ts.classicData.headCoachGrade}
-                      options={["A", "B", "C", "D", "F"]}
-                      onChange={(v) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, headCoachGrade: v as HeadCoachGrade } }))}
-                    />
-                  )}
+        {step === 1 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip text={EXPLANATIONS.hotSeat} />
+              <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>Carousel determines coaching changes</span>
+            </div>
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                const lastNarrative = ts.narratives[ts.narratives.length - 1] || "";
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr_auto_auto_auto] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <div className="flex items-center gap-1">
+                        <input
+                          value={ts.classicData.headCoachName}
+                          onChange={(e) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, headCoachName: e.target.value } }))}
+                          className="w-full text-sm bg-transparent outline-none"
+                          style={{ color: "var(--fdf-text-primary)" }}
+                        />
+                        <button
+                          onClick={() => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, headCoachName: generateCoachName() } }))}
+                          className="p-0.5 rounded opacity-50 hover:opacity-100 transition-opacity flex-shrink-0"
+                          style={{ color: "var(--fdf-text-muted)" }}
+                          type="button"
+                          title="Generate new name"
+                        >
+                          <RefreshCw size={10} />
+                        </button>
+                      </div>
+                      <span className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>HC:</span>
+                      <EditableGrade
+                        value={ts.classicData.headCoachGrade}
+                        options={["A", "B", "C", "D", "F"]}
+                        onChange={(v) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, headCoachGrade: v as HeadCoachGrade } }))}
+                      />
+                      {ts.classicData.hotSeat ? (
+                        <span className="text-xs font-fdf-mono px-1 rounded" style={{ backgroundColor: "rgba(239,68,68,0.2)", color: "#ef4444" }}>HOT SEAT</span>
+                      ) : <span />}
+                      {diceMode === "manual" && (
+                        <div className="col-span-full mt-1">
+                          <DiceInput value={lastRolls[`1-${idx}`] || "1"} onChange={(roll) => {
+                            setLastRolls(prev => ({ ...prev, [`1-${idx}`]: roll }));
+                            const r = parseInt(roll, 10);
+                            const { classicData, fired, narrative } = processCoachingCarousel(ts.classicData, r);
+                            let updated = classicData;
+                            if (fired) {
+                              const newGrade = createHeadCoachGrade(randomDiceResult(), updated.frontOfficeGrade, updated.ownership.competence);
+                              updated = { ...updated, headCoachName: generateCoachName(), headCoachGrade: newGrade, seasonsWithCoach: 0 };
+                            }
+                            const fullNarrative = fired
+                              ? `${narrative} New HC: ${updated.headCoachName} (Grade ${updated.headCoachGrade})`
+                              : narrative;
+                            updateTeamState(idx, (s) => ({ ...s, classicData: updated, narratives: [...s.narratives, fullNarrative] }));
+                          }} diceCount={1} />
+                        </div>
+                      )}
+                    </div>
+                    {lastNarrative && (
+                      <div className="mt-1 text-xs" style={{ color: "var(--fdf-text-muted)" }}>{lastNarrative}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                  {step === 2 && (
-                    <EditableNumber
-                      value={ts.classicData.franchisePoints}
-                      onChange={(v) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, franchisePoints: v } }))}
-                      max={20}
-                      suffix="FP"
-                    />
-                  )}
+        {step === 2 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip text={EXPLANATIONS.franchisePoints} />
+              <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>FP Matrix</span>
+              <InfoTooltip text={EXPLANATIONS.fpMatrix} />
+              <InfoTooltip text={EXPLANATIONS.bonusFP} />
+            </div>
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                const lastNarrative = ts.narratives[ts.narratives.length - 1] || "";
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr_auto] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <span className="text-xs" style={{ color: "var(--fdf-text-secondary)" }}>
+                        FO: {ts.classicData.frontOfficeGrade} × HC: {ts.classicData.headCoachGrade}
+                      </span>
+                      <EditableNumber
+                        value={ts.classicData.franchisePoints}
+                        onChange={(v) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, franchisePoints: v } }))}
+                        max={20}
+                        suffix="FP"
+                      />
+                    </div>
+                    {lastNarrative && (
+                      <div className="mt-1 text-xs" style={{ color: "var(--fdf-text-muted)" }}>{lastNarrative}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                  {step === 3 && (
-                    <EditableNumber
-                      value={ts.classicData.franchisePoints}
-                      onChange={(v) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, franchisePoints: v } }))}
-                      max={20}
-                      suffix="FP"
-                    />
-                  )}
+        {step === 3 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip text={EXPLANATIONS.ownershipImpact} />
+              <InfoTooltip text={EXPLANATIONS.ownershipCompetence} />
+            </div>
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                const lastNarrative = ts.narratives[ts.narratives.length - 1] || "";
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr_auto] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <span className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>{lastNarrative}</span>
+                      <EditableNumber
+                        value={ts.classicData.franchisePoints}
+                        onChange={(v) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, franchisePoints: v } }))}
+                        max={20}
+                        suffix="FP"
+                      />
+                      {diceMode === "manual" && (
+                        <div className="col-span-full mt-1">
+                          <DiceInput value={lastRolls[`3-${idx}`] || "11"} onChange={(roll) => {
+                            setLastRolls(prev => ({ ...prev, [`3-${idx}`]: roll }));
+                            const { classicData, narrative } = processOwnershipImpact(ts.classicData, roll);
+                            updateTeamState(idx, (s) => ({ ...s, classicData, narratives: [...s.narratives, narrative] }));
+                          }} diceCount={2} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                  {step === 4 && ts.qualities.offense.scoring && (
-                    <EditableQuality
-                      value={ts.qualities.offense.scoring}
-                      options={[null, "PROLIFIC", "DULL"]}
-                      onChange={(v) => updateTeamState(idx, (s) => ({
-                        ...s, qualities: { ...s.qualities, offense: { ...s.qualities.offense, scoring: v as typeof s.qualities.offense.scoring } },
-                      }))}
-                      positiveValues={["PROLIFIC"]}
-                      negativeValues={["DULL"]}
-                    />
-                  )}
+        {step === 4 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip text={EXPLANATIONS.prolific} />
+              <InfoTooltip text={EXPLANATIONS.dull} />
+            </div>
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                const lastNarrative = ts.narratives[ts.narratives.length - 1] || "";
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr_auto] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <span className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>{lastNarrative}</span>
+                      <EditableQuality
+                        value={ts.qualities.offense.scoring}
+                        options={[null, "PROLIFIC", "DULL"]}
+                        onChange={(v) => updateTeamState(idx, (s) => ({
+                          ...s, qualities: { ...s.qualities, offense: { ...s.qualities.offense, scoring: v as typeof s.qualities.offense.scoring } },
+                        }))}
+                        positiveValues={["PROLIFIC"]}
+                        negativeValues={["DULL"]}
+                      />
+                      {diceMode === "manual" && (
+                        <div className="col-span-full mt-1">
+                          <DiceInput value={lastRolls[`4-${idx}`] || "11"} onChange={(roll) => {
+                            setLastRolls(prev => ({ ...prev, [`4-${idx}`]: roll }));
+                            const profile = getOffenseDraftProfile(ts.qualities);
+                            const result = rollAnnualDraftOffense(roll, profile);
+                            let q = ts.qualities;
+                            if (result.scoringChange) {
+                              const newScoring = applyScoringChange(q.offense.scoring, q.offense.scoringSemi, result.scoringChange);
+                              q = { ...q, offense: { ...q.offense, scoring: newScoring.scoring, scoringSemi: newScoring.semi } };
+                            }
+                            updateTeamState(idx, (s) => ({ ...s, qualities: q, offenseChanged: result.scoringChange, narratives: [...s.narratives, `OFF Draft: ${result.narrative}`] }));
+                          }} diceCount={2} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                  {step === 5 && ts.qualities.defense.scoring && (
-                    <EditableQuality
-                      value={ts.qualities.defense.scoring}
-                      options={[null, "STAUNCH", "INEPT"]}
-                      onChange={(v) => updateTeamState(idx, (s) => ({
-                        ...s, qualities: { ...s.qualities, defense: { ...s.qualities.defense, scoring: v as typeof s.qualities.defense.scoring } },
-                      }))}
-                      positiveValues={["STAUNCH"]}
-                      negativeValues={["INEPT"]}
-                    />
-                  )}
+        {step === 5 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip text={EXPLANATIONS.staunch} />
+              <InfoTooltip text={EXPLANATIONS.inept} />
+            </div>
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                const lastNarrative = ts.narratives[ts.narratives.length - 1] || "";
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr_auto] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <span className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>{lastNarrative}</span>
+                      <EditableQuality
+                        value={ts.qualities.defense.scoring}
+                        options={[null, "STAUNCH", "INEPT"]}
+                        onChange={(v) => updateTeamState(idx, (s) => ({
+                          ...s, qualities: { ...s.qualities, defense: { ...s.qualities.defense, scoring: v as typeof s.qualities.defense.scoring } },
+                        }))}
+                        positiveValues={["STAUNCH"]}
+                        negativeValues={["INEPT"]}
+                      />
+                      {diceMode === "manual" && (
+                        <div className="col-span-full mt-1">
+                          <DiceInput value={lastRolls[`5-${idx}`] || "11"} onChange={(roll) => {
+                            setLastRolls(prev => ({ ...prev, [`5-${idx}`]: roll }));
+                            const profile = getDefenseDraftProfile(ts.qualities);
+                            const result = rollAnnualDraftDefense(roll, profile);
+                            let q = ts.qualities;
+                            if (result.scoringChange) {
+                              const newScoring = applyDefenseScoringChange(q.defense.scoring, q.defense.scoringSemi, result.scoringChange);
+                              q = { ...q, defense: { ...q.defense, scoring: newScoring.scoring, scoringSemi: newScoring.semi } };
+                            }
+                            updateTeamState(idx, (s) => ({ ...s, qualities: q, defenseChanged: result.scoringChange, narratives: [...s.narratives, `DEF Draft: ${result.narrative}`] }));
+                          }} diceCount={2} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                  {step === 6 && (
-                    <EditableGrade
-                      value={ts.classicData.frontOfficeGrade}
-                      options={["A", "B", "C", "D", "F"]}
-                      onChange={(v) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, frontOfficeGrade: v as FrontOfficeGrade } }))}
-                    />
-                  )}
+        {step === 6 && (
+          <div className="space-y-1.5">
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                const lastNarrative = ts.narratives[ts.narratives.length - 1] || "";
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr_auto_auto] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <span className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>{lastNarrative}</span>
+                      <span className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>FO:</span>
+                      <EditableGrade
+                        value={ts.classicData.frontOfficeGrade}
+                        options={["A", "B", "C", "D", "F"]}
+                        onChange={(v) => updateTeamState(idx, (s) => ({ ...s, classicData: { ...s.classicData, frontOfficeGrade: v as FrontOfficeGrade } }))}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                  {step !== 0 && step !== 2 && step !== 3 && step !== 4 && step !== 5 && step !== 6 && (
+        {step === 7 && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 mb-2">
+              <InfoTooltip text={EXPLANATIONS.pairedCardDraw} />
+              <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>CDV = {getQVandCDV(teamCount).cdv}</span>
+              <InfoTooltip text={EXPLANATIONS.qv} />
+              <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>QV = {getQVandCDV(teamCount).qv}</span>
+            </div>
+            <div className="grid grid-cols-[48px_160px_1fr_1fr_1fr] items-center gap-2 px-3 text-[10px] font-fdf-mono uppercase tracking-wider" style={{ color: "var(--fdf-text-muted)" }}>
+              <span />
+              <span />
+              <span>Ball Sec.</span>
+              <span>Fumbles</span>
+              <span>Tendency</span>
+            </div>
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr_1fr_1fr] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <EditableQuality value={ts.qualities.offense.ballSecurity} options={[null, "RELIABLE", "SHAKY"]}
+                        onChange={(v) => updateTeamState(idx, (s) => ({ ...s, qualities: { ...s.qualities, offense: { ...s.qualities.offense, ballSecurity: v as typeof s.qualities.offense.ballSecurity } } }))}
+                        positiveValues={["RELIABLE"]} negativeValues={["SHAKY"]}
+                      />
+                      <EditableQuality value={ts.qualities.offense.fumbles} options={[null, "SECURE", "CLUMSY"]}
+                        onChange={(v) => updateTeamState(idx, (s) => ({ ...s, qualities: { ...s.qualities, offense: { ...s.qualities.offense, fumbles: v as typeof s.qualities.offense.fumbles } } }))}
+                        positiveValues={["SECURE"]} negativeValues={["CLUMSY"]}
+                      />
+                      <EditableQuality value={ts.qualities.offense.scoringTendency} options={[null, "P+", "P", "R", "R+"]}
+                        onChange={(v) => updateTeamState(idx, (s) => ({ ...s, qualities: { ...s.qualities, offense: { ...s.qualities.offense, scoringTendency: v as typeof s.qualities.offense.scoringTendency } } }))}
+                        positiveValues={["P+", "P"]} negativeValues={["R+", "R"]}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {step === 8 && (
+          <div className="space-y-1.5">
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <span className="text-xs font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>
+                        FG: {ts.kicking.fgRange || "—"} · XP: {ts.kicking.xpRange || "—"}
+                        {ts.qualities.specialTeams.kickReturn && " · KR: ELECTRIC"}
+                        {ts.qualities.specialTeams.puntReturn && " · PR: ELECTRIC"}
+                      </span>
+                      {diceMode === "manual" && (
+                        <div className="col-span-full mt-1">
+                          <DiceInput value={lastRolls[`8-${idx}`] || "11"} onChange={(roll) => {
+                            setLastRolls(prev => ({ ...prev, [`8-${idx}`]: roll }));
+                            const xp2yd = league.settings.xpFrom2YardLine ?? false;
+                            const st = rollSpecialTeams(roll, randomDiceResult(), randomDiceResult(), randomDiceResult(), xp2yd);
+                            const q = applySpecialTeams(ts.qualities, st);
+                            updateTeamState(idx, (s) => ({ ...s, qualities: q, kicking: { fgRange: st.fgRange, xpRange: st.xpRange }, narratives: [...s.narratives, "Special teams rolled."] }));
+                          }} diceCount={2} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {step === 9 && (
+          <div className="space-y-1.5">
+            <div className="space-y-1.5">
+              {teamStates.map((ts, idx) => {
+                const ct = league.teams.find((t) => t.id === ts.teamId);
+                const team = ct ? getTeam(ct.teamStoreId) : null;
+                const lastNarrative = ts.narratives[ts.narratives.length - 1] || "";
+                return (
+                  <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <div className="grid grid-cols-[48px_160px_1fr_auto] items-center gap-2">
+                      <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                      <span className="text-sm truncate" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                      <span className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>{lastNarrative}</span>
+                      <span className="font-fdf-mono" style={{ color: "var(--fdf-accent)" }}>
+                        {ts.classicData.franchisePoints} FP
+                      </span>
+                      {diceMode === "manual" && (
+                        <div className="col-span-full mt-1">
+                          <DiceInput value={lastRolls[`9-${idx}`] || "11"} onChange={(roll) => {
+                            setLastRolls(prev => ({ ...prev, [`9-${idx}`]: roll }));
+                            const event = processUnexpectedEvent(roll);
+                            let data = { ...ts.classicData };
+                            data.franchisePoints += event.fpChange;
+                            if (event.ownershipEffect?.loyalty) {
+                              data = { ...data, ownership: { ...data.ownership, loyalty: event.ownershipEffect.loyalty } };
+                            }
+                            updateTeamState(idx, (s) => ({
+                              ...s, classicData: data, hadUnexpectedEvent: true,
+                              narratives: [...s.narratives, `Unexpected: ${event.narrative} (FP ${event.fpChange >= 0 ? "+" : ""}${event.fpChange})`],
+                            }));
+                          }} diceCount={2} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {step === OFF_SEASON_STEPS.length - 1 && (
+          <div className="space-y-1.5">
+            {teamStates.map((ts) => {
+              const ct = league.teams.find((t) => t.id === ts.teamId);
+              const team = ct ? getTeam(ct.teamStoreId) : null;
+              return (
+                <div key={ts.teamId} className="px-3 py-2 rounded text-sm" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                  <div className="grid grid-cols-[48px_minmax(160px,auto)_1fr_auto_auto_auto] items-center gap-2">
+                    <span className="font-fdf-mono font-bold" style={{ color: team?.primaryColor }}>{team?.abbreviation || "???"}</span>
+                    <span className="text-sm" style={{ color: "var(--fdf-text-primary)" }}>{team?.name || "Unknown"}</span>
+                    <span className="text-xs" style={{ color: "var(--fdf-text-muted)" }}>
+                      HC: {ts.classicData.headCoachGrade} · FO: {ts.classicData.frontOfficeGrade}
+                    </span>
                     <span className="font-fdf-mono" style={{ color: "var(--fdf-accent)" }}>
                       {ts.classicData.franchisePoints} FP
                     </span>
-                  )}
-
-                  {/* Manual dice input for roll steps */}
-                  {diceMode === "manual" && step === 1 && (
-                    <DiceInput value="1" onChange={(roll) => {
-                      const r = parseInt(roll, 10);
-                      const { classicData, fired, narrative } = processCoachingCarousel(ts.classicData, r);
-                      let updated = classicData;
-                      if (fired) updated = { ...updated, headCoachName: generateCoachName(), seasonsWithCoach: 0 };
-                      updateTeamState(idx, (s) => ({ ...s, classicData: updated, narratives: [...s.narratives, narrative] }));
-                    }} diceCount={1} />
-                  )}
-
-                  {diceMode === "manual" && step === 3 && (
-                    <DiceInput value="11" onChange={(roll) => {
-                      const { classicData, narrative } = processOwnershipImpact(ts.classicData, roll);
-                      updateTeamState(idx, (s) => ({ ...s, classicData, narratives: [...s.narratives, narrative] }));
-                    }} diceCount={2} />
-                  )}
-
-                  {diceMode === "manual" && step === 4 && (
-                    <DiceInput value="11" onChange={(roll) => {
-                      const profile = getOffenseDraftProfile(ts.qualities);
-                      const result = rollAnnualDraftOffense(roll, profile);
-                      let q = ts.qualities;
-                      if (result.scoringChange) {
-                        const newScoring = applyScoringChange(q.offense.scoring, q.offense.scoringSemi, result.scoringChange);
-                        q = { ...q, offense: { ...q.offense, scoring: newScoring.scoring, scoringSemi: newScoring.semi } };
-                      }
-                      updateTeamState(idx, (s) => ({ ...s, qualities: q, offenseChanged: result.scoringChange, narratives: [...s.narratives, `OFF Draft: ${result.narrative}`] }));
-                    }} diceCount={2} />
-                  )}
-
-                  {diceMode === "manual" && step === 5 && (
-                    <DiceInput value="11" onChange={(roll) => {
-                      const profile = getDefenseDraftProfile(ts.qualities);
-                      const result = rollAnnualDraftDefense(roll, profile);
-                      let q = ts.qualities;
-                      if (result.scoringChange) {
-                        const newScoring = applyDefenseScoringChange(q.defense.scoring, q.defense.scoringSemi, result.scoringChange);
-                        q = { ...q, defense: { ...q.defense, scoring: newScoring.scoring, scoringSemi: newScoring.semi } };
-                      }
-                      updateTeamState(idx, (s) => ({ ...s, qualities: q, defenseChanged: result.scoringChange, narratives: [...s.narratives, `DEF Draft: ${result.narrative}`] }));
-                    }} diceCount={2} />
-                  )}
-
-                  {diceMode === "manual" && step === 8 && (
-                    <DiceInput value="11" onChange={(roll) => {
-                      const xp2yd = league.settings.xpFrom2YardLine ?? false;
-                      const st = rollSpecialTeams(roll, randomDiceResult(), randomDiceResult(), randomDiceResult(), xp2yd);
-                      const q = applySpecialTeams(ts.qualities, st);
-                      updateTeamState(idx, (s) => ({ ...s, qualities: q, kicking: { fgRange: st.fgRange, xpRange: st.xpRange }, narratives: [...s.narratives, "Special teams rolled."] }));
-                    }} diceCount={2} />
-                  )}
-
-                  {diceMode === "manual" && step === 9 && (
-                    <DiceInput value="11" onChange={(roll) => {
-                      const event = processUnexpectedEvent(roll);
-                      let data = { ...ts.classicData };
-                      data.franchisePoints += event.fpChange;
-                      if (event.ownershipEffect?.loyalty) {
-                        data = { ...data, ownership: { ...data.ownership, loyalty: event.ownershipEffect.loyalty } };
-                      }
-                      updateTeamState(idx, (s) => ({
-                        ...s, classicData: data, hadUnexpectedEvent: true,
-                        narratives: [...s.narratives, `Unexpected: ${event.narrative} (FP ${event.fpChange >= 0 ? "+" : ""}${event.fpChange})`],
-                      }));
-                    }} diceCount={2} />
-                  )}
+                    {ts.qualities.offense.scoring && (
+                      <span className="text-xs font-fdf-mono px-1 rounded" style={{
+                        backgroundColor: ts.qualities.offense.scoring === "PROLIFIC" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)",
+                        color: ts.qualities.offense.scoring === "PROLIFIC" ? "#22c55e" : "#ef4444",
+                      }}>{ts.qualities.offense.scoring}</span>
+                    )}
+                    {ts.qualities.defense.scoring && (
+                      <span className="text-xs font-fdf-mono px-1 rounded" style={{
+                        backgroundColor: ts.qualities.defense.scoring === "STAUNCH" ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)",
+                        color: ts.qualities.defense.scoring === "STAUNCH" ? "#22c55e" : "#ef4444",
+                      }}>{ts.qualities.defense.scoring}</span>
+                    )}
+                  </div>
                 </div>
-
-                {/* Step 7+8: show qualities inline for editing */}
-                {step === 7 && (
-                  <div className="flex items-center gap-1 mt-1 flex-wrap">
-                    <EditableQuality value={ts.qualities.offense.ballSecurity} options={[null, "RELIABLE", "SHAKY"]}
-                      onChange={(v) => updateTeamState(idx, (s) => ({ ...s, qualities: { ...s.qualities, offense: { ...s.qualities.offense, ballSecurity: v as typeof s.qualities.offense.ballSecurity } } }))}
-                      positiveValues={["RELIABLE"]} negativeValues={["SHAKY"]}
-                    />
-                    <EditableQuality value={ts.qualities.offense.fumbles} options={[null, "SECURE", "CLUMSY"]}
-                      onChange={(v) => updateTeamState(idx, (s) => ({ ...s, qualities: { ...s.qualities, offense: { ...s.qualities.offense, fumbles: v as typeof s.qualities.offense.fumbles } } }))}
-                      positiveValues={["SECURE"]} negativeValues={["CLUMSY"]}
-                    />
-                    <EditableQuality value={ts.qualities.offense.scoringTendency} options={[null, "P+", "P", "R", "R+"]}
-                      onChange={(v) => updateTeamState(idx, (s) => ({ ...s, qualities: { ...s.qualities, offense: { ...s.qualities.offense, scoringTendency: v as typeof s.qualities.offense.scoringTendency } } }))}
-                      positiveValues={["P+", "P"]} negativeValues={["R+", "R"]}
-                    />
-                  </div>
-                )}
-
-                {step === 8 && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>
-                      FG: {ts.kicking.fgRange || "—"} · XP: {ts.kicking.xpRange || "—"}
-                      {ts.qualities.specialTeams.kickReturn && " · KR: ELECTRIC"}
-                      {ts.qualities.specialTeams.puntReturn && " · PR: ELECTRIC"}
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </FdfCard>
 
       {/* Navigation */}

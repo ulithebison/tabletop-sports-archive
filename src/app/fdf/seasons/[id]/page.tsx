@@ -40,7 +40,7 @@ export default function SeasonDashboardPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmAction, setConfirmAction] = useState<null | "week" | "remaining">(null);
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
-  const [showStandings, setShowStandings] = useState(false);
+  const [showStandings, setShowStandings] = useState(true);
   const [showSeeding, setShowSeeding] = useState(false);
   const [simResult, setSimResult] = useState<{
     result: SeasonGameResult;

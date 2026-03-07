@@ -48,6 +48,22 @@ export default function OffSeasonPage() {
     }));
   }, [league, getSeason]);
 
+  // Derive champion from playoff final (not just best regular season record)
+  const championTeamId = useMemo(() => {
+    if (!league || league.seasonIds.length === 0) return undefined;
+    const latestSeasonId = league.seasonIds[league.seasonIds.length - 1];
+    const season = getSeason(latestSeasonId);
+    if (!season) return undefined;
+    const playoffGames = season.schedule
+      .filter((g) => g.isPlayoff && g.result)
+      .sort((a, b) => b.week - a.week);
+    const finalGame = playoffGames[0];
+    if (!finalGame) return undefined;
+    return finalGame.result!.winner === "home"
+      ? finalGame.homeTeamId
+      : finalGame.awayTeamId;
+  }, [league, getSeason]);
+
   if (!hydrated) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -66,6 +82,7 @@ export default function OffSeasonPage() {
       <ClassicOffSeasonWizard
         league={league}
         standings={standings}
+        championTeamId={championTeamId}
         onComplete={() => router.push(`/fdf/commissioner/${leagueId}`)}
         onCancel={() => router.push(`/fdf/commissioner/${leagueId}`)}
       />
