@@ -14,6 +14,7 @@ interface SeasonGameRowProps {
   onResume?: (game: ScheduleGame) => void;
   onReset?: (game: ScheduleGame) => void;
   isActiveGame?: boolean;
+  teamLinkFn?: (teamStoreId: string) => string;
 }
 
 export function SeasonGameRow({
@@ -26,22 +27,35 @@ export function SeasonGameRow({
   onResume,
   onReset,
   isActiveGame,
+  teamLinkFn,
 }: SeasonGameRowProps) {
   if (game.isBye) {
+    const byeContent = (
+      <div className="flex items-center gap-2">
+        <span
+          className="w-3 h-3 rounded-sm flex-shrink-0"
+          style={{ backgroundColor: homeTeam?.primaryColor || "#666" }}
+        />
+        <span className="text-xs font-fdf-mono font-bold" style={{ color: "var(--fdf-text-primary)" }}>
+          {homeTeam?.abbreviation || "???"}
+        </span>
+        {homeTeam?.name && (
+          <span className="text-[10px] font-fdf-mono truncate" style={{ color: "var(--fdf-text-muted)" }}>
+            {homeTeam.name}
+          </span>
+        )}
+      </div>
+    );
     return (
       <div
         className="flex items-center justify-between px-3 py-2.5 rounded"
         style={{ backgroundColor: "var(--fdf-bg-card)", border: "1px solid var(--fdf-border)", opacity: 0.6 }}
       >
-        <div className="flex items-center gap-2">
-          <span
-            className="w-3 h-3 rounded-sm"
-            style={{ backgroundColor: homeTeam?.primaryColor || "#666" }}
-          />
-          <span className="text-xs font-fdf-mono font-bold" style={{ color: "var(--fdf-text-primary)" }}>
-            {homeTeam?.abbreviation || "???"}
-          </span>
-        </div>
+        {teamLinkFn && homeTeam ? (
+          <Link href={teamLinkFn(game.homeTeamId)} className="flex items-center gap-2 min-w-0 hover:opacity-80 transition-opacity">
+            {byeContent}
+          </Link>
+        ) : byeContent}
         <span className="text-[10px] font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>
           BYE
         </span>
@@ -58,22 +72,36 @@ export function SeasonGameRow({
       style={{ backgroundColor: "var(--fdf-bg-card)", border: "1px solid var(--fdf-border)" }}
     >
       {/* Away team */}
-      <div className="flex items-center gap-1.5 flex-1 min-w-0">
-        <span
-          className="w-3 h-3 rounded-sm flex-shrink-0"
-          style={{ backgroundColor: awayTeam?.primaryColor || "#666" }}
-        />
-        <span
-          className="text-xs font-fdf-mono font-bold truncate"
-          style={{
-            color: hasResult && game.result!.winner === "away"
-              ? "var(--fdf-text-primary)"
-              : "var(--fdf-text-secondary)",
-          }}
-        >
-          {awayTeam?.abbreviation || "???"}
-        </span>
-      </div>
+      {(() => {
+        const awayBlock = (
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <span
+              className="w-3 h-3 rounded-sm flex-shrink-0"
+              style={{ backgroundColor: awayTeam?.primaryColor || "#666" }}
+            />
+            <span
+              className="text-xs font-fdf-mono font-bold flex-shrink-0"
+              style={{
+                color: hasResult && game.result!.winner === "away"
+                  ? "var(--fdf-text-primary)"
+                  : "var(--fdf-text-secondary)",
+              }}
+            >
+              {awayTeam?.abbreviation || "???"}
+            </span>
+            {awayTeam?.name && (
+              <span className="text-[10px] font-fdf-mono truncate" style={{ color: "var(--fdf-text-muted)" }}>
+                {awayTeam.name}
+              </span>
+            )}
+          </div>
+        );
+        return teamLinkFn && awayTeam ? (
+          <Link href={teamLinkFn(game.awayTeamId)} className="flex items-center gap-1.5 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+            {awayBlock}
+          </Link>
+        ) : awayBlock;
+      })()}
 
       {/* Score / Status */}
       <div className="flex items-center gap-2 flex-shrink-0">
@@ -105,22 +133,36 @@ export function SeasonGameRow({
       </div>
 
       {/* Home team */}
-      <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
-        <span
-          className="text-xs font-fdf-mono font-bold truncate"
-          style={{
-            color: hasResult && game.result!.winner === "home"
-              ? "var(--fdf-text-primary)"
-              : "var(--fdf-text-secondary)",
-          }}
-        >
-          {homeTeam?.abbreviation || "???"}
-        </span>
-        <span
-          className="w-3 h-3 rounded-sm flex-shrink-0"
-          style={{ backgroundColor: homeTeam?.primaryColor || "#666" }}
-        />
-      </div>
+      {(() => {
+        const homeBlock = (
+          <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
+            {homeTeam?.name && (
+              <span className="text-[10px] font-fdf-mono truncate" style={{ color: "var(--fdf-text-muted)" }}>
+                {homeTeam.name}
+              </span>
+            )}
+            <span
+              className="text-xs font-fdf-mono font-bold flex-shrink-0"
+              style={{
+                color: hasResult && game.result!.winner === "home"
+                  ? "var(--fdf-text-primary)"
+                  : "var(--fdf-text-secondary)",
+              }}
+            >
+              {homeTeam?.abbreviation || "???"}
+            </span>
+            <span
+              className="w-3 h-3 rounded-sm flex-shrink-0"
+              style={{ backgroundColor: homeTeam?.primaryColor || "#666" }}
+            />
+          </div>
+        );
+        return teamLinkFn && homeTeam ? (
+          <Link href={teamLinkFn(game.homeTeamId)} className="flex items-center gap-1.5 flex-1 min-w-0 justify-end hover:opacity-80 transition-opacity">
+            {homeBlock}
+          </Link>
+        ) : homeBlock;
+      })()}
 
       {/* Actions */}
       <div className="flex items-center gap-1 ml-2 flex-shrink-0">

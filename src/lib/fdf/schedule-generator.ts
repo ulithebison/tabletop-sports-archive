@@ -122,96 +122,88 @@ export function generateDivisionSchedule(
     [matchups[i], matchups[j]] = [matchups[j], matchups[i]];
   }
 
-  // Distribute matchups across weeks
-  const teamsPerWeek = Math.floor(allTeamIds.length / 2);
-  let week = 1;
-  let weekGames = 0;
-  const usedTeamsThisWeek = new Set<string>();
+  // Distribute matchups evenly across weeks.
+  // Strategy: deal matchups round-robin into week buckets, ensuring no team
+  // plays twice in the same week. This guarantees even distribution.
+  const maxGamesPerWeek = Math.floor(allTeamIds.length / 2);
+  const weekUsed: Set<string>[] = [];
+  const weekMatchups: { home: string; away: string }[][] = [];
+  for (let w = 0; w < weeks; w++) {
+    weekUsed.push(new Set());
+    weekMatchups.push([]);
+  }
 
+  // Place each matchup into the earliest week that has room and no conflict
+  const overflow: { home: string; away: string }[] = [];
   for (const matchup of matchups) {
-    if (week > weeks) break;
-
-    if (usedTeamsThisWeek.has(matchup.home) || usedTeamsThisWeek.has(matchup.away)) {
-      continue; // Team already playing this week — skip (simple approach)
-    }
-
-    games.push({
-      id: generateId(),
-      week,
-      homeTeamId: matchup.home,
-      awayTeamId: matchup.away,
-    });
-
-    usedTeamsThisWeek.add(matchup.home);
-    usedTeamsThisWeek.add(matchup.away);
-    weekGames++;
-
-    if (weekGames >= teamsPerWeek) {
-      // Add bye weeks for teams not playing
-      if (includeByes) {
-        for (const teamId of allTeamIds) {
-          if (!usedTeamsThisWeek.has(teamId)) {
-            games.push({
-              id: generateId(),
-              week,
-              homeTeamId: teamId,
-              awayTeamId: teamId,
-              isBye: true,
-            });
-          }
-        }
+    let placed = false;
+    for (let w = 0; w < weeks; w++) {
+      if (
+        weekMatchups[w].length < maxGamesPerWeek &&
+        !weekUsed[w].has(matchup.home) &&
+        !weekUsed[w].has(matchup.away)
+      ) {
+        weekMatchups[w].push(matchup);
+        weekUsed[w].add(matchup.home);
+        weekUsed[w].add(matchup.away);
+        placed = true;
+        break;
       }
-      week++;
-      weekGames = 0;
-      usedTeamsThisWeek.clear();
+    }
+    if (!placed) overflow.push(matchup);
+  }
+
+  // Place overflow matchups (duplicates from recycling or excess) in any week with room
+  for (const matchup of overflow) {
+    for (let w = 0; w < weeks; w++) {
+      if (
+        weekMatchups[w].length < maxGamesPerWeek &&
+        !weekUsed[w].has(matchup.home) &&
+        !weekUsed[w].has(matchup.away)
+      ) {
+        weekMatchups[w].push(matchup);
+        weekUsed[w].add(matchup.home);
+        weekUsed[w].add(matchup.away);
+        break;
+      }
     }
   }
 
-  // Fill remaining weeks with re-matchups if needed
-  if (week <= weeks && games.length > 0) {
-    const existingMatchups = games.filter((g) => !g.isBye);
-    let matchupIdx = 0;
-
-    while (week <= weeks) {
-      usedTeamsThisWeek.clear();
-      weekGames = 0;
-
-      for (let attempt = 0; attempt < existingMatchups.length && weekGames < teamsPerWeek; attempt++) {
-        const ref = existingMatchups[(matchupIdx + attempt) % existingMatchups.length];
-        // Flip home/away for re-matchup
-        const home = ref.awayTeamId;
-        const away = ref.homeTeamId;
-
-        if (usedTeamsThisWeek.has(home) || usedTeamsThisWeek.has(away)) continue;
-
-        games.push({
-          id: generateId(),
-          week,
-          homeTeamId: home,
-          awayTeamId: away,
-        });
-
-        usedTeamsThisWeek.add(home);
-        usedTeamsThisWeek.add(away);
-        weekGames++;
-        matchupIdx++;
-      }
-
-      if (includeByes) {
-        for (const teamId of allTeamIds) {
-          if (!usedTeamsThisWeek.has(teamId)) {
-            games.push({
-              id: generateId(),
-              week,
-              homeTeamId: teamId,
-              awayTeamId: teamId,
-              isBye: true,
-            });
+  // Fill underfilled weeks by recycling existing matchups with flipped home/away
+  const allPlaced = weekMatchups.flat();
+  if (allPlaced.length > 0) {
+    for (let w = 0; w < weeks; w++) {
+      if (weekMatchups[w].length < maxGamesPerWeek) {
+        // Build recycled pool from all placed games, shuffled
+        const recycled = allPlaced.map((m) => ({ home: m.away, away: m.home }));
+        for (let i = recycled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [recycled[i], recycled[j]] = [recycled[j], recycled[i]];
+        }
+        for (const matchup of recycled) {
+          if (weekMatchups[w].length >= maxGamesPerWeek) break;
+          if (!weekUsed[w].has(matchup.home) && !weekUsed[w].has(matchup.away)) {
+            weekMatchups[w].push(matchup);
+            weekUsed[w].add(matchup.home);
+            weekUsed[w].add(matchup.away);
           }
         }
       }
+    }
+  }
 
-      week++;
+  // Convert to ScheduleGame entries
+  for (let w = 0; w < weeks; w++) {
+    const week = w + 1;
+    for (const matchup of weekMatchups[w]) {
+      games.push({ id: generateId(), week, homeTeamId: matchup.home, awayTeamId: matchup.away });
+    }
+    if (includeByes) {
+      for (const teamId of allTeamIds) {
+        if (!weekUsed[w].has(teamId)) {
+          games.push({ id: generateId(), week, homeTeamId: teamId, awayTeamId: teamId, isBye: true });
+        }
+      }
     }
   }
 

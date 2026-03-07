@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Play, Zap, RotateCcw, X } from "lucide-react";
 import type { ScheduleGame, FdfTeam } from "@/lib/fdf/types";
 import type { PlayoffSeed } from "@/lib/fdf/playoff-seeding";
@@ -14,6 +15,7 @@ interface PlayoffMatchupProps {
   onResume?: (game: ScheduleGame) => void;
   onReset?: (game: ScheduleGame) => void;
   isActiveGame?: boolean;
+  teamLinkFn?: (teamStoreId: string) => string;
 }
 
 function getSeed(teamId: string, seeds: PlayoffSeed[]): number | undefined {
@@ -26,15 +28,36 @@ function TeamSlot({
   seeds,
   isWinner,
   score,
+  teamLinkFn,
 }: {
   teamId: string;
   team: FdfTeam | undefined;
   seeds: PlayoffSeed[];
   isWinner: boolean;
   score?: number;
+  teamLinkFn?: (teamStoreId: string) => string;
 }) {
   const seed = getSeed(teamId, seeds);
   const isTBD = teamId === "__TBD__";
+
+  const teamContent = !isTBD && team ? (
+    <>
+      <span
+        className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+        style={{ backgroundColor: team.primaryColor }}
+      />
+      <span
+        className="text-[11px] font-fdf-mono font-bold flex-1 truncate"
+        style={{ color: isWinner ? "var(--fdf-text-primary)" : "var(--fdf-text-secondary)" }}
+      >
+        {team.abbreviation}
+      </span>
+    </>
+  ) : (
+    <span className="text-[11px] font-fdf-mono flex-1" style={{ color: "var(--fdf-text-muted)" }}>
+      TBD
+    </span>
+  );
 
   return (
     <div
@@ -51,24 +74,11 @@ function TeamSlot({
           {seed}
         </span>
       )}
-      {!isTBD && team ? (
-        <>
-          <span
-            className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-            style={{ backgroundColor: team.primaryColor }}
-          />
-          <span
-            className="text-[11px] font-fdf-mono font-bold flex-1 truncate"
-            style={{ color: isWinner ? "var(--fdf-text-primary)" : "var(--fdf-text-secondary)" }}
-          >
-            {team.abbreviation}
-          </span>
-        </>
-      ) : (
-        <span className="text-[11px] font-fdf-mono flex-1" style={{ color: "var(--fdf-text-muted)" }}>
-          TBD
-        </span>
-      )}
+      {teamLinkFn && !isTBD && team ? (
+        <Link href={teamLinkFn(teamId)} className="flex items-center gap-1.5 flex-1 min-w-0 hover:opacity-80 transition-opacity">
+          {teamContent}
+        </Link>
+      ) : teamContent}
       {score !== undefined && (
         <span className="text-[11px] font-fdf-mono font-bold" style={{ color: "var(--fdf-text-primary)" }}>
           {score}
@@ -88,6 +98,7 @@ export function PlayoffMatchup({
   onResume,
   onReset,
   isActiveGame,
+  teamLinkFn,
 }: PlayoffMatchupProps) {
   const hasResult = !!game.result;
   const isTBD = game.homeTeamId === "__TBD__" || game.awayTeamId === "__TBD__";
@@ -109,6 +120,7 @@ export function PlayoffMatchup({
         seeds={seeds}
         isWinner={hasResult && game.result!.winner === "away"}
         score={hasResult ? game.result!.awayScore : undefined}
+        teamLinkFn={teamLinkFn}
       />
 
       {/* Divider */}
@@ -121,6 +133,7 @@ export function PlayoffMatchup({
         seeds={seeds}
         isWinner={hasResult && game.result!.winner === "home"}
         score={hasResult ? game.result!.homeScore : undefined}
+        teamLinkFn={teamLinkFn}
       />
 
       {/* Actions */}

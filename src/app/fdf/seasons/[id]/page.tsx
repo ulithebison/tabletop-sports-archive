@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trash2, Play, Settings, Zap, BarChart3, Trophy, BookOpen } from "lucide-react";
 import { useSeasonStore } from "@/lib/fdf/stores/season-store";
@@ -18,6 +18,8 @@ import { PlayoffBracket } from "@/components/fdf/seasons/PlayoffBracket";
 import { SeasonComplete } from "@/components/fdf/seasons/SeasonComplete";
 import { NewSeasonModal } from "@/components/fdf/seasons/NewSeasonModal";
 import { PreGameModal } from "@/components/fdf/seasons/PreGameModal";
+import { useCommissionerStore } from "@/lib/fdf/commissioner/commissioner-store";
+import { getTeamLink } from "@/lib/fdf/team-link";
 import { simulateInstantResult } from "@/lib/fdf/instant-results";
 import { calculateStandings, sortStandings, getStandingsByDivision } from "@/lib/fdf/standings";
 import { generatePlayoffSeeds, generatePlayoffSchedule, advancePlayoffWinner, revertPlayoffResult, getPlayoffRoundsFromSchedule } from "@/lib/fdf/playoff-seeding";
@@ -63,6 +65,8 @@ export default function SeasonDashboardPage() {
   const createGame = useGameStore((s) => s.createGame);
   const deleteGame = useGameStore((s) => s.deleteGame);
   const gamesMap = useGameStore((s) => s.games);
+
+  const commissionerLeagues = useCommissionerStore((s) => s.leagues);
 
   const allTeams = useMemo(() => Object.values(teamsMap), [teamsMap]);
 
@@ -165,6 +169,16 @@ export default function SeasonDashboardPage() {
     const teamStats = calculateTeamSeasonStats(season, gamesMap);
     return calculateSeasonAwards(playerStats, teamStats);
   }, [season, gamesMap, teamsMap]);
+
+  const pathname = usePathname();
+
+  const teamLinkFn = useMemo(() => {
+    if (!season) return undefined;
+    const leagueId = season.commissionerLeagueId;
+    const league = leagueId ? commissionerLeagues[leagueId] : undefined;
+    const commTeams = league?.teams.map((t) => ({ id: t.id, teamStoreId: t.teamStoreId }));
+    return (teamStoreId: string) => getTeamLink(teamStoreId, leagueId, commTeams, pathname);
+  }, [season, commissionerLeagues, pathname]);
 
   const handleStartPlayoffs = useCallback(() => {
     if (!season || playoffSeeds.length === 0) return;
@@ -490,7 +504,7 @@ export default function SeasonDashboardPage() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link
-          href="/fdf/seasons"
+          href={season?.commissionerLeagueId ? `/fdf/commissioner/${season.commissionerLeagueId}` : "/fdf/seasons"}
           className="p-1.5 rounded hover:bg-white/5"
           style={{ color: "var(--fdf-text-muted)" }}
         >
@@ -663,6 +677,7 @@ export default function SeasonDashboardPage() {
             onResume={handleResume}
             onReset={setResetTarget}
             activeGameIds={activeGameIds}
+            teamLinkFn={teamLinkFn}
           />
 
           {allRegularSeasonDone && season.status === "regular_season" && (
@@ -718,6 +733,7 @@ export default function SeasonDashboardPage() {
                 onResume={handleResume}
                 onReset={setResetTarget}
                 activeGameIds={activeGameIds}
+                teamLinkFn={teamLinkFn}
               />
             </div>
           )}
@@ -738,6 +754,7 @@ export default function SeasonDashboardPage() {
               onPlay={() => {}}
               onSimulate={() => {}}
               onReset={setResetTarget}
+              teamLinkFn={teamLinkFn}
             />
           )}
 
@@ -765,6 +782,7 @@ export default function SeasonDashboardPage() {
             getTeam={getTeam}
             onPlay={() => {}}
             onSimulate={() => {}}
+            teamLinkFn={teamLinkFn}
           />
         </div>
       )}

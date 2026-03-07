@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { Trophy, BarChart3, BookOpen, Shield, RefreshCw } from "lucide-react";
 import { useCommissionerStore } from "@/lib/fdf/commissioner/commissioner-store";
@@ -21,10 +22,11 @@ export function SeasonComplete({ season, standings, getTeam, seasonId, awards, o
   );
 
   // Ensure league is in postseason when season is completed
-  const needsPhaseTransition = commissionerLeague && commissionerLeague.currentPhase === "regular_season";
-  if (needsPhaseTransition && season.commissionerLeagueId) {
-    setLeaguePhase(season.commissionerLeagueId, "postseason");
-  }
+  useEffect(() => {
+    if (commissionerLeague && commissionerLeague.currentPhase === "regular_season" && season.commissionerLeagueId) {
+      setLeaguePhase(season.commissionerLeagueId, "postseason");
+    }
+  }, [commissionerLeague, season.commissionerLeagueId, setLeaguePhase]);
 
   // Find champion (winner of the last playoff game)
   const playoffGames = season.schedule

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trophy } from "lucide-react";
 import { useSeasonStore } from "@/lib/fdf/stores/season-store";
@@ -10,6 +10,8 @@ import { useGameStore } from "@/lib/fdf/stores/game-store";
 import { PlayoffBracket } from "@/components/fdf/seasons/PlayoffBracket";
 import { SimulationModal } from "@/components/fdf/seasons/SimulationModal";
 import { PreGameModal } from "@/components/fdf/seasons/PreGameModal";
+import { useCommissionerStore } from "@/lib/fdf/commissioner/commissioner-store";
+import { getTeamLink } from "@/lib/fdf/team-link";
 import { simulateInstantResult } from "@/lib/fdf/instant-results";
 import { calculateStandings, sortStandings } from "@/lib/fdf/standings";
 import { generatePlayoffSeeds, advancePlayoffWinner, revertPlayoffResult } from "@/lib/fdf/playoff-seeding";
@@ -36,6 +38,7 @@ export default function PlayoffsPage() {
   const createGame = useGameStore((s) => s.createGame);
   const deleteGame = useGameStore((s) => s.deleteGame);
   const gamesMap = useGameStore((s) => s.games);
+  const commissionerLeagues = useCommissionerStore((s) => s.leagues);
 
   useEffect(() => setHydrated(true), []);
 
@@ -59,6 +62,16 @@ export default function PlayoffsPage() {
     if (!season) return [];
     return generatePlayoffSeeds(standings, season);
   }, [standings, season]);
+
+  const pathname = usePathname();
+
+  const teamLinkFn = useMemo(() => {
+    if (!season) return undefined;
+    const leagueId = season.commissionerLeagueId;
+    const league = leagueId ? commissionerLeagues[leagueId] : undefined;
+    const commTeams = league?.teams.map((t) => ({ id: t.id, teamStoreId: t.teamStoreId }));
+    return (teamStoreId: string) => getTeamLink(teamStoreId, leagueId, commTeams, pathname);
+  }, [season, commissionerLeagues, pathname]);
 
   const handleResume = useCallback((game: ScheduleGame) => {
     if (game.gameId) {
@@ -271,6 +284,7 @@ export default function PlayoffsPage() {
         onResume={handleResume}
         onReset={setResetTarget}
         activeGameIds={activeGameIds}
+        teamLinkFn={teamLinkFn}
       />
 
       {/* Seeds reference */}

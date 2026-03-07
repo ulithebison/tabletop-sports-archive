@@ -41,6 +41,7 @@ export default function LeagueDashboard() {
   const league = useCommissionerStore((s) => s.leagues[leagueId]);
   const setActiveLeague = useCommissionerStore((s) => s.setActiveLeague);
   const addSeasonId = useCommissionerStore((s) => s.addSeasonId);
+  const snapshotQualities = useCommissionerStore((s) => s.snapshotQualities);
   const getTeam = useTeamStore((s) => s.getTeam);
   const seasons = useSeasonStore((s) => s.seasons);
   const createSeason = useSeasonStore((s) => s.createSeason);
@@ -123,9 +124,10 @@ export default function LeagueDashboard() {
     });
 
     addSeasonId(leagueId, seasonId);
+    snapshotQualities(leagueId, seasonId, getTeam);
     setShowSeasonSettings(false);
     router.push(`/fdf/seasons/${seasonId}`);
-  }, [league, leagueId, createSeason, addSeasonId, router]);
+  }, [league, leagueId, createSeason, addSeasonId, snapshotQualities, getTeam, router]);
 
   if (!hydrated || !league) {
     return (

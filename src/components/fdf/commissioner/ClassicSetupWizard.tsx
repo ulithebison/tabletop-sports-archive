@@ -98,6 +98,7 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
   const [processing, setProcessing] = useState(false);
   const [diceMode, setDiceMode] = useState<DiceMode>("auto");
   const [digitalTeamIdx, setDigitalTeamIdx] = useState(0);
+  const [lastRolls, setLastRolls] = useState<Record<string, string>>({});
 
   const addTeam = useTeamStore((s) => s.addTeam);
   const createLeague = useCommissionerStore((s) => s.createLeague);
@@ -182,17 +183,6 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
     });
   }, [updateTeamAt]);
 
-  const recalcFP = useCallback(() => {
-    setTeams((prev) =>
-      prev.map((t) => ({
-        ...t,
-        classicData: {
-          ...t.classicData,
-          franchisePoints: calculateFranchisePoints(t.classicData.frontOfficeGrade, t.classicData.headCoachGrade),
-        },
-      }))
-    );
-  }, []);
 
   const autoRollOffenseScoring = useCallback(() => {
     const { cdv } = getQVandCDV(teams.length);
@@ -410,7 +400,17 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
 
   const next = () => {
     if (step === 0 && teams.length === 0) handleGenerateTeams();
-    if (step === 3) recalcFP(); // auto-calc FP when leaving coaches step
+    if (step === 3) {
+      setTeams((prev) =>
+        prev.map((t) => ({
+          ...t,
+          classicData: {
+            ...t.classicData,
+            franchisePoints: calculateFranchisePoints(t.classicData.frontOfficeGrade, t.classicData.headCoachGrade),
+          },
+        }))
+      );
+    }
     if (step < STEPS.length - 1) setStep(step + 1);
   };
   const prev = () => { if (step > 0) setStep(step - 1); };
@@ -583,9 +583,9 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
             )}
             <div className="space-y-1.5">
               {teams.map((t, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-xs flex-wrap" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                  <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                  <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                <div key={i} className="grid grid-cols-[48px_160px_1fr_1fr_auto_auto_auto] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                  <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                  <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
                   <EditableQuality
                     value={t.classicData.ownership.competence}
                     options={["SAVVY", "NEUTRAL", "MEDDLING"]}
@@ -607,19 +607,23 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                     onChange={(v) => updateTeamClassicData(i, { frontOfficeGrade: v as FrontOfficeGrade })}
                   />
                   {(diceMode === "auto" || diceMode === "digital") && renderRerollBtn(2, i)}
+                  {diceMode === "manual" && <span />}
                   {diceMode === "manual" && (
-                    <div className="w-full mt-1 flex items-center gap-2 flex-wrap">
-                      <DiceInput value="1" onChange={(v) => {
+                    <div className="col-span-full mt-1 flex items-center gap-2 flex-wrap">
+                      <DiceInput value={lastRolls[`2-${i}-comp`] || "1"} onChange={(v) => {
+                        setLastRolls(prev => ({ ...prev, [`2-${i}-comp`]: v }));
                         const comp = parseInt(v, 10);
                         const o = createOwnership(comp, 1);
                         updateTeamClassicData(i, { ownership: { ...t.classicData.ownership, competence: o.competence } });
                       }} diceCount={1} label="Comp" />
-                      <DiceInput value="1" onChange={(v) => {
+                      <DiceInput value={lastRolls[`2-${i}-loy`] || "1"} onChange={(v) => {
+                        setLastRolls(prev => ({ ...prev, [`2-${i}-loy`]: v }));
                         const loy = parseInt(v, 10);
                         const o = createOwnership(1, loy);
                         updateTeamClassicData(i, { ownership: { ...t.classicData.ownership, loyalty: o.loyalty } });
                       }} diceCount={1} label="Loy" />
-                      <DiceInput value="1" onChange={(v) => {
+                      <DiceInput value={lastRolls[`2-${i}-fo`] || "1"} onChange={(v) => {
+                        setLastRolls(prev => ({ ...prev, [`2-${i}-fo`]: v }));
                         const fo = parseInt(v, 10);
                         updateTeamClassicData(i, { frontOfficeGrade: createFrontOfficeGrade(fo) });
                       }} diceCount={1} label="FO" />
@@ -652,25 +656,27 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
             )}
             <div className="space-y-1.5">
               {teams.map((t, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                  <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                  <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
-                  <input
-                    value={t.classicData.headCoachName}
-                    onChange={(e) => updateTeamClassicData(i, { headCoachName: e.target.value })}
-                    placeholder="Coach Name"
-                    className="flex-1 text-sm bg-transparent outline-none"
-                    style={{ color: "var(--fdf-text-primary)" }}
-                  />
-                  <button
-                    onClick={() => updateTeamClassicData(i, { headCoachName: generateCoachName() })}
-                    className="p-0.5 rounded opacity-50 hover:opacity-100 transition-opacity"
-                    style={{ color: "var(--fdf-text-muted)" }}
-                    type="button"
-                    title="Generate new name"
-                  >
-                    <RefreshCw size={10} />
-                  </button>
+                <div key={i} className="grid grid-cols-[48px_160px_1fr_auto_auto_auto_auto] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                  <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                  <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                  <div className="flex items-center gap-1">
+                    <input
+                      value={t.classicData.headCoachName}
+                      onChange={(e) => updateTeamClassicData(i, { headCoachName: e.target.value })}
+                      placeholder="Coach Name"
+                      className="w-full text-sm bg-transparent outline-none"
+                      style={{ color: "var(--fdf-text-primary)" }}
+                    />
+                    <button
+                      onClick={() => updateTeamClassicData(i, { headCoachName: generateCoachName() })}
+                      className="p-0.5 rounded opacity-50 hover:opacity-100 transition-opacity flex-shrink-0"
+                      style={{ color: "var(--fdf-text-muted)" }}
+                      type="button"
+                      title="Generate new name"
+                    >
+                      <RefreshCw size={10} />
+                    </button>
+                  </div>
                   <span className="text-[10px]" style={{ color: "var(--fdf-text-muted)" }}>HC:</span>
                   <EditableGrade
                     value={t.classicData.headCoachGrade}
@@ -679,7 +685,7 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                   />
                   {diceMode === "auto" && renderRerollBtn(3, i)}
                   {diceMode === "manual" && (
-                    <DiceInput value="11" onChange={(roll) => rollCoachForTeam(i, roll)} diceCount={2} />
+                    <DiceInput value={lastRolls[`3-${i}`] || "11"} onChange={(roll) => { setLastRolls(prev => ({ ...prev, [`3-${i}`]: roll })); rollCoachForTeam(i, roll); }} diceCount={2} />
                   )}
                 </div>
               ))}
@@ -696,18 +702,15 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
               <span className="text-[10px] font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>FP Matrix</span>
               <InfoTooltip text={EXPLANATIONS.fpMatrix} />
             </div>
-            <button onClick={recalcFP} className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-bold text-white" style={{ backgroundColor: "var(--fdf-accent)" }} type="button">
-              <RefreshCw size={12} /> Recalculate All
-            </button>
             <div className="space-y-1.5">
               {teams.map((t, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                  <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                  <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                <div key={i} className="grid grid-cols-[48px_160px_1fr_auto] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                  <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                  <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
                   <span style={{ color: "var(--fdf-text-secondary)" }}>
                     FO: {t.classicData.frontOfficeGrade} × HC: {t.classicData.headCoachGrade}
                   </span>
-                  <span className="ml-auto">
+                  <span>
                     <EditableNumber
                       value={t.classicData.franchisePoints}
                       onChange={(v) => updateTeamClassicData(i, { franchisePoints: v })}
@@ -742,9 +745,9 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
               {teams.map((t, i) => {
                 const o = t.qualities.offense;
                 return (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-xs flex-wrap" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                    <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                    <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                  <div key={i} className="grid grid-cols-[48px_160px_repeat(6,auto)] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                    <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
                     <EditableQuality
                       value={o.scoring}
                       options={[null, "PROLIFIC", "DULL"]}
@@ -752,8 +755,8 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                       positiveValues={["PROLIFIC"]}
                       negativeValues={["DULL"]}
                     />
-                    {o.scoring && <SemiToggle checked={o.scoringSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, offense: { ...q.offense, scoringSemi: v } }))} />}
-                    {o.yards && (
+                    {o.scoring ? <SemiToggle checked={o.scoringSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, offense: { ...q.offense, scoringSemi: v } }))} /> : <span />}
+                    {o.yards ? (
                       <EditableQuality
                         value={o.yards}
                         options={[null, "DYNAMIC", "ERRATIC"]}
@@ -761,9 +764,9 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                         positiveValues={["DYNAMIC"]}
                         negativeValues={["ERRATIC"]}
                       />
-                    )}
-                    {o.yards && <SemiToggle checked={o.yardsSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, offense: { ...q.offense, yardsSemi: v } }))} />}
-                    {o.protection && (
+                    ) : <span />}
+                    {o.yards ? <SemiToggle checked={o.yardsSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, offense: { ...q.offense, yardsSemi: v } }))} /> : <span />}
+                    {o.protection ? (
                       <EditableQuality
                         value={o.protection}
                         options={[null, "SOLID", "POROUS"]}
@@ -771,11 +774,12 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                         positiveValues={["SOLID"]}
                         negativeValues={["POROUS"]}
                       />
-                    )}
-                    {o.protection && <SemiToggle checked={o.protectionSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, offense: { ...q.offense, protectionSemi: v } }))} />}
+                    ) : <span />}
+                    {o.protection ? <SemiToggle checked={o.protectionSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, offense: { ...q.offense, protectionSemi: v } }))} /> : <span />}
                     {diceMode === "manual" && o.scoring && (
-                      <div className="w-full mt-1">
-                        <DiceInput value="11" onChange={(roll) => {
+                      <div className="col-span-full mt-1">
+                        <DiceInput value={lastRolls[`5-${i}`] || "11"} onChange={(roll) => {
+                          setLastRolls(prev => ({ ...prev, [`5-${i}`]: roll }));
                           const profile = rollOffenseProfile(roll, o.scoring as "PROLIFIC" | "DULL", o.scoringSemi);
                           updateTeamQualities(i, (q) => applyOffenseProfile(q, profile));
                         }} diceCount={2} label="Table C" />
@@ -797,13 +801,20 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
               <span className="text-[10px] font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>CDV = {getQVandCDV(teams.length).cdv}</span>
             </div>
             {renderCardDrawHeader("Draw All Pairs", autoRollOffenseQualities)}
+            <div className="grid grid-cols-[48px_160px_1fr_1fr_1fr] items-center gap-2 px-3 text-[9px] font-fdf-mono uppercase tracking-wider" style={{ color: "var(--fdf-text-muted)" }}>
+              <span />
+              <span />
+              <span>Ball Sec.</span>
+              <span>Fumbles</span>
+              <span>Discipline</span>
+            </div>
             <div className="space-y-1.5">
               {teams.map((t, i) => {
                 const o = t.qualities.offense;
                 return (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-xs flex-wrap" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                    <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                    <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                  <div key={i} className="grid grid-cols-[48px_160px_1fr_1fr_1fr] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                    <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
                     <EditableQuality
                       value={o.ballSecurity}
                       options={[null, "RELIABLE", "SHAKY"]}
@@ -848,9 +859,9 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                 const cm = t.qualities.offense.clockManagement;
                 const level = t.qualities.offense.clockManagementLevel;
                 return (
-                  <div key={i} className="flex items-center gap-3 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                    <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                    <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                  <div key={i} className="grid grid-cols-[48px_160px_1fr] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                    <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
                     <EditableQuality
                       value={cm ? `${level === "super" ? "S-" : ""}${cm}` : null}
                       options={[null, "EFFICIENT", "S-EFFICIENT", "INEFFICIENT", "S-INEFFICIENT"]}
@@ -895,9 +906,9 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
               {teams.map((t, i) => {
                 const d = t.qualities.defense;
                 return (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-xs flex-wrap" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                    <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                    <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                  <div key={i} className="grid grid-cols-[48px_160px_repeat(6,auto)] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                    <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
                     <EditableQuality
                       value={d.scoring}
                       options={[null, "STAUNCH", "INEPT"]}
@@ -905,8 +916,8 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                       positiveValues={["STAUNCH"]}
                       negativeValues={["INEPT"]}
                     />
-                    {d.scoring && <SemiToggle checked={d.scoringSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, defense: { ...q.defense, scoringSemi: v } }))} />}
-                    {d.yards && (
+                    {d.scoring ? <SemiToggle checked={d.scoringSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, defense: { ...q.defense, scoringSemi: v } }))} /> : <span />}
+                    {d.yards ? (
                       <EditableQuality
                         value={d.yards}
                         options={[null, "STIFF", "SOFT"]}
@@ -914,9 +925,9 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                         positiveValues={["STIFF"]}
                         negativeValues={["SOFT"]}
                       />
-                    )}
-                    {d.yards && <SemiToggle checked={d.yardsSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, defense: { ...q.defense, yardsSemi: v } }))} />}
-                    {d.passRush && (
+                    ) : <span />}
+                    {d.yards ? <SemiToggle checked={d.yardsSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, defense: { ...q.defense, yardsSemi: v } }))} /> : <span />}
+                    {d.passRush ? (
                       <EditableQuality
                         value={d.passRush}
                         options={[null, "PUNISHING", "MILD"]}
@@ -924,11 +935,12 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                         positiveValues={["PUNISHING"]}
                         negativeValues={["MILD"]}
                       />
-                    )}
-                    {d.passRush && <SemiToggle checked={d.passRushSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, defense: { ...q.defense, passRushSemi: v } }))} />}
+                    ) : <span />}
+                    {d.passRush ? <SemiToggle checked={d.passRushSemi} onChange={(v) => updateTeamQualities(i, (q) => ({ ...q, defense: { ...q.defense, passRushSemi: v } }))} /> : <span />}
                     {diceMode === "manual" && d.scoring && (
-                      <div className="w-full mt-1">
-                        <DiceInput value="11" onChange={(roll) => {
+                      <div className="col-span-full mt-1">
+                        <DiceInput value={lastRolls[`8-${i}`] || "11"} onChange={(roll) => {
+                          setLastRolls(prev => ({ ...prev, [`8-${i}`]: roll }));
                           const profile = rollDefenseProfile(roll, d.scoring as "STAUNCH" | "INEPT", d.scoringSemi);
                           updateTeamQualities(i, (q) => applyDefenseProfile(q, profile));
                         }} diceCount={2} label="Table D" />
@@ -950,13 +962,20 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
               <span className="text-[10px] font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>CDV = {getQVandCDV(teams.length).cdv}</span>
             </div>
             {renderCardDrawHeader("Draw All Pairs", autoRollDefenseQualities)}
+            <div className="grid grid-cols-[48px_160px_1fr_1fr_1fr] items-center gap-2 px-3 text-[9px] font-fdf-mono uppercase tracking-wider" style={{ color: "var(--fdf-text-muted)" }}>
+              <span />
+              <span />
+              <span>Coverage</span>
+              <span>Fumble Rec.</span>
+              <span>Discipline</span>
+            </div>
             <div className="space-y-1.5">
               {teams.map((t, i) => {
                 const d = t.qualities.defense;
                 return (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-xs flex-wrap" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                    <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                    <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                  <div key={i} className="grid grid-cols-[48px_160px_1fr_1fr_1fr] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                    <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                    <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
                     <EditableQuality
                       value={d.coverage}
                       options={[null, "AGGRESSIVE", "MEEK"]}
@@ -1010,9 +1029,9 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
             )}
             <div className="space-y-1.5">
               {teams.map((t, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-xs flex-wrap" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                  <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                  <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                <div key={i} className="grid grid-cols-[48px_160px_1fr_auto_auto_auto_auto_auto] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                  <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                  <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
                   <span style={{ color: "var(--fdf-text-secondary)" }}>
                     {t.qualities.specialTeams.kickReturn && (
                       <span className="text-green-400">KR: ELECTRIC{t.qualities.specialTeams.kickReturnSemi ? "•" : ""} </span>
@@ -1021,24 +1040,22 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                       <span className="text-green-400">PR: ELECTRIC{t.qualities.specialTeams.puntReturnSemi ? "•" : ""} </span>
                     )}
                   </span>
-                  <span className="ml-auto font-fdf-mono flex items-center gap-2" style={{ color: "var(--fdf-text-muted)" }}>
-                    <span>FG:</span>
-                    <EditableText
-                      value={t.kicking.fgRange}
-                      onChange={(v) => updateTeamAt(i, (tt) => ({ ...tt, kicking: { ...tt.kicking, fgRange: v } }))}
-                      placeholder="—"
-                    />
-                    <span>XP:</span>
-                    <EditableText
-                      value={t.kicking.xpRange}
-                      onChange={(v) => updateTeamAt(i, (tt) => ({ ...tt, kicking: { ...tt.kicking, xpRange: v } }))}
-                      placeholder="—"
-                    />
-                  </span>
-                  {diceMode === "auto" && renderRerollBtn(10, i)}
+                  <span className="font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>FG:</span>
+                  <EditableText
+                    value={t.kicking.fgRange}
+                    onChange={(v) => updateTeamAt(i, (tt) => ({ ...tt, kicking: { ...tt.kicking, fgRange: v } }))}
+                    placeholder="—"
+                  />
+                  <span className="font-fdf-mono" style={{ color: "var(--fdf-text-muted)" }}>XP:</span>
+                  <EditableText
+                    value={t.kicking.xpRange}
+                    onChange={(v) => updateTeamAt(i, (tt) => ({ ...tt, kicking: { ...tt.kicking, xpRange: v } }))}
+                    placeholder="—"
+                  />
+                  {diceMode === "auto" ? renderRerollBtn(10, i) : <span />}
                   {diceMode === "manual" && (
-                    <div className="w-full mt-1">
-                      <DiceInput value="11" onChange={(roll) => rollSpecialTeamsForTeam(i, roll, randomDiceResult(), randomDiceResult(), randomDiceResult())} diceCount={2} label="Roll" />
+                    <div className="col-span-full mt-1">
+                      <DiceInput value={lastRolls[`10-${i}`] || "11"} onChange={(roll) => { setLastRolls(prev => ({ ...prev, [`10-${i}`]: roll })); rollSpecialTeamsForTeam(i, roll, randomDiceResult(), randomDiceResult(), randomDiceResult()); }} diceCount={2} label="Roll" />
                     </div>
                   )}
                 </div>
@@ -1067,9 +1084,9 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
             )}
             <div className="space-y-1.5">
               {teams.map((t, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
-                  <span className="font-fdf-mono font-bold w-12 flex-shrink-0" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
-                  <span className="text-xs truncate max-w-[100px]" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
+                <div key={i} className="grid grid-cols-[48px_160px_1fr_auto_auto] items-center gap-2 px-3 py-2 rounded text-xs" style={{ backgroundColor: "var(--fdf-bg-secondary)", border: "1px solid var(--fdf-border)" }}>
+                  <span className="font-fdf-mono font-bold" style={{ color: t.primaryColor }}>{t.abbreviation}</span>
+                  <span className="text-xs truncate" style={{ color: "var(--fdf-text-primary)" }}>{t.name}</span>
                   <EditableQuality
                     value={t.qualities.offense.scoringTendency}
                     options={[null, "P+", "P", "R", "R+"]}
@@ -1079,7 +1096,7 @@ export function ClassicSetupWizard({ onComplete, onCancel }: ClassicSetupWizardP
                   />
                   {diceMode === "auto" && renderRerollBtn(11, i)}
                   {diceMode === "manual" && (
-                    <DiceInput value="1" onChange={(roll) => rollTendencyForTeam(i, parseInt(roll, 10))} diceCount={1} label="" />
+                    <DiceInput value={lastRolls[`11-${i}`] || "1"} onChange={(roll) => { setLastRolls(prev => ({ ...prev, [`11-${i}`]: roll })); rollTendencyForTeam(i, parseInt(roll, 10)); }} diceCount={1} label="" />
                   )}
                 </div>
               ))}

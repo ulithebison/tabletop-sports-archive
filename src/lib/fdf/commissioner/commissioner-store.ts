@@ -67,6 +67,7 @@ interface CommissionerStore extends CommissionerState {
 
   // Season linkage
   addSeasonId: (leagueId: string, seasonId: string) => void;
+  snapshotQualities: (leagueId: string, seasonId: string, getTeam: (id: string) => import("../types").FdfTeam | undefined) => void;
 
   // Export / Import
   exportLeagueData: (leagueId: string) => string;
@@ -286,6 +287,25 @@ export const useCommissionerStore = create<CommissionerStore>()(
           updateLeagueInState(state, leagueId, (l) => ({
             ...l,
             seasonIds: [...l.seasonIds, seasonId],
+          }))
+        );
+      },
+
+      snapshotQualities: (leagueId, seasonId, getTeam) => {
+        set((state) =>
+          updateLeagueInState(state, leagueId, (l) => ({
+            ...l,
+            teams: l.teams.map((ct) => {
+              const team = getTeam(ct.teamStoreId);
+              if (!team) return ct;
+              return {
+                ...ct,
+                qualitySnapshots: {
+                  ...ct.qualitySnapshots,
+                  [seasonId]: structuredClone(team.qualities),
+                },
+              };
+            }),
           }))
         );
       },

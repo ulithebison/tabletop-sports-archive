@@ -226,6 +226,8 @@ export interface CommissionerTeam {
   headCoach?: HeadCoach;
   // Temporary modifications (Weekly Headlines, Breaking News)
   temporaryModifiers: TemporaryModifier[];
+  // Quality snapshots per season (keyed by seasonId)
+  qualitySnapshots?: Record<string, import("../types").TeamQualities>;
 }
 
 // === LEAGUE SETTINGS ===

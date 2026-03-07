@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Zap } from "lucide-react";
 import { useSeasonStore } from "@/lib/fdf/stores/season-store";
@@ -11,6 +11,8 @@ import { WeekView } from "@/components/fdf/seasons/WeekView";
 import { WeekNavigation } from "@/components/fdf/seasons/WeekNavigation";
 import { SimulationModal } from "@/components/fdf/seasons/SimulationModal";
 import { PreGameModal } from "@/components/fdf/seasons/PreGameModal";
+import { useCommissionerStore } from "@/lib/fdf/commissioner/commissioner-store";
+import { getTeamLink } from "@/lib/fdf/team-link";
 import { simulateInstantResult } from "@/lib/fdf/instant-results";
 import type { ScheduleGame, SeasonGameResult, GameMode } from "@/lib/fdf/types";
 
@@ -36,6 +38,7 @@ export default function WeekDetailPage() {
   const createGame = useGameStore((s) => s.createGame);
   const deleteGame = useGameStore((s) => s.deleteGame);
   const gamesMap = useGameStore((s) => s.games);
+  const commissionerLeagues = useCommissionerStore((s) => s.leagues);
 
   useEffect(() => setHydrated(true), []);
 
@@ -49,6 +52,16 @@ export default function WeekDetailPage() {
     }
     return ids;
   }, [season, gamesMap]);
+
+  const pathname = usePathname();
+
+  const teamLinkFn = useMemo(() => {
+    if (!season) return undefined;
+    const leagueId = season.commissionerLeagueId;
+    const league = leagueId ? commissionerLeagues[leagueId] : undefined;
+    const commTeams = league?.teams.map((t) => ({ id: t.id, teamStoreId: t.teamStoreId }));
+    return (teamStoreId: string) => getTeamLink(teamStoreId, leagueId, commTeams, pathname);
+  }, [season, commissionerLeagues, pathname]);
 
   const handleResume = useCallback((game: ScheduleGame) => {
     if (game.gameId) {
@@ -273,6 +286,7 @@ export default function WeekDetailPage() {
         onResume={handleResume}
         onReset={setResetTarget}
         activeGameIds={activeGameIds}
+        teamLinkFn={teamLinkFn}
       />
     </div>
   );
