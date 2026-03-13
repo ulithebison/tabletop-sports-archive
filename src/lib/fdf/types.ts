@@ -318,6 +318,7 @@ export interface FdfGame {
   openingKickoffReceiver: "home" | "away";
   enhancedMode?: boolean;
   gameMode?: GameMode;
+  sevenPlusMinuteDrive?: boolean;
   overtimeState?: OvertimeState;
   startedAt: string;
   completedAt?: string;

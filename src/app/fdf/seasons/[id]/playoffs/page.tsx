@@ -87,9 +87,9 @@ export default function PlayoffsPage() {
     setPendingGame(game);
   }, [activeGameIds, handleResume]);
 
-  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode) => {
+  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode, sevenPlusMinuteDrive?: boolean) => {
     if (!pendingGame) return;
-    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam, gameMode);
+    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam, gameMode, sevenPlusMinuteDrive);
     const currentSeason = useSeasonStore.getState().getSeason(seasonId);
     if (currentSeason) {
       const updatedSchedule = currentSeason.schedule.map((g) =>

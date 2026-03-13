@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { X, Play, Coins, Sparkles, Dice5, Layers } from "lucide-react";
+import { X, Play, Coins, Sparkles, Dice5, Layers, Timer } from "lucide-react";
 import { useSettingsStore } from "@/lib/fdf/stores/settings-store";
 import type { ScheduleGame, FdfTeam, GameMode } from "@/lib/fdf/types";
 
@@ -9,15 +9,17 @@ interface PreGameModalProps {
   game: ScheduleGame;
   homeTeam: FdfTeam | undefined;
   awayTeam: FdfTeam | undefined;
-  onStart: (enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode) => void;
+  onStart: (enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode, sevenPlusMinuteDrive?: boolean) => void;
   onCancel: () => void;
 }
 
 export function PreGameModal({ game, homeTeam, awayTeam, onStart, onCancel }: PreGameModalProps) {
   const globalEnhanced = useSettingsStore((s) => s.enhancedMode);
   const globalGameMode = useSettingsStore((s) => s.defaultGameMode);
+  const global7Plus = useSettingsStore((s) => s.sevenPlusMinuteDriveRule);
   const [enhancedMode, setEnhancedMode] = useState(globalEnhanced);
   const [gameMode, setGameMode] = useState<GameMode>(globalGameMode);
+  const [sevenPlusMinute, setSevenPlusMinute] = useState(global7Plus);
   const [receivingTeam, setReceivingTeam] = useState<"home" | "away">("away");
   const [coinFlipping, setCoinFlipping] = useState(false);
   const [coinResult, setCoinResult] = useState<"home" | "away" | null>(null);
@@ -144,6 +146,30 @@ export function PreGameModal({ game, homeTeam, awayTeam, onStart, onCancel }: Pr
           </div>
         </div>
 
+        {/* 7+ Minute Drive Toggle — only in Dice mode */}
+        {gameMode === "dice" && (
+          <div
+            className="rounded-md p-3 mb-4"
+            style={{ backgroundColor: "var(--fdf-bg-elevated)", border: "1px solid var(--fdf-border)" }}
+          >
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sevenPlusMinute}
+                onChange={(e) => setSevenPlusMinute(e.target.checked)}
+                className="w-4 h-4 rounded accent-blue-500"
+              />
+              <Timer size={14} style={{ color: sevenPlusMinute ? "var(--fdf-accent)" : "var(--fdf-text-muted)" }} />
+              <span className="text-xs font-bold" style={{ color: sevenPlusMinute ? "var(--fdf-accent)" : "var(--fdf-text-secondary)" }}>
+                7+ Minute Drive
+              </span>
+            </label>
+            <p className="text-[10px] mt-1.5 ml-[26px]" style={{ color: "var(--fdf-text-muted)" }}>
+              Roll 6 on timing die → re-roll → if 6 again: 6 ticks (7:30)
+            </p>
+          </div>
+        )}
+
         {/* Coin Toss button */}
         <div className="flex justify-center mb-3">
           <button
@@ -198,7 +224,7 @@ export function PreGameModal({ game, homeTeam, awayTeam, onStart, onCancel }: Pr
         </div>
 
         <button
-          onClick={() => onStart(enhancedMode, receivingTeam, gameMode)}
+          onClick={() => onStart(enhancedMode, receivingTeam, gameMode, gameMode === "dice" ? sevenPlusMinute || undefined : undefined)}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded text-sm font-bold text-white transition-colors"
           style={{ backgroundColor: "var(--fdf-accent)" }}
         >

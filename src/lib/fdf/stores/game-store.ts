@@ -217,7 +217,7 @@ function evaluateOTAfterDrive(
 
 interface GameState {
   games: Record<string, FdfGame>;
-  createGame: (homeTeamId: string, awayTeamId: string, enhancedMode?: boolean, receivingTeam?: "home" | "away", gameMode?: GameMode) => string;
+  createGame: (homeTeamId: string, awayTeamId: string, enhancedMode?: boolean, receivingTeam?: "home" | "away", gameMode?: GameMode, sevenPlusMinuteDrive?: boolean) => string;
   addDrive: (gameId: string, input: DriveInput) => void;
   undoLastDrive: (gameId: string) => void;
   completeGame: (gameId: string) => void;
@@ -234,7 +234,7 @@ export const useGameStore = create<GameState>()(
     (set, get) => ({
       games: {},
 
-      createGame: (homeTeamId, awayTeamId, enhancedMode, receivingTeam, gameMode) => {
+      createGame: (homeTeamId, awayTeamId, enhancedMode, receivingTeam, gameMode, sevenPlusMinuteDrive) => {
         const id = generateId();
         const game: FdfGame = {
           id,
@@ -248,6 +248,7 @@ export const useGameStore = create<GameState>()(
           openingKickoffReceiver: receivingTeam || "away",
           enhancedMode: enhancedMode || undefined,
           gameMode: gameMode || undefined,
+          sevenPlusMinuteDrive: sevenPlusMinuteDrive || undefined,
           startedAt: new Date().toISOString(),
         };
         set((state) => ({ games: { ...state.games, [id]: game } }));

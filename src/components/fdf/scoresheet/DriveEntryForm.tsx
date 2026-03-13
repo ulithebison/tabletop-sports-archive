@@ -12,6 +12,7 @@ import { DriveTimeSelector } from "./DriveTimeSelector";
 import { DriveResultPicker } from "./DriveResultPicker";
 import { PATSelector } from "./PATSelector";
 import { TimingWarning } from "./TimingWarning";
+import { SevenPlusMinutePrompt } from "./SevenPlusMinutePrompt";
 import { PlayerSelector, isPlayerSelectionValid } from "./PlayerSelector";
 import { AutoSummaryPreview } from "./AutoSummaryPreview";
 import { Undo2 } from "lucide-react";
@@ -24,6 +25,7 @@ interface DriveEntryFormProps {
   hasDrives: boolean;
   enhancedMode?: boolean;
   gameMode?: GameMode;
+  sevenPlusMinuteDrive?: boolean;
   offenseFinderRoster?: FinderRoster;
   defenseFinderRoster?: FinderRoster;
   onSubmit: (input: DriveInput) => void;
@@ -39,14 +41,17 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
     hasDrives,
     enhancedMode,
     gameMode,
+    sevenPlusMinuteDrive,
     offenseFinderRoster,
     defenseFinderRoster,
     onSubmit,
     onUndo,
   } = props;
   const timingConfig = getTimingConfig(gameMode);
+  const is7PlusEligible = sevenPlusMinuteDrive && gameMode !== "fac";
   const [fieldPosition, setFieldPosition] = useState<FieldPosition | null>(null);
   const [driveTicks, setDriveTicks] = useState<number>(0);
+  const [sevenPlusResolved, setSevenPlusResolved] = useState(false);
   const [result, setResult] = useState<DriveResultType | null>(null);
   const [patResult, setPatResult] = useState<PATResult | null>(null);
   const [summary, setSummary] = useState("");
@@ -157,6 +162,7 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
     setPlayerInvolvement({});
     setGeneratedSummaryText("");
     setSummaryContext(null);
+    setSevenPlusResolved(false);
     prevInvolvementRef.current = "";
   };
 
@@ -201,10 +207,20 @@ export function DriveEntryForm(props: DriveEntryFormProps) {
           <>
             <FieldPositionSelector value={fieldPosition} onChange={setFieldPosition} />
             {!noClockPlay && (
-              <DriveTimeSelector value={driveTicks} onChange={setDriveTicks} maxTicks={timingConfig.maxDriveTicks} gameMode={gameMode} />
+              <DriveTimeSelector value={driveTicks} onChange={(t) => { setDriveTicks(t); setSevenPlusResolved(false); }} maxTicks={timingConfig.maxDriveTicks} gameMode={gameMode} sevenPlusMinuteDrive={is7PlusEligible} />
             )}
           </>
         )}
+        {/* 7+ Minute Drive prompt */}
+        {is7PlusEligible && driveTicks === 4 && !sevenPlusResolved
+          && (fieldPosition === "POOR" || fieldPosition === "AVERAGE")
+          && ticksRemaining >= 6 && (
+          <SevenPlusMinutePrompt
+            onResult={(newTicks) => { setDriveTicks(newTicks); setSevenPlusResolved(true); }}
+            onSkip={() => setSevenPlusResolved(true)}
+          />
+        )}
+
         <DriveResultPicker value={result} onChange={(r) => { setResult(r); setPatResult(null); setPlayerInvolvement({}); }} />
         {showPAT && (
           <PATSelector

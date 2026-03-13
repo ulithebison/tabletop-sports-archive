@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Zap, Users, Sparkles, Coins, Dice5, Layers } from "lucide-react";
+import { Zap, Users, Sparkles, Coins, Dice5, Layers, Timer } from "lucide-react";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
 import { useSettingsStore } from "@/lib/fdf/stores/settings-store";
@@ -21,11 +21,13 @@ export default function QuickGamePage() {
   const createGame = useGameStore((s) => s.createGame);
   const globalEnhanced = useSettingsStore((s) => s.enhancedMode);
   const globalGameMode = useSettingsStore((s) => s.defaultGameMode);
+  const global7Plus = useSettingsStore((s) => s.sevenPlusMinuteDriveRule);
 
   const [awayTeamId, setAwayTeamId] = useState("");
   const [homeTeamId, setHomeTeamId] = useState("");
   const [enhancedMode, setEnhancedMode] = useState(globalEnhanced);
   const [gameMode, setGameMode] = useState<GameMode>(globalGameMode);
+  const [sevenPlusMinute, setSevenPlusMinute] = useState(global7Plus);
   const [receivingTeam, setReceivingTeam] = useState<"home" | "away">("away");
   const [coinFlipping, setCoinFlipping] = useState(false);
   const [coinResult, setCoinResult] = useState<"home" | "away" | null>(null);
@@ -62,7 +64,7 @@ export default function QuickGamePage() {
 
   const handleStart = () => {
     if (!canStart) return;
-    const gameId = createGame(homeTeamId, awayTeamId, enhancedMode || undefined, receivingTeam, gameMode);
+    const gameId = createGame(homeTeamId, awayTeamId, enhancedMode || undefined, receivingTeam, gameMode, gameMode === "dice" ? sevenPlusMinute || undefined : undefined);
     router.push(`/fdf/game/${gameId}`);
   };
 
@@ -202,6 +204,30 @@ export default function QuickGamePage() {
               : "Chartbook + 3 dice — 12 ticks/quarter, timing die"}
           </p>
         </div>
+
+        {/* 7+ Minute Drive Toggle — only in Dice mode */}
+        {gameMode === "dice" && (
+          <div
+            className="mt-4 rounded-md p-3"
+            style={{ backgroundColor: "var(--fdf-bg-elevated)", border: "1px solid var(--fdf-border)" }}
+          >
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sevenPlusMinute}
+                onChange={(e) => setSevenPlusMinute(e.target.checked)}
+                className="w-4 h-4 rounded accent-blue-500"
+              />
+              <Timer size={16} style={{ color: sevenPlusMinute ? "var(--fdf-accent)" : "var(--fdf-text-muted)" }} />
+              <span className="text-sm font-bold" style={{ color: sevenPlusMinute ? "var(--fdf-accent)" : "var(--fdf-text-secondary)" }}>
+                7+ Minute Drive Rule
+              </span>
+            </label>
+            <p className="text-xs mt-1.5 ml-[26px]" style={{ color: "var(--fdf-text-muted)" }}>
+              After rolling 6 on timing die, re-roll — if 6 again, drive uses 6 ticks (7:30). Recommended for POOR/AVERAGE field position only.
+            </p>
+          </div>
+        )}
 
         {/* Kickoff — Coin Toss / Receiver Selection */}
         <div

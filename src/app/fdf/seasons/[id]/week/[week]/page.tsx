@@ -77,9 +77,9 @@ export default function WeekDetailPage() {
     setPendingGame(game);
   }, [activeGameIds, handleResume]);
 
-  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode) => {
+  const handleStartPendingGame = useCallback((enhancedMode: boolean, receivingTeam: "home" | "away", gameMode?: GameMode, sevenPlusMinuteDrive?: boolean) => {
     if (!pendingGame) return;
-    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam, gameMode);
+    const gameId = createGame(pendingGame.homeTeamId, pendingGame.awayTeamId, enhancedMode || undefined, receivingTeam, gameMode, sevenPlusMinuteDrive);
     const updateSchedule = useSeasonStore.getState().setSchedule;
     const currentSeason = useSeasonStore.getState().getSeason(seasonId);
     if (currentSeason) {

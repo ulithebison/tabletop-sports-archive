@@ -8,9 +8,10 @@ interface DriveTimeSelectorProps {
   onChange: (ticks: number) => void;
   maxTicks?: number;
   gameMode?: GameMode;
+  sevenPlusMinuteDrive?: boolean;
 }
 
-export function DriveTimeSelector({ value, onChange, maxTicks = 4, gameMode }: DriveTimeSelectorProps) {
+export function DriveTimeSelector({ value, onChange, maxTicks = 4, gameMode, sevenPlusMinuteDrive }: DriveTimeSelectorProps) {
   const isFAC = gameMode === "fac";
 
   return (
@@ -62,7 +63,7 @@ export function DriveTimeSelector({ value, onChange, maxTicks = 4, gameMode }: D
         </div>
       ) : (
         /* Dice: tick buttons */
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {Array.from({ length: maxTicks }, (_, i) => {
             const ticks = i + 1;
             const active = value === ticks;
@@ -91,6 +92,33 @@ export function DriveTimeSelector({ value, onChange, maxTicks = 4, gameMode }: D
               </button>
             );
           })}
+          {sevenPlusMinuteDrive && (
+            <>
+              <div className="w-px h-6 mx-0.5" style={{ backgroundColor: "var(--fdf-border)" }} />
+              <button
+                type="button"
+                onClick={() => onChange(6)}
+                className="flex flex-col items-center justify-center px-3 py-1.5 rounded-md transition-all"
+                style={{
+                  backgroundColor: value === 6 ? "#22c55e" : "var(--fdf-bg-elevated)",
+                  border: `1px solid ${value === 6 ? "#22c55e" : "var(--fdf-border)"}`,
+                }}
+              >
+                <span
+                  className="text-sm font-fdf-mono font-bold leading-none"
+                  style={{ color: value === 6 ? "#fff" : "#22c55e" }}
+                >
+                  6
+                </span>
+                <span
+                  className="text-[9px] font-fdf-mono font-bold leading-none mt-0.5"
+                  style={{ color: value === 6 ? "rgba(255,255,255,0.8)" : "rgba(34,197,94,0.7)" }}
+                >
+                  7+
+                </span>
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

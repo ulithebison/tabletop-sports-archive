@@ -2,7 +2,11 @@
 
 import { TIMING_DIE_MAP } from "@/lib/fdf/constants";
 
-export function TimingDieReference() {
+interface TimingDieReferenceProps {
+  sevenPlusMinuteDrive?: boolean;
+}
+
+export function TimingDieReference({ sevenPlusMinuteDrive }: TimingDieReferenceProps) {
   return (
     <div
       className="rounded-lg p-3"
@@ -36,6 +40,11 @@ export function TimingDieReference() {
           </div>
         ))}
       </div>
+      {sevenPlusMinuteDrive && (
+        <p className="text-[10px] font-fdf-mono mt-2" style={{ color: "var(--fdf-text-muted)" }}>
+          6* = Re-roll. If 6 again: 6 ticks (7:30)
+        </p>
+      )}
     </div>
   );
 }

@@ -198,6 +198,7 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
                 hasDrives={game.drives.length > 0}
                 enhancedMode={game.enhancedMode}
                 gameMode={game.gameMode}
+                sevenPlusMinuteDrive={game.sevenPlusMinuteDrive}
                 offenseFinderRoster={offenseTeam.finderRoster}
                 defenseFinderRoster={defenseTeam.finderRoster}
                 onSubmit={handleDrive}
@@ -256,7 +257,7 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
           <DiceRoller onRoll={(values, deciderValue) => { setLastDice(values); setLastDecider(deciderValue); }} />
 
           {/* Timing Die Reference — only shown in Dice mode */}
-          {game.gameMode !== "fac" && <TimingDieReference />}
+          {game.gameMode !== "fac" && <TimingDieReference sevenPlusMinuteDrive={game.sevenPlusMinuteDrive} />}
 
           {/* End Half / End Game / End OT Period buttons */}
           {!game.gameClock.isGameOver && !isWaitingForOTCoinToss && (
