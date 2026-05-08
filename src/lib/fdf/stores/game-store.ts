@@ -204,7 +204,7 @@ function evaluateOTAfterDrive(
           otStartDriveNumber: driveEntry.driveNumber + 1,
         },
         isGameOver: false,
-        newClock: startNewOTPeriod(),
+        newClock: startNewOTPeriod(getTimingConfig(game.gameMode)),
       };
     }
   }

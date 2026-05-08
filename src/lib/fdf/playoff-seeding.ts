@@ -145,8 +145,9 @@ export function generatePlayoffSchedule(
 
     if (!highSeed || !lowSeed) continue;
 
-    const homeTeamId = season.config.homeFieldInPlayoffs ? highSeed.teamId : highSeed.teamId;
-    const awayTeamId = season.config.homeFieldInPlayoffs ? lowSeed.teamId : lowSeed.teamId;
+    const isHighSeedHome = season.config.homeFieldInPlayoffs || Math.random() > 0.5;
+    const homeTeamId = isHighSeedHome ? highSeed.teamId : lowSeed.teamId;
+    const awayTeamId = isHighSeedHome ? lowSeed.teamId : highSeed.teamId;
 
     games.push({
       id: generateId(),
@@ -216,6 +217,8 @@ export function generatePlayoffSchedule(
 
 /**
  * After a playoff game is completed, advance the winner to the next round.
+ * Uses position-based slot mapping to maintain correct bracket structure
+ * regardless of game completion order.
  */
 export function advancePlayoffWinner(
   season: FdfSeason,
@@ -225,32 +228,66 @@ export function advancePlayoffWinner(
   const completedGame = schedule.find((g) => g.id === completedGameId);
   if (!completedGame || !completedGame.result || !completedGame.isPlayoff) return schedule;
 
+  if (completedGame.result.winner === "tie") return schedule;
+
   const winnerId = completedGame.result.winner === "home"
     ? completedGame.homeTeamId
     : completedGame.awayTeamId;
 
-  // Derive round ordering from actual schedule
   const rounds = getPlayoffRoundsFromSchedule(schedule);
   const currentRoundIdx = rounds.indexOf(completedGame.playoffRound!);
   if (currentRoundIdx < 0) return schedule;
 
-  // Find next round's TBD games
   const nextRound = rounds[currentRoundIdx + 1];
-  if (!nextRound) return schedule; // Was the final
+  if (!nextRound) return schedule;
 
-  const nextRoundGames = schedule
-    .filter((g) => g.isPlayoff && g.playoffRound === nextRound)
-    .sort((a, b) => a.week - b.week);
+  const currentRoundGames = schedule.filter(
+    (g) => g.isPlayoff && g.playoffRound === completedGame.playoffRound
+  );
+  const gameIndex = currentRoundGames.findIndex((g) => g.id === completedGameId);
+  if (gameIndex < 0) return schedule;
 
-  // Find first TBD slot
-  for (const game of nextRoundGames) {
-    if (game.homeTeamId === "__TBD__") {
-      game.homeTeamId = winnerId;
-      return schedule;
+  const nextRoundGames = schedule.filter(
+    (g) => g.isPlayoff && g.playoffRound === nextRound
+  );
+
+  const byeGameCount = nextRoundGames.filter(
+    (g) => g.homeTeamId !== "__TBD__" && g.awayTeamId === "__TBD__"
+  ).length;
+
+  let targetGame: ScheduleGame | undefined;
+  let slot: "home" | "away";
+
+  if (byeGameCount > 0 && byeGameCount === currentRoundGames.length) {
+    // All FR winners pair with bye teams: reverse 1:1 mapping into away slots
+    const targetIdx = currentRoundGames.length - 1 - gameIndex;
+    targetGame = nextRoundGames[targetIdx];
+    slot = "away";
+  } else if (byeGameCount > 0) {
+    // Mixed: last FR games pair with bye teams, rest use standard bracket
+    const nonByeStart = currentRoundGames.length - byeGameCount;
+    if (gameIndex >= nonByeStart) {
+      const byeOffset = gameIndex - nonByeStart;
+      const targetIdx = byeGameCount - 1 - byeOffset;
+      targetGame = nextRoundGames[targetIdx];
+      slot = "away";
+    } else {
+      const targetIdx = byeGameCount + Math.floor(gameIndex / 2);
+      targetGame = nextRoundGames[targetIdx];
+      slot = gameIndex % 2 === 0 ? "home" : "away";
     }
-    if (game.awayTeamId === "__TBD__") {
-      game.awayTeamId = winnerId;
-      return schedule;
+  } else {
+    // No byes: standard bracket — game i feeds into game floor(i/2)
+    const targetIdx = Math.floor(gameIndex / 2);
+    targetGame = nextRoundGames[targetIdx];
+    slot = gameIndex % 2 === 0 ? "home" : "away";
+  }
+
+  if (targetGame) {
+    if (slot === "home") {
+      targetGame.homeTeamId = winnerId;
+    } else {
+      targetGame.awayTeamId = winnerId;
     }
   }
 
