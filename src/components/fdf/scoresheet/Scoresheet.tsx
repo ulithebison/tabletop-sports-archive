@@ -336,7 +336,7 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
             snapshots={wpSnapshots}
             homeTeam={homeTeam}
             awayTeam={awayTeam}
-            analytics={computeWPAnalytics(wpSnapshots, game.homeTeamId)}
+            analytics={computeWPAnalytics(wpSnapshots, game.homeTeamId, game.awayTeamId)}
             isCollapsible={true}
           />
         );

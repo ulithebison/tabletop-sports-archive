@@ -120,7 +120,7 @@ export function TeamStatsTable({ game, homeTeam, awayTeam }: { game: FdfGame; ho
 
 function WPSection({ game, homeTeam, awayTeam }: { game: FdfGame; homeTeam: FdfTeam; awayTeam: FdfTeam }) {
   const wpSnapshots = computeWPHistory(game);
-  const wpAnalytics = computeWPAnalytics(wpSnapshots, game.homeTeamId);
+  const wpAnalytics = computeWPAnalytics(wpSnapshots, game.homeTeamId, game.awayTeamId);
 
   const getTeamAbbr = (teamId: string) =>
     teamId === homeTeam.id ? homeTeam.abbreviation : awayTeam.abbreviation;
@@ -164,11 +164,6 @@ function WPSection({ game, homeTeam, awayTeam }: { game: FdfGame; homeTeam: FdfT
             </p>
           )}
           <p>
-            <span style={{ color: "var(--fdf-text-primary)" }}>Biggest Swing:</span>{" "}
-            {Math.round(wpAnalytics.biggestSwingDelta * 100)}% on Drive{" "}
-            {wpAnalytics.keyPlay?.snapshot.afterDriveNumber ?? "—"}
-          </p>
-          <p>
             <span style={{ color: "var(--fdf-text-primary)" }}>Lead Changes:</span>{" "}
             {wpAnalytics.leadChanges}
           </p>
@@ -197,7 +192,7 @@ export function GameSummary({ game, homeTeam, awayTeam, seasonId }: GameSummaryP
 
   // WP data for game card export
   const wpSnapshots = computeWPHistory(game);
-  const wpAnalytics = computeWPAnalytics(wpSnapshots, game.homeTeamId);
+  const wpAnalytics = computeWPAnalytics(wpSnapshots, game.homeTeamId, game.awayTeamId);
 
   const winner = game.score.home.total > game.score.away.total ? homeTeam : awayTeam;
   const winScore = Math.max(game.score.home.total, game.score.away.total);

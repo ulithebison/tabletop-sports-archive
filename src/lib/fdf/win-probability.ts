@@ -69,7 +69,10 @@ export function computeWPHistory(game: FdfGame): WinProbabilitySnapshot[] {
   for (let i = 0; i < game.drives.length; i++) {
     const drive = game.drives[i];
 
-    // Accumulate ticks
+    // Accumulate ticks (reset Q5 accumulator at OT period boundaries)
+    if (drive.quarter === 5 && ticksConsumedPerQuarter[5] >= otTicks) {
+      ticksConsumedPerQuarter[5] = 0;
+    }
     ticksConsumedPerQuarter[drive.quarter] += drive.driveTicks;
     const maxTicksForQuarter = drive.quarter === 5 ? otTicks : ticksPerQ;
     const ticksInQuarter = Math.max(0, maxTicksForQuarter - ticksConsumedPerQuarter[drive.quarter]);
@@ -95,7 +98,8 @@ export function computeWPHistory(game: FdfGame): WinProbabilitySnapshot[] {
       else if (scoreDiff < 0) wp = 0.01;
       else wp = 0.50;
     } else {
-      wp = calculateWinProbability(scoreDiff, totalRemaining, nextIsHomePossession, totalTicks);
+      const effectiveTotalTicks = drive.quarter === 5 ? otTicks : totalTicks;
+      wp = calculateWinProbability(scoreDiff, totalRemaining, nextIsHomePossession, effectiveTotalTicks);
     }
 
     snapshots.push({
@@ -119,6 +123,7 @@ export function computeWPHistory(game: FdfGame): WinProbabilitySnapshot[] {
 export function computeWPAnalytics(
   snapshots: WinProbabilitySnapshot[],
   homeTeamId: string,
+  awayTeamId?: string,
 ): WPAnalytics {
   let keyPlay: WPAnalytics["keyPlay"] = null;
   let biggestLead: WPAnalytics["biggestLead"] = null;
@@ -142,16 +147,13 @@ export function computeWPAnalytics(
       ? Math.abs(biggestLead.snapshot.homeWinProbability - 0.5)
       : 0;
     if (deviation > currentBiggestDeviation) {
-      // Determine which team has the lead based on score
-      const actualLeadTeamId = curr.scoreDifferential > 0
-        ? homeTeamId
-        : curr.scoreDifferential < 0
-          ? (curr.possessionTeamId === homeTeamId ? curr.possessionTeamId : snapshots[0].possessionTeamId)
-          : homeTeamId;
+      const resolvedAwayId = awayTeamId
+        ?? snapshots.find(s => s.possessionTeamId !== homeTeamId)?.possessionTeamId
+        ?? homeTeamId;
       biggestLead = {
         snapshot: curr,
-        teamId: curr.homeWinProbability > 0.5 ? homeTeamId : actualLeadTeamId,
-        wpPct: curr.homeWinProbability > 0.5
+        teamId: curr.homeWinProbability >= 0.5 ? homeTeamId : resolvedAwayId,
+        wpPct: curr.homeWinProbability >= 0.5
           ? curr.homeWinProbability
           : 1 - curr.homeWinProbability,
       };

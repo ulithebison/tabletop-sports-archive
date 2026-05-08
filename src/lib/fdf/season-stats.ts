@@ -13,6 +13,7 @@ import type {
   ScheduleGame,
   FinderRoster,
   TeamRoster,
+  WinProbabilitySnapshot,
 } from "./types";
 import { calculatePlayerGameStats } from "./player-stats";
 import { computeWPHistory, computeWPAnalytics } from "./win-probability";
@@ -471,6 +472,7 @@ export function calculateSeasonMoments(
     margin: number;
     totalPoints: number;
     wpSwing: number;
+    wpHistory: WinProbabilitySnapshot[];
     headline: string;
   }
 
@@ -490,7 +492,7 @@ export function calculateSeasonMoments(
     const totalPoints = homeScore + awayScore;
 
     const wpHistory = computeWPHistory(game);
-    const wpAnalytics = computeWPAnalytics(wpHistory, game.homeTeamId);
+    const wpAnalytics = computeWPAnalytics(wpHistory, game.homeTeamId, game.awayTeamId);
     const headline = generateGameHeadline(game, homeTeam, awayTeam, wpAnalytics);
 
     gameDataList.push({
@@ -501,6 +503,7 @@ export function calculateSeasonMoments(
       margin,
       totalPoints,
       wpSwing: wpAnalytics.biggestSwingDelta,
+      wpHistory,
       headline,
     });
   }
@@ -556,9 +559,20 @@ export function calculateSeasonMoments(
     });
   }
 
-  // Comebacks (WP swing > 40%)
+  // Comebacks: single-drive WP swing > 40% OR winner's WP dropped below 25%
   for (const gd of gameDataList) {
-    if (gd.wpSwing > 0.4 && !moments.some((m) => m.type === "biggest_wp_swing" && m.gameId === gd.sg.gameId)) {
+    if (moments.some((m) => m.type === "biggest_wp_swing" && m.gameId === gd.sg.gameId)) continue;
+
+    let isComeback = gd.wpSwing > 0.4;
+    if (!isComeback && gd.margin > 0 && gd.wpHistory.length > 1) {
+      const winnerIsHome = gd.game.score.home.total > gd.game.score.away.total;
+      const lowestWinnerWP = Math.min(
+        ...gd.wpHistory.map(s => winnerIsHome ? s.homeWinProbability : 1 - s.homeWinProbability)
+      );
+      isComeback = lowestWinnerWP < 0.25;
+    }
+
+    if (isComeback) {
       moments.push({
         type: "comeback",
         week: gd.sg.week,
