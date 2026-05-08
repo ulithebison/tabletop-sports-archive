@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import type { FdfGame, FdfTeam, PlayerGameStats, DriveEntry } from "./types";
-import { isScoringPlay, isReturnTD } from "./scoring";
+import { isScoringPlay, isReturnTD, isDefenseScoringTD } from "./scoring";
 
 // ── FDF Dark Theme Palette ──────────────────────────────────────
 const BG_PRIMARY = "FF0A0E17";
@@ -160,14 +160,12 @@ export async function exportGameToExcel(
   // Stat calculations (used in multiple sections)
   const homeDrives = game.drives.filter((d) => d.teamId === homeTeam.id);
   const awayDrives = game.drives.filter((d) => d.teamId === awayTeam.id);
-  const homeScoringDrives = homeDrives.filter((d) => isScoringPlay(d.result) && !isReturnTD(d.result)).length
-    + awayDrives.filter((d) => isReturnTD(d.result)).length;
-  const awayScoringDrives = awayDrives.filter((d) => isScoringPlay(d.result) && !isReturnTD(d.result)).length
-    + homeDrives.filter((d) => isReturnTD(d.result)).length;
-  const homeINT = homeDrives.filter((d) => d.result === "INTERCEPTION" || d.result === "INTERCEPTION_RETURN_TD").length;
-  const awayINT = awayDrives.filter((d) => d.result === "INTERCEPTION" || d.result === "INTERCEPTION_RETURN_TD").length;
-  const homeFum = homeDrives.filter((d) => d.result === "FUMBLE" || d.result === "FUMBLE_RETURN_TD").length;
-  const awayFum = awayDrives.filter((d) => d.result === "FUMBLE" || d.result === "FUMBLE_RETURN_TD").length;
+  const homeScoringDrives = homeDrives.filter((d) => isScoringPlay(d.result) && d.result !== "SAFETY" && !isDefenseScoringTD(d.result)).length;
+  const awayScoringDrives = awayDrives.filter((d) => isScoringPlay(d.result) && d.result !== "SAFETY" && !isDefenseScoringTD(d.result)).length;
+  const homeINT = homeDrives.filter((d) => d.result === "INTERCEPTION").length;
+  const awayINT = awayDrives.filter((d) => d.result === "INTERCEPTION").length;
+  const homeFum = homeDrives.filter((d) => d.result === "FUMBLE").length;
+  const awayFum = awayDrives.filter((d) => d.result === "FUMBLE").length;
   const homePassTD = homeDrives.filter((d) => d.result === "TD_PASS").length;
   const awayPassTD = awayDrives.filter((d) => d.result === "TD_PASS").length;
   const homeRushTD = homeDrives.filter((d) => d.result === "TD_RUN").length;
@@ -473,7 +471,7 @@ export async function exportGameToExcel(
     spScoreHdr.border = borders;
 
     scoringPlays.forEach((d, i) => {
-      const scoringTeam = isReturnTD(d.result)
+      const scoringTeam = (isDefenseScoringTD(d.result) || d.result === "SAFETY")
         ? (d.teamId === homeTeam.id ? awayTeam : homeTeam)
         : (d.teamId === homeTeam.id ? homeTeam : awayTeam);
       const bg = i % 2 === 0 ? BG_PRIMARY : BG_CARD;

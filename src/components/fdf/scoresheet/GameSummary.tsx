@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { FdfGame, FdfTeam } from "@/lib/fdf/types";
-import { isScoringPlay, isReturnTD } from "@/lib/fdf/scoring";
+import { isScoringPlay, isReturnTD, isDefenseScoringTD } from "@/lib/fdf/scoring";
 import { calculatePlayerGameStats, getGameMVP } from "@/lib/fdf/player-stats";
 import { computeWPHistory, computeWPAnalytics } from "@/lib/fdf/win-probability";
 import { exportGameToExcel } from "@/lib/fdf/excel-export";
@@ -36,15 +36,13 @@ export function TeamStatsTable({ game, homeTeam, awayTeam }: { game: FdfGame; ho
   const homeDrives = game.drives.filter((d) => d.teamId === homeTeam.id);
   const awayDrives = game.drives.filter((d) => d.teamId === awayTeam.id);
 
-  const homeScoringDrives = homeDrives.filter((d) => isScoringPlay(d.result) && !isReturnTD(d.result)).length
-    + awayDrives.filter((d) => isReturnTD(d.result)).length;
-  const awayScoringDrives = awayDrives.filter((d) => isScoringPlay(d.result) && !isReturnTD(d.result)).length
-    + homeDrives.filter((d) => isReturnTD(d.result)).length;
+  const homeScoringDrives = homeDrives.filter((d) => isScoringPlay(d.result) && d.result !== "SAFETY" && !isDefenseScoringTD(d.result)).length;
+  const awayScoringDrives = awayDrives.filter((d) => isScoringPlay(d.result) && d.result !== "SAFETY" && !isDefenseScoringTD(d.result)).length;
 
-  const homeInterceptions = homeDrives.filter((d) => d.result === "INTERCEPTION" || d.result === "INTERCEPTION_RETURN_TD").length;
-  const awayInterceptions = awayDrives.filter((d) => d.result === "INTERCEPTION" || d.result === "INTERCEPTION_RETURN_TD").length;
-  const homeFumbles = homeDrives.filter((d) => d.result === "FUMBLE" || d.result === "FUMBLE_RETURN_TD").length;
-  const awayFumbles = awayDrives.filter((d) => d.result === "FUMBLE" || d.result === "FUMBLE_RETURN_TD").length;
+  const homeInterceptions = homeDrives.filter((d) => d.result === "INTERCEPTION").length;
+  const awayInterceptions = awayDrives.filter((d) => d.result === "INTERCEPTION").length;
+  const homeFumbles = homeDrives.filter((d) => d.result === "FUMBLE").length;
+  const awayFumbles = awayDrives.filter((d) => d.result === "FUMBLE").length;
   const homeTurnovers = homeInterceptions + homeFumbles;
   const awayTurnovers = awayInterceptions + awayFumbles;
 
@@ -335,8 +333,7 @@ export function GameSummary({ game, homeTeam, awayTeam, seasonId }: GameSummaryP
           <div className="space-y-1.5">
             {scoringDrives.map((d) => {
               const team = d.teamId === homeTeam.id ? homeTeam : awayTeam;
-              // For return TDs, the scoring team is the defense
-              const scoringTeam = isReturnTD(d.result)
+              const scoringTeam = (isDefenseScoringTD(d.result) || d.result === "SAFETY")
                 ? (d.teamId === homeTeam.id ? awayTeam : homeTeam)
                 : team;
               return (

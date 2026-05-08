@@ -123,7 +123,7 @@ export function calculatePlayerGameStats(
     if (inv.quarterback && offRoster) {
       const qbStats = getOrCreate(inv.quarterback, offenseTeamId, offRoster);
       if (drive.result === "TD_PASS") qbStats.passing.touchdowns++;
-      if (drive.result === "INTERCEPTION" || drive.result === "INTERCEPTION_RETURN_TD") qbStats.passing.interceptions++;
+      if (drive.result === "INTERCEPTION") qbStats.passing.interceptions++;
       if (drive.result === "SAFETY" && inv.sackBy) qbStats.passing.sacks++;
     }
 

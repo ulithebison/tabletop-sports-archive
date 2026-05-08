@@ -228,9 +228,7 @@ export function calculateTeamSeasonStats(
           // Turnovers
           if (
             drive.result === "INTERCEPTION" ||
-            drive.result === "FUMBLE" ||
-            drive.result === "INTERCEPTION_RETURN_TD" ||
-            drive.result === "FUMBLE_RETURN_TD"
+            drive.result === "FUMBLE"
           ) {
             offenseStats.turnoversCommitted++;
             defenseStats.turnoversForced++;
