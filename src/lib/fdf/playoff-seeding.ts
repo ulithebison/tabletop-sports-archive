@@ -251,9 +251,11 @@ export function advancePlayoffWinner(
     (g) => g.isPlayoff && g.playoffRound === nextRound
   );
 
-  const byeGameCount = nextRoundGames.filter(
-    (g) => g.homeTeamId !== "__TBD__" && g.awayTeamId === "__TBD__"
-  ).length;
+  // Derive bye count structurally from round sizes (stable across multiple advancements)
+  // R2 receives numFR winners + numByes teams, so numByes = R2*2 - FR
+  const byeGameCount = currentRoundIdx === 0
+    ? Math.max(0, nextRoundGames.length * 2 - currentRoundGames.length)
+    : 0;
 
   let targetGame: ScheduleGame | undefined;
   let slot: "home" | "away";
