@@ -30,8 +30,8 @@ function initialClock(mode?: GameMode): GameClock {
  */
 function doesDriveEndPossession(result: DriveResultType): boolean {
   if (isDefenseScoringTD(result) || result === "KICK_PUNT_REC_RECOVERS"
-      || result === "ONSIDE_KICK_FAIL") {
-    return false; // no possession change
+      || result === "ONSIDE_KICK_FAIL" || result === "ONSIDE_KICK_SUCCESS") {
+    return false; // no possession change for OT tracking
   }
   return true;
 }
@@ -44,30 +44,48 @@ function recomputeOvertimeState(
   game: FdfGame,
   otState: OvertimeState,
 ): OvertimeState | undefined {
-  const otDrives = game.drives.filter(d => d.driveNumber >= otState.otStartDriveNumber);
+  const otDrives = game.drives.filter(d => d.quarter === 5);
+
+  // Derive period-1 receiver using alternation parity
+  const initialReceiver: "home" | "away" = otState.period % 2 === 1
+    ? otState.receivingTeam
+    : (otState.receivingTeam === "home" ? "away" : "home");
 
   if (otDrives.length === 0) {
-    // No OT drives left — still at start of OT
     return {
       ...otState,
       phase: "guaranteed_possession",
       firstTeamPossessionComplete: false,
       secondTeamPossessionComplete: false,
+      period: 1,
+      receivingTeam: initialReceiver,
     };
   }
 
-  const receivingTeamId = otState.receivingTeam === "home" ? game.homeTeamId : game.awayTeamId;
-  const kickingTeamId = otState.receivingTeam === "home" ? game.awayTeamId : game.homeTeamId;
+  // Revert period if drives no longer reach the current period start
+  let period = otState.period;
+  let receivingTeam = otState.receivingTeam;
+  let otStart = otState.otStartDriveNumber;
+  const maxDriveNum = Math.max(...otDrives.map(d => d.driveNumber));
+
+  while (period > 1 && otStart > maxDriveNum) {
+    period--;
+    receivingTeam = receivingTeam === "home" ? "away" : "home";
+    otStart = otDrives[0].driveNumber;
+  }
+
+  const receivingTeamId = receivingTeam === "home" ? game.homeTeamId : game.awayTeamId;
+  const kickingTeamId = receivingTeam === "home" ? game.awayTeamId : game.homeTeamId;
+
+  const periodDrives = otDrives.filter(d => d.driveNumber >= otStart);
 
   let firstComplete = false;
   let secondComplete = false;
 
-  for (const drive of otDrives) {
+  for (const drive of periodDrives) {
     const isFirstTeamDrive = drive.teamId === receivingTeamId;
     const isSecondTeamDrive = drive.teamId === kickingTeamId;
 
-    // Safety on first possession by first team → game over immediately (not tracked here)
-    // Just track possession completions
     if (isFirstTeamDrive && !firstComplete && doesDriveEndPossession(drive.result)) {
       firstComplete = true;
     } else if (isSecondTeamDrive && firstComplete && !secondComplete && doesDriveEndPossession(drive.result)) {
@@ -82,6 +100,9 @@ function recomputeOvertimeState(
     phase,
     firstTeamPossessionComplete: firstComplete,
     secondTeamPossessionComplete: secondComplete,
+    period,
+    receivingTeam,
+    otStartDriveNumber: otStart,
   };
 }
 
@@ -173,13 +194,9 @@ function evaluateOTAfterDrive(
     secondTeamPossessionComplete: secondComplete,
   };
 
-  // In sudden death, any scoring play with score difference → game over
-  if (isScoringPlay(driveEntry.result) && !isTied) {
-    return {
-      overtimeState: suddenDeathOt,
-      isGameOver: true,
-    };
-  }
+  // In sudden death, any scoring that breaks the tie → game over
+  // (isTied is already confirmed true at line 181 to reach here, so this
+  // only triggers if a future refactor changes the flow)
 
   if (clockExpired) {
     if (ot.canEndInTie) {
@@ -446,21 +463,41 @@ export const useGameStore = create<GameState>()(
 
           // Restore clock: add the ticks back to the quarter the drive was in
           const undoConfig = getTimingConfig(game.gameMode);
-          let ticksForQuarter = undoConfig.ticksPerQuarter;
-          if (lastDrive.quarter === 5) {
-            ticksForQuarter = undoConfig.ticksPerOTPeriod;
+          const ticksForQuarter = lastDrive.quarter === 5
+            ? undoConfig.ticksPerOTPeriod
+            : undoConfig.ticksPerQuarter;
+
+          // Detect within-half overflow (Q1→Q2 or Q3→Q4)
+          const prevDriveQuarter = newDrives.length > 0
+            ? newDrives[newDrives.length - 1].quarter
+            : 1;
+          const crossedWithinHalf =
+            lastDrive.quarter !== prevDriveQuarter &&
+            game.gameClock.quarter === lastDrive.quarter &&
+            (prevDriveQuarter === 1 || prevDriveQuarter === 3);
+
+          let restoredClock: GameClock;
+          if (crossedWithinHalf) {
+            const overflowTicks = undoConfig.ticksPerQuarter - game.gameClock.ticksRemaining;
+            restoredClock = {
+              quarter: prevDriveQuarter as GameClock["quarter"],
+              ticksRemaining: lastDrive.driveTicks - overflowTicks,
+              isHalftime: false,
+              isGameOver: false,
+            };
+          } else {
+            restoredClock = {
+              quarter: lastDrive.quarter,
+              ticksRemaining: Math.min(
+                ticksForQuarter,
+                (game.gameClock.quarter === lastDrive.quarter
+                  ? game.gameClock.ticksRemaining
+                  : 0) + lastDrive.driveTicks,
+              ),
+              isHalftime: false,
+              isGameOver: false,
+            };
           }
-          const restoredClock: GameClock = {
-            quarter: lastDrive.quarter,
-            ticksRemaining: Math.min(
-              ticksForQuarter,
-              (game.gameClock.quarter === lastDrive.quarter
-                ? game.gameClock.ticksRemaining
-                : 0) + lastDrive.driveTicks,
-            ),
-            isHalftime: false,
-            isGameOver: false,
-          };
 
           // Restore possession to whoever had it for the undone drive
           const restoredPossession: "home" | "away" = wasHomePossession ? "home" : "away";

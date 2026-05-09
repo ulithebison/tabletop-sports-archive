@@ -137,19 +137,13 @@ export function WinProbabilityChart({
       {/* Chart */}
       {!collapsed && (
         <div className="px-4 pb-4">
-          {/* Team labels */}
-          <div className="flex justify-between mb-1">
+          {/* Home team label at top (homeWP = 100%) */}
+          <div className="mb-1" style={{ paddingLeft: 36 }}>
             <span
               className="text-[10px] font-fdf-mono font-bold uppercase"
               style={{ color: homeTeam.primaryColor }}
             >
-              {homeTeam.abbreviation} 100%
-            </span>
-            <span
-              className="text-[10px] font-fdf-mono font-bold uppercase"
-              style={{ color: awayTeam.primaryColor }}
-            >
-              {awayTeam.abbreviation} 100%
+              ▲ {homeTeam.abbreviation} 100%
             </span>
           </div>
 
@@ -179,7 +173,10 @@ export function WinProbabilityChart({
               <YAxis
                 domain={[0, 1]}
                 ticks={[0, 0.25, 0.5, 0.75, 1]}
-                tickFormatter={(v: number) => `${Math.round(v * 100)}%`}
+                tickFormatter={(v: number) => {
+                  const pct = Math.round(Math.abs(v - 0.5) * 200);
+                  return pct === 0 ? "50%" : `${pct}%`;
+                }}
                 tick={{ fontSize: 10, fill: "var(--fdf-text-muted)", fontFamily: "'JetBrains Mono', monospace" }}
                 axisLine={{ stroke: "var(--fdf-border)" }}
                 tickLine={false}
@@ -243,6 +240,16 @@ export function WinProbabilityChart({
               )}
             </LineChart>
           </ResponsiveContainer>
+
+          {/* Away team label at bottom (homeWP = 0%) */}
+          <div style={{ paddingLeft: 36 }}>
+            <span
+              className="text-[10px] font-fdf-mono font-bold uppercase"
+              style={{ color: awayTeam.primaryColor }}
+            >
+              ▼ {awayTeam.abbreviation} 100%
+            </span>
+          </div>
 
           {/* Key Play annotation */}
           {analytics.keyPlay && (

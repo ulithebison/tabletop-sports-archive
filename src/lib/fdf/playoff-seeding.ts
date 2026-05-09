@@ -43,8 +43,9 @@ export function generatePlayoffSeeds(
     // Sort division winners by record
     const sortedDivWinners = sortStandings(divWinners);
 
-    // Add division winners as top seeds
+    // Add division winners as top seeds (cap at numTeams)
     for (const standing of sortedDivWinners) {
+      if (seeds.length >= numTeams) break;
       seeds.push({
         seed: seeds.length + 1,
         teamId: standing.teamId,

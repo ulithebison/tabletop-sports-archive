@@ -146,6 +146,16 @@ export const SUMMARY_TEMPLATES: Partial<Record<DriveResultType, string[]>> = {
     "{opponent} recovers the fumble and takes it to the house!",
     "Loose ball! {opponent} scoops it up and scores! Touchdown!",
   ],
+  ONSIDE_KICK_SUCCESS: [
+    "{opponent} recovers the onside kick!",
+    "Onside kick! {opponent} comes up with it!",
+    "{opponent} pounces on the onside kick!",
+  ],
+  ONSIDE_KICK_FAIL: [
+    "{team} secures the onside kick attempt.",
+    "The onside kick fails. {team} recovers.",
+    "{team} fields the onside kick cleanly.",
+  ],
   KNEEL_DOWN: [
     "{team} takes a knee to run out the clock.",
     "Victory formation. {team} kneels it.",

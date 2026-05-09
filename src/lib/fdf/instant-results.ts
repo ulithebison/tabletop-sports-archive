@@ -149,7 +149,7 @@ interface WinRollResult {
   isTie?: boolean;
 }
 
-function rollForWinner(diff: number, otConfig: OvertimeConfig): WinRollResult {
+function rollForWinner(diff: number, homeRating: number, otConfig: OvertimeConfig): WinRollResult {
   const winRangeMax = getWinRangeMax(diff);
   const roll = twoD6TensOnes();
 
@@ -157,7 +157,7 @@ function rollForWinner(diff: number, otConfig: OvertimeConfig): WinRollResult {
   if (roll === winRangeMax) {
     // Overtime: re-roll using Home Team Rating as the diff
     const otRoll = twoD6TensOnes();
-    const otWinRangeMax = getWinRangeMax(diff); // re-use home diff as specified
+    const otWinRangeMax = getWinRangeMax(homeRating);
     if (otRoll === otWinRangeMax && otConfig.canEndInTie) {
       return { roll, homeWins: false, isOvertime: true, otRoll, isTie: true };
     }
@@ -285,13 +285,24 @@ export function simulateInstantResult(
 
   // Step 3: Win range & roll
   const winRangeMax = getWinRangeMax(pointDiff);
-  const winResult = rollForWinner(pointDiff, overtimeConfig);
+  const winResult = rollForWinner(pointDiff, homeRating, overtimeConfig);
 
   // Handle tie
   if (winResult.isTie) {
-    // Both teams get same score via neutral scoring
+    // Both teams get same score via neutral scoring (with dagger/star adjustments)
     const tieScoreRoll = twoD6Sum();
-    const tieScore = SCORE_TABLES.NEUTRAL[tieScoreRoll];
+    let tieScore = SCORE_TABLES.NEUTRAL[tieScoreRoll];
+    if (tieScoreRoll === 2) {
+      const reroll = twoD6Sum();
+      if (reroll >= 2 && reroll <= 4) {
+        tieScore = Math.max(0, tieScore - 3);
+      }
+    } else if (tieScoreRoll === 12) {
+      const reroll = twoD6Sum();
+      if (reroll >= 10 && reroll <= 12) {
+        tieScore += 7;
+      }
+    }
     return {
       homeScore: tieScore,
       awayScore: tieScore,

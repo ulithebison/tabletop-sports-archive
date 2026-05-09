@@ -154,7 +154,9 @@ export function generateDivisionSchedule(
   }
 
   // Place overflow matchups (duplicates from recycling or excess) in any week with room
+  const stillUnplaced: { home: string; away: string }[] = [];
   for (const matchup of overflow) {
+    let placed = false;
     for (let w = 0; w < weeks; w++) {
       if (
         weekMatchups[w].length < maxGamesPerWeek &&
@@ -164,8 +166,29 @@ export function generateDivisionSchedule(
         weekMatchups[w].push(matchup);
         weekUsed[w].add(matchup.home);
         weekUsed[w].add(matchup.away);
+        placed = true;
         break;
       }
+    }
+    if (!placed) stillUnplaced.push(matchup);
+  }
+
+  // Add extra weeks for matchups that couldn't fit in the configured weeks
+  for (const matchup of stillUnplaced) {
+    let placed = false;
+    for (let w = weeks; w < weekMatchups.length; w++) {
+      if (!weekUsed[w].has(matchup.home) && !weekUsed[w].has(matchup.away)) {
+        weekMatchups[w].push(matchup);
+        weekUsed[w].add(matchup.home);
+        weekUsed[w].add(matchup.away);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      const extraWeek = weekMatchups.length;
+      weekMatchups.push([matchup]);
+      weekUsed.push(new Set([matchup.home, matchup.away]));
     }
   }
 
@@ -192,8 +215,8 @@ export function generateDivisionSchedule(
     }
   }
 
-  // Convert to ScheduleGame entries
-  for (let w = 0; w < weeks; w++) {
+  // Convert to ScheduleGame entries (includes extra weeks for overflow matchups)
+  for (let w = 0; w < weekMatchups.length; w++) {
     const week = w + 1;
     for (const matchup of weekMatchups[w]) {
       games.push({ id: generateId(), week, homeTeamId: matchup.home, awayTeamId: matchup.away });

@@ -54,8 +54,7 @@ export function isTouchdown(result: DriveResultType): boolean {
   return (
     result === "TD_RUN" ||
     result === "TD_PASS" ||
-    result === "DESPERATION_TD" ||
-    result === "HAIL_MARY_TD" as DriveResultType
+    result === "DESPERATION_TD"
   );
 }
 

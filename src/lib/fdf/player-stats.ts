@@ -167,11 +167,8 @@ export function calculatePlayerGameStats(
       if (drive.patResult === "XP_MISSED") kickerStats.kicking.extraPointsMissed++;
     }
 
-    // PAT passer (2PT)
-    if (inv.patPasser && offRoster && (drive.patResult === "2PT_GOOD")) {
-      const patPasserStats = getOrCreate(inv.patPasser, offenseTeamId, offRoster);
-      patPasserStats.passing.touchdowns++; // Credit 2PT pass as passing TD
-    }
+    // 2PT conversions: not counted as passing TDs (NFL convention)
+    // Points are attributed to the team via getPointsForResult
 
     // Return TD returner — attributed to the offense (drive team = scoring team)
     if (inv.returnedBy && isReturnTD(drive.result) && offRoster) {

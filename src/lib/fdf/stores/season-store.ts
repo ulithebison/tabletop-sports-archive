@@ -180,8 +180,9 @@ export const useSeasonStore = create<SeasonState>()(
             return { ...g, result: simulateFn(g, season) };
           });
 
-          // Find max week with games
-          const maxWeek = Math.max(...updatedSchedule.filter((g) => !g.isPlayoff).map((g) => g.week));
+          // Find max week with games (guard against empty array)
+          const regWeeks = updatedSchedule.filter((g) => !g.isPlayoff).map((g) => g.week);
+          const maxWeek = regWeeks.length > 0 ? Math.max(...regWeeks) : season.currentWeek;
 
           return {
             seasons: {
@@ -204,7 +205,8 @@ export const useSeasonStore = create<SeasonState>()(
 
           // Append playoff games to existing schedule
           const updatedSchedule = [...season.schedule, ...playoffSchedule];
-          const playoffWeek = Math.min(...playoffSchedule.map((g) => g.week));
+          const playoffWeeks = playoffSchedule.map((g) => g.week);
+          const playoffWeek = playoffWeeks.length > 0 ? Math.min(...playoffWeeks) : season.currentWeek + 1;
 
           return {
             seasons: {

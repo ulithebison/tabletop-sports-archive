@@ -127,9 +127,9 @@ function patLabel(pat?: string): string {
 }
 
 function resultColor(result: string): string {
-  if (result.includes("TD") || result === "TD_RUN" || result === "TD_PASS") return TD_GREEN;
+  if (result === "INTERCEPTION" || result === "FUMBLE") return TURNOVER_RED;
+  if (result.includes("TD")) return TD_GREEN;
   if (result.includes("FG") || result === "DESPERATION_FGA") return FG_AMBER;
-  if (result === "INTERCEPTION" || result === "FUMBLE" || result.includes("RETURN_TD")) return TURNOVER_RED;
   return TEXT_PRIMARY;
 }
 
@@ -155,7 +155,7 @@ export async function exportGameToExcel(
         ? awayTeam.name
         : "Tie";
 
-  const hasOT = game.score.home.ot > 0 || game.score.away.ot > 0;
+  const hasOT = game.score.home.ot > 0 || game.score.away.ot > 0 || !!game.overtimeState;
 
   // Stat calculations (used in multiple sections)
   const homeDrives = game.drives.filter((d) => d.teamId === homeTeam.id);
@@ -400,14 +400,16 @@ export async function exportGameToExcel(
   if (playerStats && playerStats.length > 0) {
     addSectionTitle(ws, "PLAYER STATS");
 
-    // 9 columns: Name | # | Team | Pass TD | INT | Rush TD | Rec TD | FG/XP | Points
-    addTableHeader(ws, ["Name", "#", "Team", "PsTD", "INT", "RuTD", "RcTD", "FG/XP", "Points"], 1);
+    // 9 columns: Name | # | Team | Pass TD | INT | Rush TD | Rec TD | K/Ret | Points
+    addTableHeader(ws, ["Name", "#", "Team", "PsTD", "INT", "RuTD", "RcTD", "K/Ret", "Points"], 1);
 
     playerStats.forEach((p, i) => {
       const team = p.teamId === homeTeam.id ? homeTeam : awayTeam;
-      const fgXp = [
+      const retTDs = p.defense.returnTouchdowns + p.specialTeams.kickReturnTouchdowns + p.specialTeams.puntReturnTouchdowns;
+      const kRet = [
         p.kicking.fieldGoalsMade > 0 ? `${p.kicking.fieldGoalsMade}FG` : "",
         p.kicking.extraPointsMade > 0 ? `${p.kicking.extraPointsMade}XP` : "",
+        retTDs > 0 ? `${retTDs}Ret` : "",
       ].filter(Boolean).join(" ") || "-";
 
       const row = addDataRow(ws, [
@@ -418,7 +420,7 @@ export async function exportGameToExcel(
         p.passing.interceptions,
         p.rushing.touchdowns,
         p.receiving.touchdowns,
-        fgXp,
+        kRet,
         p.pointsResponsibleFor,
       ], 1, i % 2 !== 0);
 

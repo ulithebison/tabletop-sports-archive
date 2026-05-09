@@ -53,7 +53,8 @@ export function calculateSeasonPlayerStats(
     // Determine winner for game log
     const homeScore = game.score.home.total;
     const awayScore = game.score.away.total;
-    const scoreStr = `${awayScore}-${homeScore}`;
+    const homeFirst = `${homeScore}-${awayScore}`;
+    const awayFirst = `${awayScore}-${homeScore}`;
 
     for (const gs of gameStats) {
       let ps = statsMap.get(gs.playerId);
@@ -122,7 +123,7 @@ export function calculateSeasonPlayerStats(
         opponentTeamId,
         isHome,
         result,
-        score: scoreStr,
+        score: isHome ? homeFirst : awayFirst,
         passingTD: gs.passing.touchdowns,
         interceptions: gs.passing.interceptions,
         rushingTD: gs.rushing.touchdowns,
