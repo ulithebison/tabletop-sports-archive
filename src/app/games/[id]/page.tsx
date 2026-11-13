@@ -92,7 +92,9 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
   // Build JSON-LD structured data
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": "BoardGame",
+    // Google's review snippets accept "Game" but not the subtype "BoardGame".
+    "@type": "Game",
+    additionalType: "https://schema.org/BoardGame",
     name: game.name,
     url: `${SITE_URL}/games/${gameId}`,
   };
@@ -103,7 +105,8 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
   }
   if (game.year) jsonLd.datePublished = String(game.year);
 
-  // Community rating (1-5) takes priority, fallback to BGG rating (1-10 scale)
+  // Only ratings collected on this site may appear in structured data.
+  // BGG ratings are third-party reviews and violate Google's review snippet guidelines.
   if (ratingCount > 0) {
     jsonLd.aggregateRating = {
       "@type": "AggregateRating",
@@ -111,14 +114,6 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
       bestRating: 5,
       worstRating: 1,
       ratingCount,
-    };
-  } else if (game.average_rating && game.users_rated) {
-    jsonLd.aggregateRating = {
-      "@type": "AggregateRating",
-      ratingValue: game.average_rating,
-      bestRating: 10,
-      worstRating: 1,
-      ratingCount: game.users_rated,
     };
   }
 
