@@ -44,6 +44,7 @@ export async function generateMetadata({ params }: GameDetailPageProps): Promise
   return {
     title: game.name,
     description: desc,
+    alternates: { canonical: `/games/${game.id}` },
     openGraph: {
       title: game.name,
       description: desc,

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getTypes } from "@/lib/queries";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/browse/type" },
   title: "Browse by Type",
   description:
     "Browse the Tabletop Sports Games Archive by game type — board games, dice games, card games, simulation games, and more.",

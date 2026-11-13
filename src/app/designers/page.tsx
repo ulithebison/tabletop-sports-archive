@@ -4,6 +4,7 @@ import { getDesigners } from "@/lib/queries";
 import { DesignerDirectory } from "@/components/designers/DesignerDirectory";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/designers" },
   title: "Browse by Designer",
   description:
     "Browse the Tabletop Sports Games Archive by game designer. Discover prolific designers and explore their games.",

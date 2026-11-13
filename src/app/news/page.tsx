@@ -8,6 +8,7 @@ import type { NewsItem } from "@/lib/types";
 export const revalidate = 3600;
 
 export const metadata = {
+  alternates: { canonical: "/news" },
   title: `News — ${SITE_NAME}`,
   description: "The latest news and announcements from the Tabletop Sports Games Archive.",
 };

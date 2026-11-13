@@ -9,6 +9,7 @@ import type { BlogPost } from "@/lib/types";
 export const revalidate = 3600;
 
 export const metadata = {
+  alternates: { canonical: "/blog" },
   title: `Blog — ${SITE_NAME}`,
   description:
     "Game reviews, deep dives, and updates from the Tabletop Sports Games Archive.",

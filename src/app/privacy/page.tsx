@@ -4,6 +4,7 @@ import { SITE_NAME } from "@/lib/constants";
 export const revalidate = 3600;
 
 export const metadata = {
+  alternates: { canonical: "/privacy" },
   title: `Privacy Policy — ${SITE_NAME}`,
   description:
     "How the Tabletop Sports Games Archive collects, stores, and protects your data.",

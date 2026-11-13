@@ -4,6 +4,7 @@ import { getSports } from "@/lib/queries";
 import { getSportColor } from "@/lib/utils";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/browse/sport" },
   title: "Browse by Sport",
   description:
     "Browse the Tabletop Sports Games Archive by sport. Find board games, dice games, and card games for every sport.",

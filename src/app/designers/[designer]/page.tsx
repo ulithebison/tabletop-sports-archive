@@ -15,12 +15,17 @@ interface DesignerPageProps {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: DesignerPageProps): Promise<Metadata> {
   const { designer } = await params;
+  const { page: pageParam } = await searchParams;
+  const pageNum = Number(pageParam) > 1 ? Number(pageParam) : 1;
+  const canonicalPath = `/designers/${encodeURIComponent(decodeURIComponent(designer))}${pageNum > 1 ? `?page=${pageNum}` : ""}`;
   const name = decodeURIComponent(designer);
   return {
     title: `${name} — Designer`,
     description: `Browse all tabletop sports games designed by ${name}.`,
+    alternates: { canonical: canonicalPath },
   };
 }
 

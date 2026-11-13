@@ -6,6 +6,7 @@ import { TrendingUp } from "lucide-react";
 import type { Game } from "@/lib/types";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/popular" },
   title: "Most Popular",
   description:
     "The most-viewed tabletop sports games in the archive — board games, dice games, card games, and more.",

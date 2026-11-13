@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: `${post.title} — ${SITE_NAME}`,
     description: post.excerpt ?? post.body.slice(0, 160),
+    alternates: { canonical: `/blog/${slug}` },
   };
 }
 

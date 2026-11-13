@@ -9,6 +9,10 @@ import { ArrowRight, Trophy, Clock, Tags, Layers } from "lucide-react";
 
 export const revalidate = 3600;
 
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 async function GameCount() {
   try {
     const count = await getGameCount();

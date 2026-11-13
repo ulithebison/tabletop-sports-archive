@@ -15,6 +15,7 @@ import { BarChart3, Gamepad2, Calendar, Users } from "lucide-react";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/stats" },
   title: "Stats & Insights — Tabletop Sports Games Archive",
   description:
     "Explore statistics and infographics across 6,800+ tabletop sports games — by decade, sport, complexity, publisher, and more.",

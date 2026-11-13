@@ -17,13 +17,18 @@ interface SportGamesPageProps {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: SportGamesPageProps): Promise<Metadata> {
   const { sport } = await params;
+  const { page: pageParam } = await searchParams;
+  const pageNum = Number(pageParam) > 1 ? Number(pageParam) : 1;
+  const canonicalPath = `/browse/sport/${encodeURIComponent(decodeURIComponent(sport))}${pageNum > 1 ? `?page=${pageNum}` : ""}`;
   const sportName = decodeURIComponent(sport);
   const desc = `Browse all ${sportName} tabletop games — board games, dice games, card games, and simulations. Discover top-rated titles, stats, and more.`;
   return {
     title: `${sportName} Tabletop Games`,
     description: desc,
+    alternates: { canonical: canonicalPath },
     openGraph: {
       title: `${sportName} Tabletop Games — ${SITE_NAME}`,
       description: desc,

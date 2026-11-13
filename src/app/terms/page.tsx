@@ -4,6 +4,7 @@ import { SITE_NAME } from "@/lib/constants";
 export const revalidate = 3600;
 
 export const metadata = {
+  alternates: { canonical: "/terms" },
   title: `Terms of Use — ${SITE_NAME}`,
   description:
     "Terms and conditions for using the Tabletop Sports Games Archive.",

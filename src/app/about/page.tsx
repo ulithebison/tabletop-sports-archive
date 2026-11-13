@@ -5,6 +5,7 @@ import { SITE_NAME } from "@/lib/constants";
 export const revalidate = 3600;
 
 export const metadata = {
+  alternates: { canonical: "/about" },
   title: `About — ${SITE_NAME}`,
   description:
     "Why the Tabletop Sports Games Archive exists, how it works, and how you can help grow the collection.",

@@ -14,12 +14,17 @@ interface TypeGamesPageProps {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: TypeGamesPageProps): Promise<Metadata> {
   const { type } = await params;
+  const { page: pageParam } = await searchParams;
+  const pageNum = Number(pageParam) > 1 ? Number(pageParam) : 1;
+  const canonicalPath = `/browse/type/${encodeURIComponent(decodeURIComponent(type))}${pageNum > 1 ? `?page=${pageNum}` : ""}`;
   const typeName = decodeURIComponent(type);
   return {
     title: typeName,
     description: `Browse all tabletop ${typeName} sports games in the archive.`,
+    alternates: { canonical: canonicalPath },
   };
 }
 

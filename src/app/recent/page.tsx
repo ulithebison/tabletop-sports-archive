@@ -6,6 +6,7 @@ import { Clock } from "lucide-react";
 import type { Game } from "@/lib/types";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/recent" },
   title: "Recently Added",
   description:
     "The latest tabletop sports games added to the archive — board games, dice games, card games, and more.",

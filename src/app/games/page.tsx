@@ -53,6 +53,12 @@ export async function generateMetadata({ searchParams }: GamesPageProps) {
       : search
       ? `Search: "${search}"`
       : "All Games",
+    // Filtered views duplicate /games and /browse/sport/*; point Google to the clean URL.
+    alternates: {
+      canonical: sport ? `/browse/sport/${encodeURIComponent(sport)}` : "/games",
+    },
+    // Search result pages should not be indexed, but their links should be followed.
+    ...(search ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
