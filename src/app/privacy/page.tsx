@@ -104,16 +104,13 @@ export default function PrivacyPage() {
             >
               We use{" "}
               <strong style={{ color: "var(--color-text-primary)" }}>
-                Vercel Analytics
-              </strong>{" "}
-              and{" "}
-              <strong style={{ color: "var(--color-text-primary)" }}>
-                Vercel Speed Insights
+                Umami
               </strong>
-              , both of which are cookieless and privacy-focused. They collect
-              aggregate page-view and performance data without tracking individual
-              users. We do not use Google Analytics or any other third-party
-              tracking service.
+              , a cookieless, privacy-focused analytics tool that we host
+              ourselves on our own server in Germany. It collects aggregate
+              page-view data without tracking individual users and without
+              sharing data with third parties. We do not use Google Analytics or
+              any other third-party tracking service.
             </p>
           </div>
 
@@ -152,7 +149,7 @@ export default function PrivacyPage() {
               <strong style={{ color: "var(--color-text-primary)" }}>
                 Supabase
               </strong>{" "}
-              (AWS infrastructure, US region). Data is encrypted at rest and in
+              (AWS infrastructure, EU region, Ireland). Data is encrypted at rest and in
               transit.
             </p>
           </div>
@@ -178,16 +175,24 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong style={{ color: "var(--color-text-primary)" }}>
-                  Vercel
+                  Hetzner
                 </strong>{" "}
-                &mdash; hosts the website and provides cookieless analytics.
+                &mdash; hosts the website and our self-hosted analytics on servers
+                in Germany.
+              </li>
+              <li>
+                <strong style={{ color: "var(--color-text-primary)" }}>
+                  Cloudflare
+                </strong>{" "}
+                &mdash; provides DNS for our domain.
               </li>
               <li>
                 <strong style={{ color: "var(--color-text-primary)" }}>
                   Google Fonts
                 </strong>{" "}
-                &mdash; typefaces (Oswald, Inter, DM Mono, Lora) are loaded from
-                Google&rsquo;s font CDN.
+                &mdash; typefaces (Oswald, Inter, DM Mono, Lora, JetBrains Mono)
+                are downloaded once at build time and served from our own server.
+                Your browser does not connect to Google to load fonts.
               </li>
             </ul>
           </div>

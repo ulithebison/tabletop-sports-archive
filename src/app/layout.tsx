@@ -3,8 +3,7 @@ import { Oswald, Inter, DM_Mono, Lora, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
+import Script from "next/script";
 
 const oswald = Oswald({
   subsets: ["latin"],
@@ -75,8 +74,11 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
-        <Analytics />
-        <SpeedInsights />
+        <Script
+          src="https://stats.tabletopsportsarchive.com/script.js"
+          data-website-id="dd8cffdc-9b37-4a9a-99bf-3ea5f5e76913"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
