@@ -118,7 +118,7 @@ const config: Config = {
         heading: ["var(--font-oswald)", "Arial Narrow", "Arial", "sans-serif"],
         body:    ["var(--font-inter)", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         mono:    ["var(--font-dm-mono)", "Fira Code", "Consolas", "monospace"],
-        "fdf-mono": ["var(--font-jetbrains)", "'JetBrains Mono'", "monospace"],
+        "fdf-mono": ["var(--font-jetbrains)", "monospace"],
         serif:   ["var(--font-lora)", "Georgia", "serif"],
       },
 

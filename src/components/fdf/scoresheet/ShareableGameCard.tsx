@@ -32,6 +32,7 @@ function formatPlayerLine(p: PlayerGameStats): string {
 function TeamLogo({ team, size, isSocial }: { team: FdfTeam; size: number; isSocial: boolean }) {
   if (team.logoUrl) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element -- user-supplied logo URL; html-to-image needs a plain <img>
       <img
         src={team.logoUrl}
         crossOrigin="anonymous"
@@ -112,7 +113,7 @@ export const ShareableGameCard = React.forwardRef<HTMLDivElement, ShareableGameC
           width: cardWidth,
           height: cardHeight,
           backgroundColor: "#0f0f14",
-          fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+          fontFamily: "var(--font-jetbrains), 'Courier New', monospace",
           color: "#e8e6e3",
           display: "flex",
           flexDirection: "column",

@@ -41,6 +41,7 @@ export function TeamCard({ team }: TeamCardProps) {
       {/* Team color stripe */}
       <div className="flex items-center gap-3 mb-3">
         {team.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- user-supplied logo URL (any host or data URL)
           <img
             src={team.logoUrl}
             alt={team.name}

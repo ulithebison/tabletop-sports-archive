@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Pencil } from "lucide-react";
 
 // ── Grade Dropdown ──────────────────────────────────────────
@@ -153,6 +153,12 @@ export function EditableNumber({ value, onChange, min = 0, max = 99, suffix }: E
   const [draft, setDraft] = useState(String(value));
   const ref = useRef<HTMLDivElement>(null);
 
+  const commit = useCallback(() => {
+    const n = parseInt(draft, 10);
+    if (!isNaN(n)) onChange(Math.max(min, Math.min(max, n)));
+    setEditing(false);
+  }, [draft, onChange, min, max]);
+
   useEffect(() => {
     if (!editing) return;
     const handler = (e: MouseEvent) => {
@@ -162,13 +168,7 @@ export function EditableNumber({ value, onChange, min = 0, max = 99, suffix }: E
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [editing, draft]);
-
-  const commit = () => {
-    const n = parseInt(draft, 10);
-    if (!isNaN(n)) onChange(Math.max(min, Math.min(max, n)));
-    setEditing(false);
-  };
+  }, [editing, commit]);
 
   if (editing) {
     return (
@@ -230,7 +230,7 @@ export function EditableText({ value, onChange, placeholder }: EditableTextProps
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [editing, draft]);
+  }, [editing, draft, onChange]);
 
   if (editing) {
     return (

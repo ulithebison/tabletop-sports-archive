@@ -13,7 +13,7 @@ import type {
 import { generateId } from "../id";
 import { STORAGE_KEYS, getTimingConfig } from "../constants";
 import { consumeTicks, startOvertime, startNewOTPeriod } from "../game-clock";
-import { getPointsForResult, addToQuarterScore, isDefenseScoringTD, isScoringPlay } from "../scoring";
+import { getPointsForResult, addToQuarterScore, isDefenseScoringTD } from "../scoring";
 
 function emptyQuarterScore(): QuarterScore {
   return { q1: 0, q2: 0, q3: 0, q4: 0, ot: 0, total: 0 };

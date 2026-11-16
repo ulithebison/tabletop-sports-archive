@@ -50,7 +50,7 @@ function WPTooltip({
         border: "1px solid var(--fdf-border)",
         borderRadius: "6px",
         padding: "8px 12px",
-        fontFamily: "'JetBrains Mono', monospace",
+        fontFamily: "var(--font-jetbrains), monospace",
         fontSize: "11px",
       }}
     >
@@ -160,14 +160,14 @@ export function WinProbabilityChart({
 
               <XAxis
                 dataKey="drive"
-                tick={{ fontSize: 10, fill: "var(--fdf-text-muted)", fontFamily: "'JetBrains Mono', monospace" }}
+                tick={{ fontSize: 10, fill: "var(--fdf-text-muted)", fontFamily: "var(--font-jetbrains), monospace" }}
                 axisLine={{ stroke: "var(--fdf-border)" }}
                 tickLine={false}
                 label={{
                   value: "Drive",
                   position: "insideBottom",
                   offset: -2,
-                  style: { fontSize: 10, fill: "var(--fdf-text-muted)", fontFamily: "'JetBrains Mono', monospace" },
+                  style: { fontSize: 10, fill: "var(--fdf-text-muted)", fontFamily: "var(--font-jetbrains), monospace" },
                 }}
               />
               <YAxis
@@ -177,7 +177,7 @@ export function WinProbabilityChart({
                   const pct = Math.round(Math.abs(v - 0.5) * 200);
                   return pct === 0 ? "50%" : `${pct}%`;
                 }}
-                tick={{ fontSize: 10, fill: "var(--fdf-text-muted)", fontFamily: "'JetBrains Mono', monospace" }}
+                tick={{ fontSize: 10, fill: "var(--fdf-text-muted)", fontFamily: "var(--font-jetbrains), monospace" }}
                 axisLine={{ stroke: "var(--fdf-border)" }}
                 tickLine={false}
                 width={36}
@@ -202,7 +202,7 @@ export function WinProbabilityChart({
                   label={{
                     value: `Q${snapshots.find((s) => s.afterDriveNumber === drive)?.quarter || ""}`,
                     position: "top",
-                    style: { fontSize: 9, fill: "var(--fdf-text-muted)", fontFamily: "'JetBrains Mono', monospace" },
+                    style: { fontSize: 9, fill: "var(--fdf-text-muted)", fontFamily: "var(--font-jetbrains), monospace" },
                   }}
                 />
               ))}

@@ -21,7 +21,6 @@ export function SeasonGameRow({
   game,
   homeTeam,
   awayTeam,
-  seasonId,
   onSimulate,
   onPlay,
   onResume,

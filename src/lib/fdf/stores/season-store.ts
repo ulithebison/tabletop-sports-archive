@@ -92,7 +92,8 @@ export const useSeasonStore = create<SeasonState>()(
 
       deleteSeason: (id) => {
         set((state) => {
-          const { [id]: _removed, ...rest } = state.seasons;
+          const rest = { ...state.seasons };
+          delete rest[id];
           return { seasons: rest };
         });
       },

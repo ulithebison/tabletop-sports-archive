@@ -13,7 +13,7 @@ interface PreGameModalProps {
   onCancel: () => void;
 }
 
-export function PreGameModal({ game, homeTeam, awayTeam, onStart, onCancel }: PreGameModalProps) {
+export function PreGameModal({ homeTeam, awayTeam, onStart, onCancel }: PreGameModalProps) {
   const globalEnhanced = useSettingsStore((s) => s.enhancedMode);
   const globalGameMode = useSettingsStore((s) => s.defaultGameMode);
   const global7Plus = useSettingsStore((s) => s.sevenPlusMinuteDriveRule);

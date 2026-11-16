@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import type { FdfGame, FdfTeam, PlayerGameStats, DriveEntry } from "./types";
-import { isScoringPlay, isReturnTD, isDefenseScoringTD } from "./scoring";
+import { isScoringPlay, isDefenseScoringTD } from "./scoring";
 
 // ── FDF Dark Theme Palette ──────────────────────────────────────
 const BG_PRIMARY = "FF0A0E17";

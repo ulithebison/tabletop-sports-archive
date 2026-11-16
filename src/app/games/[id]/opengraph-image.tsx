@@ -33,7 +33,6 @@ function getSportColor(sport: string | null): string {
 
 function getBaseUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return "http://localhost:3000";
 }
 
@@ -205,7 +204,7 @@ export default async function GameOGImage({
                 flexShrink: 0,
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               <img
                 src={imageUrl}
                 width={280}

@@ -17,7 +17,7 @@ There are no tests. `npm run build` is the primary verification step.
 
 - **Next.js 15** (App Router) + **TypeScript** + **Tailwind CSS 3** + **shadcn/ui** (Radix primitives)
 - **Supabase** (`@supabase/ssr`) — postgres + auth; project: `hfbkmqzffrletmqwzvme.supabase.co`
-- **Deploy**: Vercel + Supabase free tier
+- **Deploy**: Hetzner server via Coolify (Railpack build), Supabase Cloud free tier
 - Path alias: `@/` maps to `src/`
 
 ## Architecture

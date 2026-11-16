@@ -191,8 +191,8 @@ export default function PrivacyPage() {
                 <strong style={{ color: "var(--color-text-primary)" }}>
                   Google Fonts
                 </strong>{" "}
-                &mdash; typefaces (Oswald, Inter, DM Mono, Lora, JetBrains Mono)
-                are downloaded once at build time and served from our own server.
+                &mdash; typefaces (Oswald, Inter, DM Mono, Lora) are downloaded
+                once at build time and served from our own server.
                 Your browser does not connect to Google to load fonts.
               </li>
             </ul>

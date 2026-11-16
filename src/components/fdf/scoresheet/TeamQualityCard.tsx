@@ -81,6 +81,7 @@ export function TeamQualityCard({ team, side }: TeamQualityCardProps) {
       {/* Header */}
       <div className={`flex items-center gap-2 mb-1.5 ${side === "away" ? "" : "flex-row-reverse"}`}>
         {team.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- user-supplied logo URL (any host or data URL)
           <img
             src={team.logoUrl}
             alt={team.name}
