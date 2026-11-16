@@ -2,11 +2,10 @@ import type {
   FdfSeason,
   TeamStanding,
   ScheduleGame,
-  Division,
   PlayoffRound,
 } from "./types";
 import { generateId } from "./id";
-import { calculateStandings, sortStandings, getStandingsByDivision } from "./standings";
+import { sortStandings, getStandingsByDivision } from "./standings";
 import { ALL_PLAYOFF_ROUNDS } from "./constants";
 
 export interface PlayoffSeed {

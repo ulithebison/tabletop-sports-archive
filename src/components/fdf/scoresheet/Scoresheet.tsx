@@ -6,7 +6,7 @@ import type { FdfGame, FdfTeam, DriveInput } from "@/lib/fdf/types";
 import { useGameStore } from "@/lib/fdf/stores/game-store";
 import { useTeamStore } from "@/lib/fdf/stores/team-store";
 import { useSeasonStore } from "@/lib/fdf/stores/season-store";
-import { calculatePlayerGameStats, getGameMVP } from "@/lib/fdf/player-stats";
+import { calculatePlayerGameStats } from "@/lib/fdf/player-stats";
 import { computeWPHistory, computeWPAnalytics } from "@/lib/fdf/win-probability";
 import { Scoreboard } from "./Scoreboard";
 import { WinProbabilityChart } from "./WinProbabilityChart";
@@ -74,7 +74,6 @@ export function Scoresheet({ game, homeTeam, awayTeam, onGameComplete }: Scoresh
   const liveStats = game.enhancedMode && showStats
     ? calculatePlayerGameStats(game, homeRoster, awayRoster)
     : [];
-  const liveMvp = liveStats.length > 0 ? getGameMVP(liveStats) : null;
 
   const isFirstHalf = game.gameClock.quarter <= 2;
   const isSecondHalf = game.gameClock.quarter >= 3 && game.gameClock.quarter <= 4;

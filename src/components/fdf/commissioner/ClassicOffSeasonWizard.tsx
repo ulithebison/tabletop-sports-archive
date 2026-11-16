@@ -137,10 +137,10 @@ export function ClassicOffSeasonWizard({
   });
 
   // Helper to get standing for a team
-  const getStanding = (teamId: string) => {
+  const getStanding = useCallback((teamId: string) => {
     const ct = league.teams.find((t) => t.id === teamId);
     return standings.find((s) => s.teamId === ct?.teamStoreId) ?? { wins: 0, losses: 0, rank: teamCount };
-  };
+  }, [league.teams, standings, teamCount]);
 
   // Update a single team state
   const updateTeamState = useCallback((index: number, updater: (ts: TeamOffSeasonState) => TeamOffSeasonState) => {
@@ -164,7 +164,7 @@ export function ClassicOffSeasonWizard({
       })
     );
     setProcessedSteps((prev) => new Set([...prev, 0]));
-  }, [standings, league.teams, championTeamId]);
+  }, [getStanding, league.teams, championTeamId]);
 
   const processStep1Carousel = useCallback(() => {
     setTeamStates((prev) =>
@@ -197,7 +197,7 @@ export function ClassicOffSeasonWizard({
       })
     );
     setProcessedSteps((prev) => new Set([...prev, 2]));
-  }, [teamCount, standings, league.teams]);
+  }, [getStanding, teamCount]);
 
   const processStep3Ownership = useCallback(() => {
     setTeamStates((prev) =>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Oswald, Inter, DM_Mono, Lora, JetBrains_Mono } from "next/font/google";
+import { Oswald, Inter, DM_Mono, Lora } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -34,18 +35,20 @@ const lora = Lora({
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+// Bundled in the repo (OFL-1.1, from @fontsource-variable/jetbrains-mono 5.3.0).
+// The Google Fonts download of JetBrains Mono broke a Coolify build once.
+const jetbrainsMono = localFont({
+  src: "./fonts/JetBrainsMono-latin-variable.woff2",
+  weight: "100 800",
+  style: "normal",
   variable: "--font-jetbrains",
   display: "swap",
+  fallback: ["ui-monospace", "Courier New", "monospace"],
+  adjustFontFallback: false, // the default Arial-based fallback is not monospace
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL
-      ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
-  ),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
     default: "Tabletop Sports Games Archive",
     template: "%s | Tabletop Sports Games Archive",

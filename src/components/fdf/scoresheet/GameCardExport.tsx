@@ -5,7 +5,7 @@ import { toPng } from "html-to-image";
 import type { FdfGame, FdfTeam, PlayerGameStats, WinProbabilitySnapshot, WPAnalytics } from "@/lib/fdf/types";
 import { generateGameHeadline } from "@/lib/fdf/headline-generator";
 import { ShareableGameCard } from "./ShareableGameCard";
-import { Download, Copy, Share2, Image } from "lucide-react";
+import { Download, Copy, Share2, Image as ImageIcon } from "lucide-react";
 
 interface GameCardExportProps {
   game: FdfGame;
@@ -143,7 +143,7 @@ export function GameCardExport({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Image size={14} style={{ color: "var(--fdf-accent)" }} />
+          <ImageIcon size={14} style={{ color: "var(--fdf-accent)" }} />
           <h3
             className="text-xs font-bold font-fdf-mono uppercase tracking-wider"
             style={{ color: "var(--fdf-accent)" }}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { FdfGame, FdfTeam } from "@/lib/fdf/types";
-import { isScoringPlay, isReturnTD, isDefenseScoringTD } from "@/lib/fdf/scoring";
+import { isScoringPlay, isDefenseScoringTD } from "@/lib/fdf/scoring";
 import { calculatePlayerGameStats, getGameMVP } from "@/lib/fdf/player-stats";
 import { computeWPHistory, computeWPAnalytics } from "@/lib/fdf/win-probability";
 import { exportGameToExcel } from "@/lib/fdf/excel-export";

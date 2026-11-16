@@ -2,7 +2,6 @@ import type {
   FdfTeam,
   TeamQualities,
   SeasonGameResult,
-  InstantResultData,
   OvertimeConfig,
 } from "./types";
 

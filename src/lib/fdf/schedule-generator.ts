@@ -186,7 +186,6 @@ export function generateDivisionSchedule(
       }
     }
     if (!placed) {
-      const extraWeek = weekMatchups.length;
       weekMatchups.push([matchup]);
       weekUsed.push(new Set([matchup.home, matchup.away]));
     }

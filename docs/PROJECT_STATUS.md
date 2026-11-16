@@ -206,7 +206,7 @@ The plan specified a standalone Vite SPA. The actual implementation integrates i
 | **Image export** | html-to-image or html2canvas | html-to-image | As planned |
 | **Icons** | Lucide React | Lucide React | As planned |
 | **Testing** | Vitest + React Testing Library | None (`npm run build` is verification) | Matches main archive approach |
-| **Font** | Inter + JetBrains Mono | JetBrains Mono (FDF-specific) + parent site fonts | FDF uses `font-fdf-mono` class throughout |
+| **Font** | Inter + JetBrains Mono | JetBrains Mono (FDF-specific, bundled locally in `src/app/fonts`) + parent site fonts | FDF uses `font-fdf-mono` class throughout |
 | **Deployment** | Vercel (sub-path `/fdf/`) | Vercel (Next.js route `/fdf/*`) | Cleaner integration — no separate SPA build |
 
 ### Structural Differences
